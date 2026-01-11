@@ -1,0 +1,28 @@
+# ===== Node / JS =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# ===== Env files (secrets) =====
+.env
+.env.*
+!.env.example
+
+# ===== Builds =====
+dist/
+build/
+
+# ===== OS / Editor =====
+.DS_Store
+.vscode/
+.idea/
+
+# ===== Drizzle / DB meta noise =====
+backend/src/db/migrations/meta/_journal.json
+backend/src/db/migrations/meta/*.json
+
+# ===== Optional: local db volumes (if any) =====
+postgres-data/
+redis-data/
