@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { verifyEmail } from "@/lib/auth";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -35,26 +36,42 @@ export default function VerifyEmailPage() {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-muted/30">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Email verification</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {status === "loading" && <p className="text-sm text-muted-foreground">Verifying your email…</p>}
-          {status === "success" && <p className="text-sm">{message}</p>}
-          {status === "error" && <p className="text-sm text-destructive">{message}</p>}
+    <div className="space-y-5 w-full max-w-lg mx-auto">
+      <div className="text-center md:text-left leading-none select-none">
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85]">
+          EMAIL
+        </h1>
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85] text-right">
+          VERIFY
+        </h1>
+      </div>
 
-          <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/login">Go to Login</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/signup">Back to Signup</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="pt-2">
+         {status === "loading" && (
+            <div className="bg-white rounded-2xl p-4 text-center border border-gray-200 shadow-sm">
+              <p className="text-gray-500 animate-pulse font-medium">Verifying your email...</p>
+            </div>
+         )}
+         {status === "success" && (
+            <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
+               <p className="text-green-800 font-bold text-lg text-center leading-tight">{message}</p>
+            </div>
+         )}
+         {status === "error" && (
+            <div className="bg-red-50 rounded-2xl p-4 border border-red-200">
+               <p className="text-red-600 font-bold text-lg text-center leading-tight">{message}</p>
+            </div>
+         )}
+      </div>
+
+      <div className="grid gap-3 pt-4">
+        <Button asChild className="w-full h-12 rounded-md text-lg font-medium bg-[#1F1F1F] hover:bg-black text-white transition-all shadow-lg">
+          <Link href="/login">Go to Login</Link>
+        </Button>
+        <Button asChild variant="outline" className="w-full h-12 rounded-md text-lg font-medium border-gray-300 hover:bg-gray-50 text-black">
+          <Link href="/signup">Back to Signup</Link>
+        </Button>
+      </div>
     </div>
   );
 }

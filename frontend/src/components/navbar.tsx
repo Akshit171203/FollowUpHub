@@ -18,8 +18,8 @@ export function Navbar() {
           <Image
             src="/FollowUpHub.png"
             alt="FollowUpHub Logo"
-            width={32}
-            height={32}
+            width={40}
+            height={40}
             className="rounded-sm"
           />
           <span className="text-lg font-bold">FollowUpHub</span>

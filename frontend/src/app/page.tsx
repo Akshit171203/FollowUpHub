@@ -9,8 +9,8 @@ export default function HomePage() {
           <Image
             src="/FollowUpHub.png"
             alt="FollowUpHub Logo"
-            width={64}
-            height={64}
+            width={120}
+            height={120}
             className="rounded-md"
           />
         </div>

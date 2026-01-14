@@ -12,11 +12,15 @@ const router = express.Router();
 //Google OAuth Routes
 // STEP 1 — Redirect user to Google
 router.get("/google", (req, res) => {
+  console.log("--- GOOGLE OAUTH START ---");
+  console.log("CLIENT_ID from env:", process.env.GOOGLE_CLIENT_ID);
+  console.log("Redirect URI being sent:", "http://localhost:5001/api/oauth/google/callback");
+
   const redirectUrl = 
     "https://accounts.google.com/o/oauth2/v2/auth?" +
     new URLSearchParams({
       client_id: process.env.GOOGLE_CLIENT_ID,
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      redirect_uri: "http://localhost:5001/api/oauth/google/callback",
       response_type: "code",
       scope: "openid email profile",
       prompt: "select_account",
@@ -32,7 +36,7 @@ router.get("/google/callback", async (req, res) => {
       code,
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri: process.env.GOOGLE_REDIRECT_URI,
+      redirectUri: "http://localhost:5001/api/oauth/google/callback",
     });
 
     const googleUser = await getGoogleUser(id_token, access_token);
@@ -80,10 +84,10 @@ router.get("/google/callback", async (req, res) => {
     });
 
     // Redirect to frontend dashboard
-    res.redirect("http://localhost:5174/profile");
+    res.redirect("http://localhost:3000/dashboard");
   } catch (err) {
     console.error("Google OAuth error:", err);
-    res.redirect("http://localhost:5174/login?error=oauth_failed");
+    res.redirect("http://localhost:3000/login?error=oauth_failed");
   }
 });
 
@@ -91,11 +95,15 @@ router.get("/google/callback", async (req, res) => {
 //Github OAuth Routes
 // STEP 1 — Redirect user to Github
 router.get("/github", (req, res) => {
+  console.log("--- GITHUB OAUTH START ---");
+  console.log("CLIENT_ID from env:", process.env.GITHUB_CLIENT_ID);
+  console.log("Redirect URI being sent:", "http://localhost:5001/api/oauth/github/callback");
+
   const url =
     "https://github.com/login/oauth/authorize?" +
     new URLSearchParams({
       client_id: process.env.GITHUB_CLIENT_ID,
-      redirect_uri: process.env.GITHUB_REDIRECT_URI,
+      redirect_uri: "http://localhost:5001/api/oauth/github/callback",
       scope: "read:user user:email",
     });
 
@@ -168,11 +176,11 @@ router.get("/github/callback", async (req, res) => {
       sameSite: "lax",
     });
 
-    res.redirect("http://localhost:5174/profile");
+    res.redirect("http://localhost:3000/dashboard");
 
   } catch (err) {
     console.error(err);
-    res.redirect("http://localhost:5174/login?error=github_failed");
+    res.redirect("http://localhost:3000/login?error=github_failed");
   }
 });
 

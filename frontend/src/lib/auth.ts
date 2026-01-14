@@ -57,3 +57,9 @@ export async function resendVerification(email: string) {
     body: JSON.stringify({ email }),
   });
 }
+// ✅ matches your backend GET /verify-email
+export async function verifyEmail(token: string) {
+  return apiFetch<{ message: string }>(`/api/users/verify-email?token=${token}`, {
+    method: "GET",
+  });
+}

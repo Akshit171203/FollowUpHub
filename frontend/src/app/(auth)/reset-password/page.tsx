@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { resetPassword } from "@/lib/auth";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,55 +41,52 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Reset password</CardTitle>
-        </CardHeader>
+    <div className="space-y-5 w-full max-w-lg mx-auto">
+      <div className="text-center md:text-left leading-none select-none">
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85]">
+          RESET
+        </h1>
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85] text-right">
+          PASSWORD
+        </h1>
+      </div>
 
-        <CardContent>
-          {!token ? (
-            <div className="space-y-3">
-              <p className="text-sm text-red-600">
-                Reset token missing. Please use the link from your email.
-              </p>
-              <Link className="underline text-sm" href="/forgot-password">
-                Request a new reset link
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="Minimum 6 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Use at least 6 characters.
-                </p>
-              </div>
+      {!token ? (
+        <div className="space-y-3 pt-4">
+          <p className="text-sm text-red-600 font-medium bg-red-50 p-3 rounded-xl border border-red-100">
+            Reset token missing. Please use the link from your email.
+          </p>
+          <Link className="block text-center font-bold underline decoration-2 underline-offset-4 text-black" href="/forgot-password">
+            Request a new reset link
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              id="newPassword"
+              type="password"
+              placeholder="New password (min 6 chars)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="h-12 rounded-md bg-white border-gray-400 px-6 text-base placeholder:text-gray-500 focus:ring-1 focus:ring-black focus:border-black transition-all"
+            />
+          </div>
 
-              {msg ? <p className="text-sm text-green-600">{msg}</p> : null}
-              {err ? <p className="text-sm text-red-600">{err}</p> : null}
+          {msg ? <p className="text-green-600 font-medium bg-green-50 p-2 rounded-lg text-sm">{msg}</p> : null}
+          {err ? <p className="text-red-600 font-medium bg-red-50 p-2 rounded-lg text-sm">{err}</p> : null}
 
-              <Button className="w-full" disabled={disabled} type="submit">
-                {loading ? "Resetting..." : "Reset password"}
-              </Button>
+          <Button className="w-full h-12 rounded-md text-lg font-medium bg-[#1F1F1F] hover:bg-black text-white transition-all shadow-lg" disabled={disabled} type="submit">
+            {loading ? "Resetting..." : "Reset password"}
+          </Button>
 
-              <p className="text-sm text-muted-foreground">
-                Back to{" "}
-                <Link className="underline" href="/login">
-                  Login
-                </Link>
-              </p>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+          <div className="text-center">
+            <Link className="font-bold underline decoration-2 underline-offset-4 text-black" href="/login">
+              Back to Login
+            </Link>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

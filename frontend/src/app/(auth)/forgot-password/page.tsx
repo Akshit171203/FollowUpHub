@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { forgotPassword } from "@/lib/auth";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,41 +33,44 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Forgot password</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {msg && <p className="text-sm">{msg}</p>}
-          {err && <p className="text-sm text-destructive">{err}</p>}
+    <div className="space-y-5 w-full max-w-lg mx-auto">
+      <div className="text-center md:text-left leading-none select-none">
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85]">
+          FORGOT
+        </h1>
+        <h1 className="text-[4rem] lg:text-[5.5rem] font-oswald font-bold tracking-tighter uppercase text-black leading-[0.85] text-right">
+          PASSWORD
+        </h1>
+      </div>
 
-          <form onSubmit={onSubmit} className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
+      <div className="pt-2">
+         {msg && <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700 font-medium">{msg}</div>}
+         {err && <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 font-medium">{err}</div>}
+      </div>
 
-            <Button className="w-full" disabled={disabled}>
-              {loading ? "Sending..." : "Send reset link"}
-            </Button>
-          </form>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Input
+            id="email"
+            type="email"
+            placeholder="Your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            className="h-12 rounded-md bg-white border-gray-400 px-6 text-base placeholder:text-gray-500 focus:ring-1 focus:ring-black focus:border-black transition-all"
+          />
+        </div>
 
-          <p className="text-sm text-muted-foreground">
-            Remembered your password?{" "}
-            <Link className="underline" href="/login">
-              Login
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        <Button className="w-full h-12 rounded-md text-lg font-medium bg-[#1F1F1F] hover:bg-black text-white transition-all shadow-lg" disabled={disabled}>
+          {loading ? "Sending..." : "Send reset link"}
+        </Button>
+      </form>
+
+      <div className="text-center">
+        <Link className="font-bold underline decoration-2 underline-offset-4 text-black" href="/login">
+          Back to Login
+        </Link>
+      </div>
     </div>
   );
 }
