@@ -180,6 +180,11 @@ router.patch("/:id/snooze", authenticateUser, async (req, res) => {
     return res.status(404).json({ message: "Followup not found" });
   }
 
+  // ✅ Prevent snoozing of completed follow-ups
+  if (existing[0].status === "DONE") {
+    return res.status(400).json({ message: "Cannot snooze a completed follow-up" });
+  }
+
   const newDueAt = new Date(
     new Date(existing[0].dueAt).getTime() + snoozeMinutes * 60000
   );

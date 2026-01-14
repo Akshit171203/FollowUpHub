@@ -206,7 +206,7 @@ router.post(
       { expiresIn: "15m" }
     );
 
-    const resetLink = `http://localhost:5174/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
 
     await sendEmail({
       to: email,
@@ -300,7 +300,7 @@ router.post(
       html: `
         <h2>Email Verification</h2>
         <p>Click below to verify your email:</p>
-        <a href="http://localhost:5001/api/users/verify-email?token=${verifyToken}">
+        <a href="http://localhost:3000/api/users/verify-email?token=${verifyToken}">
           Verify Email
         </a>
         <p>This link expires in 1 hour.</p>

@@ -1,0 +1,87 @@
+// src/lib/followups.ts
+import { apiFetch } from "@/lib/api";
+
+export type FollowUpStatus = "PENDING" | "DONE" | "SNOOZED" | "CANCELLED";
+export type FollowUpPriority = "LOW" | "MEDIUM" | "HIGH";
+
+export type FollowUp = {
+  id: string;
+  userId: string;
+  title: string;
+  target?: string | null;
+  notes?: string | null;
+  dueAt?: string | null;
+  status?: FollowUpStatus | string | null;
+  priority?: FollowUpPriority | string | null;
+  reminderPolicy?: string | null;
+  ignoreCount?: number | null;
+  escalationLevel?: number | null;
+  isActive?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  completedAt?: string | null;
+  lastReminderSentAt?: string | null;
+};
+
+export type CreateFollowUpInput = {
+  title: string;
+  target?: string | null;
+  notes?: string | null;
+  dueAt?: string | null;
+  priority?: FollowUpPriority | string;
+};
+
+export type UpdateFollowUpInput = Partial<CreateFollowUpInput> & {
+  status?: FollowUpStatus | string;
+  isActive?: boolean;
+};
+
+type ListResp = { followups: FollowUp[] };
+type DetailResp = { followup: FollowUp };
+
+export async function getAllFollowUps(): Promise<FollowUp[]> {
+  const res = await apiFetch<ListResp | FollowUp[]>("/api/followups", {
+    method: "GET",
+  });
+
+  if (Array.isArray(res)) return res;
+  return Array.isArray(res?.followups) ? res.followups : [];
+}
+
+export async function getFollowUp(id: string): Promise<FollowUp | null> {
+  if (!id) return null;
+
+  const res = await apiFetch<DetailResp | FollowUp>(`/api/followups/${id}`, {
+    method: "GET",
+  });
+
+  // ✅ handle both shapes:
+  // { followup: {...} } OR {...}
+  if ((res as any)?.followup) return (res as any).followup as FollowUp;
+  return res as FollowUp;
+}
+
+export async function createFollowUp(input: CreateFollowUpInput) {
+  return apiFetch(`/api/followups`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
+  return apiFetch(`/api/followups/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function markDone(id: string) {
+  return apiFetch(`/api/followups/${id}/done`, { method: "PATCH" });
+}
+
+export async function snoozeFollowUp(id: string, snoozeMinutes: number) {
+  return apiFetch(`/api/followups/${id}/snooze`, {
+    method: "PATCH",
+    body: JSON.stringify({ snoozeMinutes }),
+  });
+}
