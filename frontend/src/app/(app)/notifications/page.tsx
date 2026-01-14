@@ -10,10 +10,12 @@ import {
   markAllRead,
   markNotificationRead,
   type Notification,
+  type PaginationMeta,
 } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 
 function fmt(dateIso?: string | null) {
   if (!dateIso) return "—";
@@ -27,16 +29,43 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [items, setItems] = useState<Notification[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
-  async function load() {
+  async function load(page = currentPage) {
     try {
       setLoading(true);
-      const [count, list] = await Promise.all([
-        getUnreadCount(),
-        tab === "unread" ? getUnreadNotifications() : getAllNotifications(),
-      ]);
+      
+      const countPromise = getUnreadCount();
+      let listPromise;
+      
+      if (tab === "unread") {
+        listPromise = getUnreadNotifications(); // Unread endpoint doesn't support pagination yet
+      } else {
+        listPromise = getAllNotifications({ page, limit: 10 });
+      }
+
+      const [count, listResult] = await Promise.all([countPromise, listPromise]);
       setUnreadCount(count);
-      setItems(Array.isArray(list) ? list : []);
+
+      if (tab === "all") {
+        // Handle paginated response
+        const result = listResult as { notifications: Notification[], pagination?: PaginationMeta };
+        setItems(Array.isArray(result.notifications) ? result.notifications : []);
+        if (result.pagination) {
+          setPagination(result.pagination);
+        }
+      } else {
+        // Handle array response (legacy)
+        setItems(Array.isArray(listResult) ? listResult : []);
+        // Reset pagination for unread tab since it's not paginated or handled differently
+        setPagination({ page: 1, limit: 10, total: (listResult as Notification[]).length, totalPages: 1 });
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Request failed");
       setItems([]);
@@ -46,11 +75,25 @@ export default function NotificationsPage() {
   }
 
   useEffect(() => {
-    load();
+    // Reset to page 1 when tab changes
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      load(1);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  useEffect(() => {
+    load(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
   const list = useMemo(() => items, [items]);
+
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+  }
 
   async function onMarkAllRead() {
     try {
@@ -136,11 +179,18 @@ export default function NotificationsPage() {
                 ))}
               </div>
             )}
+            {tab === "all" && !loading && items.length > 0 && pagination.total > 0 && (
+              <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                disabled={loading}
+              />
+            )}
           </CardContent>
         </Card>
 
         <div className="mt-4">
-          <Button variant="outline" onClick={load} disabled={loading}>
+          <Button variant="outline" onClick={() => load(currentPage)} disabled={loading}>
             Refresh
           </Button>
         </div>

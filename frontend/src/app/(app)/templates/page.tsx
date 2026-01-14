@@ -4,21 +4,32 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { getTemplates, type Template } from "@/lib/templates";
+import { getTemplates, type Template, type PaginationMeta } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 
 export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Template[]>([]);
   const [q, setQ] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
-  async function load() {
+  async function load(page = currentPage) {
     try {
       setLoading(true);
-      const list = await getTemplates();
-      setItems(Array.isArray(list) ? list : []);
+      const result = await getTemplates({ page, limit: 10 });
+      setItems(Array.isArray(result.templates) ? result.templates : []);
+      if (result.pagination) {
+        setPagination(result.pagination);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to fetch templates");
       setItems([]);
@@ -28,8 +39,13 @@ export default function TemplatesPage() {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+  }
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -65,7 +81,7 @@ export default function TemplatesPage() {
             onChange={(e) => setQ(e.target.value)}
             className="max-w-md"
           />
-          <Button variant="outline" onClick={load} disabled={loading}>
+          <Button variant="outline" onClick={() => load(currentPage)} disabled={loading}>
             Refresh
           </Button>
         </div>
@@ -99,6 +115,13 @@ export default function TemplatesPage() {
                   </div>
                 ))}
               </div>
+            )}
+            {!q && pagination.total > 0 && (
+              <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                disabled={loading}
+              />
             )}
           </CardContent>
         </Card>

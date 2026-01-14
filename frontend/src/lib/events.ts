@@ -27,32 +27,41 @@ export async function getFollowUpEvents(followupId: string): Promise<FollowUpEve
  * "Global timeline" = fetch all followups, then fetch events for each followup.
  * MVP approach without changing backend.
  */
-export async function getEventTimeline(): Promise<FollowUpEvent[]> {
-  const followups = await getAllFollowUps();
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
 
-  const list: FollowUp[] = Array.isArray(followups) ? followups : [];
+type TimelineResp = { 
+  events: FollowUpEvent[]; 
+  pagination?: PaginationMeta;
+};
 
-  const all = await Promise.all(
-    list
-      .filter((f) => !!f?.id)
-      .map(async (f) => {
-        try {
-          const evs = await getFollowUpEvents(f.id);
-          // ensure followupId is present even if backend doesn't include it
-          return evs.map((e) => ({ ...e, followupId: e.followupId ?? f.id }));
-        } catch {
-          return [];
-        }
-      })
-  );
+/**
+ * Global timeline using efficient backend endpoint
+ */
+export async function getEventTimeline(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ events: FollowUpEvent[]; pagination?: PaginationMeta }> {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  
+  const queryString = queryParams.toString();
+  const url = `/api/events/timeline${queryString ? `?${queryString}` : ""}`;
 
-  const flat = all.flat();
-
-  flat.sort((a, b) => {
-    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return tb - ta;
-  });
-
-  return flat;
+  const res = await apiFetch<TimelineResp>(url, { method: "GET" });
+  
+  // Handle older array response if fallback needed, though we updated backend
+  if (Array.isArray(res)) {
+    return { events: res };
+  }
+  
+  return {
+    events: Array.isArray((res as any)?.events) ? (res as any).events : [],
+    pagination: res?.pagination
+  };
 }

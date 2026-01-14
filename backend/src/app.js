@@ -8,6 +8,7 @@ import adminRoutes from "./modules/auth/routes/admin.routes.js";
 import followupRoutes from "./modules/followups/followup.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
 import templateRoutes from "./modules/templates/template.routes.js";
+import eventRoutes from "./modules/events/event.routes.js";
 
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/followups", followupRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/templates", templateRoutes);
+app.use("/api/events", eventRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true, message: "FollowUpHub backend running" });

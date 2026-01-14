@@ -25,8 +25,8 @@ export async function createNotification({
   return inserted[0];
 }
 
-// ✅ UPDATED: now returns followup details too
-export async function getNotifications(userId, filters = {}) {
+// ✅ UPDATED: now returns followup details too + pagination support
+export async function getNotifications(userId, filters = {}, pagination = {}) {
   const conditions = [eq(notifications.userId, userId)];
 
   if (filters.isRead !== undefined) {
@@ -37,6 +37,19 @@ export async function getNotifications(userId, filters = {}) {
     conditions.push(eq(notifications.type, filters.type));
   }
 
+  const page = pagination.page || 1;
+  const limit = pagination.limit || 10;
+  const offset = (page - 1) * limit;
+
+  // Get total count
+  const countResult = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(and(...conditions));
+  
+  const total = countResult.length;
+
+  // Get paginated results
   const rows = await db
     .select({
       id: notifications.id,
@@ -63,9 +76,19 @@ export async function getNotifications(userId, filters = {}) {
     .from(notifications)
     .leftJoin(followups, eq(notifications.followupId, followups.id))
     .where(and(...conditions))
-    .orderBy(desc(notifications.createdAt));
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
+    .offset(offset);
 
-  return rows;
+  return {
+    notifications: rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
 }
 
 export async function getUnreadCount(userId) {

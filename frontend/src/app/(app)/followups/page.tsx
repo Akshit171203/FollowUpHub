@@ -9,11 +9,13 @@ import {
   markDone,
   snoozeFollowUp,
   type FollowUp,
+  type PaginationMeta,
 } from "@/lib/followups";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 
 function fmt(dateIso?: string | null) {
   if (!dateIso) return "—";
@@ -26,12 +28,22 @@ export default function FollowUpsPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FollowUp[]>([]);
   const [q, setQ] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
-  async function load() {
+  async function load(page = currentPage) {
     try {
       setLoading(true);
-      const list = await getAllFollowUps(); // <-- now returns FollowUp[]
-      setItems(Array.isArray(list) ? list : []);
+      const result = await getAllFollowUps({ page, limit: 10 });
+      setItems(Array.isArray(result.followups) ? result.followups : []);
+      if (result.pagination) {
+        setPagination(result.pagination);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to fetch follow-ups");
       setItems([]);
@@ -41,8 +53,9 @@ export default function FollowUpsPage() {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -75,6 +88,10 @@ export default function FollowUpsPage() {
     }
   }
 
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-5xl px-4 py-10">
@@ -103,7 +120,7 @@ export default function FollowUpsPage() {
             onChange={(e) => setQ(e.target.value)}
             className="max-w-md"
           />
-          <Button variant="outline" onClick={load} disabled={loading}>
+          <Button variant="outline" onClick={() => load(currentPage)} disabled={loading}>
             Refresh
           </Button>
         </div>
@@ -161,6 +178,13 @@ export default function FollowUpsPage() {
                   </div>
                 ))}
               </div>
+            )}
+            {!q && pagination.total > 0 && (
+              <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                disabled={loading}
+              />
             )}
           </CardContent>
         </Card>

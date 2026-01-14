@@ -49,19 +49,41 @@ router.post("/", authenticateUser, async (req, res) => {
 });
 
 /**
- * GET /api/templates
+ * GET /api/templates with pagination
  */
 router.get("/", authenticateUser, async (req, res) => {
   try {
     const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
+    // Get total count
+    const countResult = await db
+      .select()
+      .from(followupTemplates)
+      .where(eq(followupTemplates.userId, userId));
+    
+    const total = countResult.length;
+
+    // Get paginated results
     const rows = await db
       .select()
       .from(followupTemplates)
       .where(eq(followupTemplates.userId, userId))
-      .orderBy(desc(followupTemplates.createdAt));
+      .orderBy(desc(followupTemplates.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return res.json({ templates: rows });
+    return res.json({ 
+      templates: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     console.error("GET /templates error:", err);
     return res.status(500).json({ message: "Internal server error" });

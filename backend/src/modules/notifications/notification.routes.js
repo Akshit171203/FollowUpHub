@@ -10,10 +10,12 @@ import {
 const router = express.Router();
 
 /**
- * GET /api/notifications
+ * GET /api/notifications with pagination
  * Optional filters:
  *  - ?isRead=true/false
  *  - ?type=FOLLOWUP_DUE
+ *  - ?page=1
+ *  - ?limit=10
  */
 router.get("/", authenticateUser, async (req, res) => {
   try {
@@ -29,9 +31,14 @@ router.get("/", authenticateUser, async (req, res) => {
       filters.type = req.query.type;
     }
 
-    const list = await getNotifications(userId, filters);
+    const pagination = {
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 10,
+    };
 
-    return res.json({ notifications: list });
+    const result = await getNotifications(userId, filters, pagination);
+
+    return res.json(result);
   } catch (err) {
     console.error("GET /notifications error:", err);
     return res.status(500).json({ message: "Internal server error" });

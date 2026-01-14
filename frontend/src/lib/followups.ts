@@ -36,16 +36,42 @@ export type UpdateFollowUpInput = Partial<CreateFollowUpInput> & {
   isActive?: boolean;
 };
 
-type ListResp = { followups: FollowUp[] };
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+type ListResp = { 
+  followups: FollowUp[];
+  pagination?: PaginationMeta;
+};
 type DetailResp = { followup: FollowUp };
 
-export async function getAllFollowUps(): Promise<FollowUp[]> {
-  const res = await apiFetch<ListResp | FollowUp[]>("/api/followups", {
+export async function getAllFollowUps(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ followups: FollowUp[]; pagination?: PaginationMeta }> {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  
+  const queryString = queryParams.toString();
+  const url = `/api/followups${queryString ? `?${queryString}` : ""}`;
+
+  const res = await apiFetch<ListResp>(url, {
     method: "GET",
   });
 
-  if (Array.isArray(res)) return res;
-  return Array.isArray(res?.followups) ? res.followups : [];
+  if (Array.isArray(res)) {
+    return { followups: res };
+  }
+  
+  return {
+    followups: Array.isArray(res?.followups) ? res.followups : [],
+    pagination: res?.pagination
+  };
 }
 
 export async function getFollowUp(id: string): Promise<FollowUp | null> {

@@ -11,15 +11,42 @@ export type Notification = {
   createdAt?: string | null;
 };
 
-type ListResp = { notifications: Notification[] };
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+type ListResp = { 
+  notifications: Notification[];
+  pagination?: PaginationMeta;
+};
 type CountResp = { count: number } | { unread: number } | number;
 
-export async function getAllNotifications(): Promise<Notification[]> {
-  const res = await apiFetch<ListResp | Notification[]>("/api/notifications", {
+export async function getAllNotifications(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ notifications: Notification[]; pagination?: PaginationMeta }> {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  
+  const queryString = queryParams.toString();
+  const url = `/api/notifications${queryString ? `?${queryString}` : ""}`;
+
+  const res = await apiFetch<ListResp>(url, {
     method: "GET",
   });
-  if (Array.isArray(res)) return res;
-  return Array.isArray(res?.notifications) ? res.notifications : [];
+  
+  if (Array.isArray(res)) {
+    return { notifications: res };
+  }
+  
+  return {
+    notifications: Array.isArray(res?.notifications) ? res.notifications : [],
+    pagination: res?.pagination
+  };
 }
 
 export async function getUnreadNotifications(): Promise<Notification[]> {

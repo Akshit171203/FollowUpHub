@@ -47,17 +47,40 @@ router.post("/", authenticateUser, async (req, res) => {
 
 /**
  * GET /api/followups
- * List followups for logged-in user
+ * List followups for logged-in user with pagination
  */
 router.get("/", authenticateUser, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await db
+      .select()
+      .from(followups)
+      .where(eq(followups.userId, req.user.id));
+    
+    const total = countResult.length;
+
+    // Get paginated results
     const rows = await db
       .select()
       .from(followups)
       .where(eq(followups.userId, req.user.id))
-      .orderBy(desc(followups.createdAt));
+      .orderBy(desc(followups.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return res.json({ followups: rows });
+    return res.json({ 
+      followups: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("List followups error:", error);
     return res.status(500).json({ message: "Internal server error" });

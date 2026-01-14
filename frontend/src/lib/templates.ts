@@ -17,12 +17,39 @@ export type CreateTemplateInput = {
 
 export type UpdateTemplateInput = Partial<CreateTemplateInput>;
 
-type ListResp = { templates: Template[] };
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
 
-export async function getTemplates(): Promise<Template[]> {
-  const res = await apiFetch<ListResp | Template[]>("/api/templates", { method: "GET" });
-  if (Array.isArray(res)) return res;
-  return Array.isArray(res?.templates) ? res.templates : [];
+type ListResp = { 
+  templates: Template[];
+  pagination?: PaginationMeta;
+};
+
+export async function getTemplates(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ templates: Template[]; pagination?: PaginationMeta }> {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  
+  const queryString = queryParams.toString();
+  const url = `/api/templates${queryString ? `?${queryString}` : ""}`;
+
+  const res = await apiFetch<ListResp>(url, { method: "GET" });
+  
+  if (Array.isArray(res)) {
+    return { templates: res };
+  }
+  
+  return {
+    templates: Array.isArray(res?.templates) ? res.templates : [],
+    pagination: res?.pagination
+  };
 }
 
 export async function getTemplate(id: string): Promise<Template | null> {

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { getEventTimeline, type FollowUpEvent } from "@/lib/events";
+import { getEventTimeline, type FollowUpEvent, type PaginationMeta } from "@/lib/events";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 
 function fmt(dateIso?: string | null) {
   if (!dateIso) return "—";
@@ -17,12 +18,22 @@ function fmt(dateIso?: string | null) {
 export default function TimelinePage() {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<FollowUpEvent[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
-  async function load() {
+  async function load(page = currentPage) {
     try {
       setLoading(true);
-      const data = await getEventTimeline();
-      setEvents(Array.isArray(data) ? data : []);
+      const data = await getEventTimeline({ page, limit: 10 });
+      setEvents(Array.isArray(data.events) ? data.events : []);
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to load timeline");
       setEvents([]);
@@ -32,15 +43,20 @@ export default function TimelinePage() {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-5xl px-4 py-10">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Event Timeline</h1>
-          <Button variant="outline" onClick={load} disabled={loading}>
+          <Button variant="outline" onClick={() => load(currentPage)} disabled={loading}>
             Refresh
           </Button>
         </div>
@@ -78,6 +94,13 @@ export default function TimelinePage() {
                   </div>
                 ))}
               </div>
+            )}
+            {pagination.total > 0 && (
+              <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                disabled={loading}
+              />
             )}
           </CardContent>
         </Card>
