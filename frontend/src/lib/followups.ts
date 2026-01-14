@@ -111,3 +111,10 @@ export async function snoozeFollowUp(id: string, snoozeMinutes: number) {
     body: JSON.stringify({ snoozeMinutes }),
   });
 }
+export async function cancelFollowUp(id: string) {
+  return apiFetch(`/api/followups/${id}/cancel`, { method: "PATCH" });
+}
+
+export async function deleteFollowUp(id: string) {
+  return apiFetch(`/api/followups/${id}`, { method: "DELETE" });
+}

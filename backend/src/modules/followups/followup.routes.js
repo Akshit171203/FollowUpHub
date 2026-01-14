@@ -248,4 +248,71 @@ router.get("/:id/events", authenticateUser, async (req, res) => {
   return res.json({ events });
 });
 
+/**
+ * PATCH /api/followups/:id/cancel
+ * Cancel a followup
+ */
+router.patch("/:id/cancel", authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const updated = await db
+      .update(followups)
+      .set({
+        status: "CANCELLED",
+        isActive: false,
+        updatedAt: new Date(),
+        lastReminderSentAt: null,
+      })
+      .where(and(eq(followups.id, id), eq(followups.userId, userId)))
+      .returning();
+
+    if (!updated.length) {
+      return res.status(404).json({ message: "Followup not found" });
+    }
+
+    await logEvent({
+      followupId: id,
+      userId,
+      eventType: "CANCELLED",
+      message: "Followup cancelled",
+    });
+
+    return res.json({ message: "Followup cancelled", followup: updated[0] });
+  } catch (error) {
+    console.error("Cancel followup error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+/**
+ * DELETE /api/followups/:id
+ * Delete a followup permanently
+ */
+router.delete("/:id", authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const deleted = await db
+      .delete(followups)
+      .where(and(eq(followups.id, id), eq(followups.userId, userId)))
+      .returning();
+
+    if (!deleted.length) {
+      return res.status(404).json({ message: "Followup not found" });
+    }
+
+    // Optional: Log event for deletion? (might be tricky if cascade delete isn't set up, but usually logs are separate)
+    // If foreign keys cascade, events will be deleted. If not, we might leave orphans or need manual cleanup.
+    // Assuming standard behavior for now.
+
+    return res.json({ message: "Followup deleted" });
+  } catch (error) {
+    console.error("Delete followup error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 export default router;

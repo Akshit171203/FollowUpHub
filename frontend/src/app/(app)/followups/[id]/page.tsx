@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import {
   getFollowUp,
   markDone,
+  cancelFollowUp,
+  deleteFollowUp,
   snoozeFollowUp,
   type FollowUp,
 } from "@/lib/followups";
@@ -73,6 +75,31 @@ export default function FollowUpDetailPage() {
     }
   }
 
+
+  async function onCancel() {
+    if (!id) return;
+    if (!confirm("Are you sure you want to cancel this follow-up?")) return;
+    try {
+      await cancelFollowUp(id);
+      toast.success("Follow-up cancelled");
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to cancel");
+    }
+  }
+
+  async function onDelete() {
+    if (!id) return;
+    if (!confirm("Are you sure you want to delete this follow-up? This cannot be undone.")) return;
+    try {
+      await deleteFollowUp(id);
+      toast.success("Follow-up deleted");
+      router.push("/followups");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -125,15 +152,26 @@ export default function FollowUpDetailPage() {
                   <Button 
                     variant="secondary" 
                     onClick={onDone}
-                    disabled={item.status === "DONE"}
+                    disabled={item.status === "DONE" || item.status === "CANCELLED"}
                   >
                     Mark done
                   </Button>
-                  {item.status !== "DONE" && (
-                    <Button variant="outline" onClick={onSnooze}>
-                      Snooze 10m
-                    </Button>
+                  
+                  {item.status !== "DONE" && item.status !== "CANCELLED" && (
+                    <>
+                      <Button variant="outline" onClick={onSnooze}>
+                        Snooze 10m
+                      </Button>
+                      <Button variant="outline" onClick={onCancel} className="text-red-500 hover:text-red-600">
+                        Cancel
+                      </Button>
+                    </>
                   )}
+                  
+                  <Button variant="destructive" onClick={onDelete}>
+                    Delete
+                  </Button>
+
                   <Button asChild variant="outline">
                     <Link href="/followups">Back to list</Link>
                   </Button>
