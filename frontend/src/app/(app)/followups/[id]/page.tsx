@@ -13,6 +13,7 @@ import {
   snoozeFollowUp,
   type FollowUp,
 } from "@/lib/followups";
+import { isValidId } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -30,6 +31,27 @@ export default function FollowUpDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState<FollowUp | null>(null);
+
+  // Early validation for invalid IDs
+  if (!isValidId(id)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Invalid Follow-up</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This follow-up ID is invalid or doesn't exist.
+            </p>
+            <Button asChild>
+              <Link href="/followups">Back to Follow-ups</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   async function load() {
     try {

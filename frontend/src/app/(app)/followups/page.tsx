@@ -144,7 +144,7 @@ export default function FollowUpsPage() {
                     className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <div className="truncate font-medium">{f.title}</div>
+                      <div className="truncate font-medium">{f.title ?? "Untitled"}</div>
                       <div className="mt-1 text-xs text-muted-foreground">
                         Due: {fmt(f.dueAt)} • Status: {f.status ?? "—"}
                       </div>

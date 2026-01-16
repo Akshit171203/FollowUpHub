@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { login } from "@/lib/auth";
 import Image from "next/image";
@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || "/dashboard";
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +29,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
-      router.push("/dashboard");
+      router.push(returnUrl);
     } catch (e: any) {
       setErr(e.message || "Login failed");
     } finally {

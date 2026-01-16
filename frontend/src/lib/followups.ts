@@ -1,5 +1,6 @@
 // src/lib/followups.ts
 import { apiFetch } from "@/lib/api";
+import { isValidId } from "@/lib/utils";
 
 export type FollowUpStatus = "PENDING" | "DONE" | "SNOOZED" | "CANCELLED";
 export type FollowUpPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -75,7 +76,9 @@ export async function getAllFollowUps(params?: {
 }
 
 export async function getFollowUp(id: string): Promise<FollowUp | null> {
-  if (!id) return null;
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
 
   const res = await apiFetch<DetailResp | FollowUp>(`/api/followups/${id}`, {
     method: "GET",
@@ -95,6 +98,10 @@ export async function createFollowUp(input: CreateFollowUpInput) {
 }
 
 export async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+  
   return apiFetch(`/api/followups/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
@@ -102,19 +109,36 @@ export async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
 }
 
 export async function markDone(id: string) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+  
   return apiFetch(`/api/followups/${id}/done`, { method: "PATCH" });
 }
 
 export async function snoozeFollowUp(id: string, snoozeMinutes: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+  
   return apiFetch(`/api/followups/${id}/snooze`, {
     method: "PATCH",
     body: JSON.stringify({ snoozeMinutes }),
   });
 }
+
 export async function cancelFollowUp(id: string) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+  
   return apiFetch(`/api/followups/${id}/cancel`, { method: "PATCH" });
 }
 
 export async function deleteFollowUp(id: string) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+  
   return apiFetch(`/api/followups/${id}`, { method: "DELETE" });
 }

@@ -7,7 +7,12 @@ export default {
     "./src/components/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        oswald: ["var(--font-oswald)", "sans-serif"],
+        sans: ["var(--font-lato)", "sans-serif"],
+      },
+    },
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
