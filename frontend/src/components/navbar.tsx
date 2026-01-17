@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { logout, profile, User } from "@/lib/auth";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { DesktopNotificationToggle } from "@/components/notifications/DesktopNotificationToggle";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -126,6 +127,9 @@ export function Navbar() {
 
           {/* Notifications */}
           <NotificationBell />
+          
+          {/* Desktop Notification Toggle */}
+          <DesktopNotificationToggle />
 
           <div className="h-5 w-[1px] bg-zinc-200 hidden sm:block"></div>
 

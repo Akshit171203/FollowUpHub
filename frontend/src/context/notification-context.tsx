@@ -1,10 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
-import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket"; // Adjust path
-import { apiFetch } from "@/lib/api"; // Existing API helper assumed
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode, useRef } from "react";
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
-// You might need to import types from your followups.ts or create new types
+import { useRouter } from "next/navigation";
+import {
+  showDesktopNotification,
+  isTabVisible,
+  getPermissionStatus,
+  cleanupThrottleCache,
+} from "@/lib/notificationPermission";
 
 type NotificationGroup = {
   groupKey: string;
@@ -28,10 +34,27 @@ type NotificationContextType = {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+// Debounce helper
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+  let timeoutId: NodeJS.Timeout;
+  return ((...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  }) as T;
+}
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [groups, setGroups] = useState<NotificationGroup[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  
+  // Ref to prevent stale closure issues
+  const groupsRef = useRef<NotificationGroup[]>([]);
+  
+  useEffect(() => {
+    groupsRef.current = groups;
+  }, [groups]);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -51,28 +74,30 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   
+  // Debounced version for socket events (500ms delay)
+  const debouncedFetchGroups = useRef(debounce(fetchGroups, 500)).current;
+  
   const markGroupRead = useCallback(async (groupKey: string) => {
       try {
+          // Use ref to avoid stale closure
+          const currentGroups = groupsRef.current;
+          const targetGroup = currentGroups.find(g => g.groupKey === groupKey);
+          const unreadToSubtract = targetGroup?.unreadCount || 0;
+          
           // Optimistic update
           setGroups(prev => prev.map(g => g.groupKey === groupKey ? { ...g, unreadCount: 0 } : g));
-          setUnreadCount(prev => {
-              const group = groups.find(g => g.groupKey === groupKey);
-              return prev - (group?.unreadCount || 0);
-          });
+          setUnreadCount(prev => Math.max(0, prev - unreadToSubtract));
 
           await apiFetch(`/api/notifications/groups/${groupKey}/read-all`, { method: "PATCH" });
-          // Optionally re-fetch to ensure sync
-          // fetchGroups(); 
       } catch (err) {
           console.error("Failed to read group:", err);
           fetchGroups(); // Revert on error
       }
-  }, [groups, fetchGroups]);
+  }, [fetchGroups]);
 
   const markAsRead = useCallback(async (id: string) => {
       try {
           await apiFetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-          // Optimistic update handled by socket return event usually, but we can double check
           setUnreadCount(prev => Math.max(0, prev - 1));
       } catch (err) {
           console.error("Failed to mark read:", err);
@@ -82,7 +107,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const actionDone = useCallback(async (id: string) => {
       try {
           await apiFetch(`/api/notifications/${id}/action/done`, { method: "POST" });
-          // Refresh will be triggered by socket events
       } catch (err) {
           console.error("Failed to mark done:", err);
           throw err;
@@ -102,18 +126,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // 1. Connect Socket
+    // Socket listener cleanup - NO dependencies to prevent re-registration
     const socket = connectSocket();
 
-    // 2. Initial Fetch
+    // Initial Fetch
     fetchGroups();
+    
+    // Cleanup throttle cache every 5 minutes
+    const cleanupInterval = setInterval(cleanupThrottleCache, 5 * 60 * 1000);
 
-    // 3. Listen for events
     const handleChanged = (data: { groupKey: string; title?: string; message?: string; severity?: string }) => {
         if (data.title) {
             // Play Sound
             try {
-                // Simple "ding" sound
                 const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
                 audio.volume = 0.5;
                 audio.play().catch(e => console.warn("Audio play failed", e));
@@ -121,22 +146,55 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 console.warn("Audio setup failed", e);
             }
 
-            // Show visible toast!
+            // Show in-app toast
             toast(data.title, {
                 description: data.message,
                 action: {
                     label: "View",
                     onClick: () => {
-                        // We could navigate
+                        if (data.groupKey) {
+                          try {
+                            router.push(`/notifications/${data.groupKey}`);
+                          } catch (error) {
+                            console.error("Navigation failed:", error);
+                          }
+                        }
                     }
                 }
             });
+
+            // Desktop Notification Logic
+            const desktopEnabled = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsEnabled") === "true";
+            const permissionGranted = getPermissionStatus() === "granted";
+            const alwaysShow = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsAlwaysShow") === "true";
+            const tabHidden = !isTabVisible();
+
+            // Show if: enabled AND permission granted AND (tab hidden OR always show)
+            if (desktopEnabled && permissionGranted && (tabHidden || alwaysShow)) {
+                showDesktopNotification(
+                    data.title,
+                    data.message || "",
+                    data.groupKey,
+                    () => {
+                        try {
+                            window.focus();
+                            if (data.groupKey) {
+                                router.push(`/notifications/${data.groupKey}`);
+                            }
+                        } catch (error) {
+                            console.error("Desktop notification click failed:", error);
+                        }
+                    }
+                );
+            }
         }
-        fetchGroups(); 
+        
+        // Use debounced fetch to prevent API spam
+        debouncedFetchGroups();
     };
     
     const handleUnreadChanged = () => {
-        fetchGroups();
+        debouncedFetchGroups();
     };
 
     socket.on("notification:changed", handleChanged);
@@ -146,8 +204,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       socket.off("notification:changed", handleChanged);
       socket.off("unread:changed", handleUnreadChanged);
       disconnectSocket();
+      clearInterval(cleanupInterval);
     };
-  }, [fetchGroups]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - listeners use latest state via refs/closures
 
   return (
     <NotificationContext.Provider value={{ groups, unreadCount, loading, refresh: fetchGroups, markGroupRead, markAsRead, actionDone, actionSnooze }}>
