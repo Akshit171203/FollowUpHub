@@ -1,199 +1,92 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-
-import {
-  getAllNotifications,
-  getUnreadCount,
-  getUnreadNotifications,
-  markAllRead,
-  markNotificationRead,
-  type Notification,
-  type PaginationMeta,
-} from "@/lib/notifications";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pagination } from "@/components/ui/pagination";
-
-function fmt(dateIso?: string | null) {
-  if (!dateIso) return "—";
-  const d = new Date(dateIso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
-}
+import { useEffect } from "react";
+import { useNotifications } from "@/context/notification-context";
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { CheckCheck } from "lucide-react";
 
 export default function NotificationsPage() {
-  const [tab, setTab] = useState<"all" | "unread">("all");
-  const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [items, setItems] = useState<Notification[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState<PaginationMeta>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
-
-  async function load(page = currentPage) {
-    try {
-      setLoading(true);
-      
-      const countPromise = getUnreadCount();
-      let listPromise;
-      
-      if (tab === "unread") {
-        listPromise = getUnreadNotifications(); // Unread endpoint doesn't support pagination yet
-      } else {
-        listPromise = getAllNotifications({ page, limit: 10 });
-      }
-
-      const [count, listResult] = await Promise.all([countPromise, listPromise]);
-      setUnreadCount(count);
-
-      if (tab === "all") {
-        // Handle paginated response
-        const result = listResult as { notifications: Notification[], pagination?: PaginationMeta };
-        setItems(Array.isArray(result.notifications) ? result.notifications : []);
-        if (result.pagination) {
-          setPagination(result.pagination);
-        }
-      } else {
-        // Handle array response (legacy)
-        setItems(Array.isArray(listResult) ? listResult : []);
-        // Reset pagination for unread tab since it's not paginated or handled differently
-        setPagination({ page: 1, limit: 10, total: (listResult as Notification[]).length, totalPages: 1 });
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? "Request failed");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { groups, loading, refresh, markGroupRead } = useNotifications();
 
   useEffect(() => {
-    // Reset to page 1 when tab changes
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      load(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+    refresh();
+  }, [refresh]);
 
-  useEffect(() => {
-    load(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
-
-  const list = useMemo(() => items, [items]);
-
-  function handlePageChange(page: number) {
-    setCurrentPage(page);
-  }
-
-  async function onMarkAllRead() {
-    try {
-      await markAllRead();
-      toast.success("Marked all as read");
-      load();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
-    }
-  }
-
-  async function onMarkRead(id: string) {
-    try {
-      await markNotificationRead(id);
-      toast.success("Marked as read");
-      load();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
-    }
+  if (loading && groups.length === 0) {
+    return <div className="p-8 text-center">Loading notifications...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-5xl px-4 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Notifications</h1>
-            <p className="text-sm text-muted-foreground">
-              Unread: {unreadCount}
-            </p>
+    <div className="container max-w-2xl mx-auto py-8 px-4">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Notifications</h1>
+      </div>
+
+      <div className="space-y-4">
+        {groups.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12 bg-muted/20 rounded-lg">
+            No notifications found.
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant={tab === "all" ? "default" : "outline"}
-              onClick={() => setTab("all")}
+        ) : (
+          groups.map((group) => (
+            <div
+              key={group.groupKey}
+              className={cn(
+                "group relative flex flex-col gap-2 p-4 rounded-lg border transition-all hover:shadow-sm bg-card",
+                group.unreadCount > 0 ? "border-primary/20 bg-primary/5" : "border-border"
+              )}
             >
-              All
-            </Button>
-            <Button
-              variant={tab === "unread" ? "default" : "outline"}
-              onClick={() => setTab("unread")}
-            >
-              Unread
-            </Button>
-            <Button variant="outline" onClick={onMarkAllRead}>
-              Mark all read
-            </Button>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">List</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            ) : list.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                No notifications.
-              </div>
-            ) : (
-              <div className="divide-y rounded-md border">
-                {list.map((n) => (
-                  <div key={n.id} className="flex items-center justify-between gap-3 p-4">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">
-                        {n.title ?? n.type ?? "Notification"}
-                      </div>
-                      <div className="text-sm text-muted-foreground break-words">
-                        {n.message ?? "—"}
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {fmt(n.createdAt)}
-                      </div>
-                    </div>
-
-                    <Button variant="outline" onClick={() => onMarkRead(n.id)}>
-                      Mark read
-                    </Button>
+              <div className="flex items-start justify-between gap-4">
+                <Link 
+                  href={`/notifications/${group.groupKey}`}
+                  className="flex-1 min-w-0 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn(
+                      "text-xs font-mono px-1.5 py-0.5 rounded",
+                      group.latestSeverity === "ERROR" || group.latestSeverity === "CRITICAL" ? "bg-red-100 text-red-700" :
+                      group.latestSeverity === "WARNING" ? "bg-amber-100 text-amber-700" :
+                      "bg-blue-50 text-blue-700"
+                    )}>
+                      {group.latestType}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(group.lastActivity), { addSuffix: true })}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-            {tab === "all" && !loading && items.length > 0 && pagination.total > 0 && (
-              <Pagination
-                pagination={pagination}
-                onPageChange={handlePageChange}
-                disabled={loading}
-              />
-            )}
-          </CardContent>
-        </Card>
+                  
+                  <h3 className={cn(
+                    "font-medium leading-tight truncate pr-8", 
+                    group.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {group.latestTitle}
+                  </h3>
+                   
+                   {group.unreadCount > 1 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        +{group.unreadCount - 1} more events in this group
+                      </p>
+                   )}
+                </Link>
 
-        <div className="mt-4">
-          <Button variant="outline" onClick={() => load(currentPage)} disabled={loading}>
-            Refresh
-          </Button>
-        </div>
+                {group.unreadCount > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markGroupRead(group.groupKey);
+                    }}
+                    className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-muted"
+                    title="Mark group as read"
+                  >
+                    <CheckCheck className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

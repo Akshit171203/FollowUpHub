@@ -123,23 +123,20 @@ export default function DashboardPage() {
   // Data States
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [userData, followUpsData, timelineData, notificationsData] = await Promise.all([
+        const [userData, followUpsData, timelineData] = await Promise.all([
           profile(),
           getAllFollowUps({ limit: 100 }),
-          getEventTimeline({ limit: 20 }),
-          getUnreadNotifications()
+          getEventTimeline({ limit: 20 })
         ]);
 
         setUser(userData.user);
         setFollowUps(followUpsData.followups);
         setTimeline(timelineData.events);
-        setNotifications(notificationsData);
 
         // Process chart data: Last 7 days
         const today = new Date();

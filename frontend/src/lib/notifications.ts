@@ -51,7 +51,7 @@ export async function getAllNotifications(params?: {
 
 export async function getUnreadNotifications(): Promise<Notification[]> {
   const res = await apiFetch<ListResp | Notification[]>(
-    "/api/notifications/unread",
+    "/api/notifications",
     { method: "GET" }
   );
   if (Array.isArray(res)) return res;

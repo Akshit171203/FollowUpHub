@@ -1,13 +1,15 @@
 import express from "express";
 import { db } from "../../config/db.js";
 import { followups } from "../../db/schema.js";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, or, sql } from "drizzle-orm";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
 import {
   followupEvents,
   followups as followupsTable,
+  notifications,
 } from "../../db/schema.js";
 import { logEvent } from "../events/event.service.js";
+import { notificationService } from "../../services/notification.service.js";
 const router = express.Router();
 
 /**
@@ -35,9 +37,26 @@ router.post("/", authenticateUser, async (req, res) => {
       })
       .returning();
 
+    const followup = inserted[0];
+
+    // Send notification that followup was created
+    await notificationService.notify({
+      userId: req.user.id,
+      type: "FOLLOWUP_CREATED",
+      title: `Created: ${followup.title}`,
+      body: `New followup scheduled for ${new Date(followup.dueAt).toLocaleString()}`,
+      severity: "SUCCESS",
+      groupKey: `followup-${followup.id}`,
+      metadata: {
+        followupId: followup.id,
+        priority: followup.priority,
+      },
+      actionType: "followup_created",
+    });
+
     return res.status(201).json({
       message: "Followup created",
-      followup: inserted[0],
+      followup,
     });
   } catch (error) {
     console.error("Create followup error:", error);
@@ -129,6 +148,48 @@ router.patch("/:id/done", authenticateUser, async (req, res) => {
 
     if (!updated.length) {
       return res.status(404).json({ message: "Followup not found" });
+    }
+
+    // ✅ Clean up notifications
+    // Mark notifications read if they either match the groupKey OR contain the followupId in metadata
+    await db
+      .update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(
+          eq(notifications.isRead, false),
+          or(
+              eq(notifications.groupKey, `followup-${id}`),
+              sql`${notifications.metadata}->>'followupId' = ${id}`
+          )
+      ));
+
+    // Send notification that followup was completed
+    await notificationService.notify({
+      userId: req.user.id,
+      type: "FOLLOWUP_DONE",
+      title: `Completed: ${updated[0].title}`,
+      body: `You marked this followup as done`,
+      severity: "SUCCESS",
+      groupKey: `followup-${id}`,
+      metadata: {
+        followupId: id,
+        completedAt: updated[0].completedAt,
+      },
+      actionType: "followup_done",
+    });
+      
+    // Emit socket event to clear badge
+    try {
+        const { getIO } = await import("../../socket.js");
+        const io = getIO();
+        if (io) {
+            io.to(req.user.id).emit("unread:changed");
+            // We emit changed for both potential groupKeys just in case
+            io.to(req.user.id).emit("notification:changed", { groupKey: `followup-${id}` });
+            io.to(req.user.id).emit("notification:changed", { groupKey: 'legacy' }); 
+        }
+    } catch (e) {
+        console.error("Socket emit error:", e);
     }
 
     return res.json({
@@ -230,6 +291,47 @@ router.patch("/:id/snooze", authenticateUser, async (req, res) => {
     message: `Snoozed for ${snoozeMinutes} minutes`,
   });
 
+  // ✅ Clean up notifications on Snooze
+  await db
+    .update(notifications)
+    .set({ isRead: true, readAt: new Date() })
+    .where(and(
+        eq(notifications.isRead, false),
+        or(
+            eq(notifications.groupKey, `followup-${id}`),
+            sql`${notifications.metadata}->>'followupId' = ${id}`
+        )
+    ));
+
+  // Send notification that followup was snoozed
+  await notificationService.notify({
+    userId,
+    type: "FOLLOWUP_SNOOZED",
+    title: `Snoozed: ${updated[0].title}`,
+    body: `Followup snoozed for ${snoozeMinutes} minutes until ${newDueAt.toLocaleString()}`,
+    severity: "INFO",
+    groupKey: `followup-${id}`,
+    metadata: {
+      followupId: id,
+      snoozeMinutes,
+      newDueAt: newDueAt.toISOString(),
+    },
+    actionType: "followup_snoozed",
+  });
+    
+  // Emit socket event
+  try {
+      const { getIO } = await import("../../socket.js");
+      const io = getIO();
+      if (io) {
+          io.to(userId).emit("unread:changed");
+          io.to(userId).emit("notification:changed", { groupKey: `followup-${id}` });
+          io.to(userId).emit("notification:changed", { groupKey: 'legacy' });
+      }
+  } catch (e) {
+      console.error("Socket emit error:", e);
+  }
+
   return res.json({ message: "Followup snoozed", followup: updated[0] });
 });
 
@@ -278,6 +380,30 @@ router.patch("/:id/cancel", authenticateUser, async (req, res) => {
       eventType: "CANCELLED",
       message: "Followup cancelled",
     });
+
+    // ✅ Clean up notifications on Cancel
+    await db
+      .update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(
+          eq(notifications.isRead, false),
+          or(
+              eq(notifications.groupKey, `followup-${id}`),
+              sql`${notifications.metadata}->>'followupId' = ${id}`
+          )
+      ));
+
+    try {
+        const { getIO } = await import("../../socket.js");
+        const io = getIO();
+        if (io) {
+            io.to(userId).emit("unread:changed");
+            io.to(userId).emit("notification:changed", { groupKey: `followup-${id}` });
+            io.to(userId).emit("notification:changed", { groupKey: 'legacy' });
+        }
+    } catch (e) {
+        console.error("Socket emit error:", e);
+    }
 
     return res.json({ message: "Followup cancelled", followup: updated[0] });
   } catch (error) {

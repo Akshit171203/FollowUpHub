@@ -2,10 +2,10 @@ import { db } from "../config/db.js";
 import { followups } from "../db/schema.js";
 import { and, eq, lt, ne } from "drizzle-orm";
 
-import { createNotification } from "./notification.creator.js";
+import { notificationService } from "./notification.service.js";
 import { logEvent } from "./event.service.js";
 
-// Cooldown mapping (you can tweak these)
+// Cooldown mapping
 function getCooldownMs(policy) {
   switch (policy) {
     case "AGGRESSIVE":
@@ -17,15 +17,14 @@ function getCooldownMs(policy) {
       return 60 * 60 * 1000; // 60 min
   }
 }
-
-// Only escalate based on ignoreCount thresholds (simple + stable)
+// Only escalate based on ignoreCount thresholds
 function computeEscalationFromIgnoreCount(ignoreCount, current) {
   let newPriority = current.priority;
   let newPolicy = current.reminderPolicy;
   let newEscalationLevel = current.escalationLevel;
   let newStatus = current.status;
 
-  // thresholds: 1, 3, 5 (cleaner than escalating every time)
+  // thresholds: 1, 3, 5
   if (ignoreCount >= 5) {
     newEscalationLevel = Math.max(newEscalationLevel, 3);
     newPriority = "URGENT";
@@ -38,9 +37,7 @@ function computeEscalationFromIgnoreCount(ignoreCount, current) {
     newStatus = "ESCALATED";
   } else if (ignoreCount >= 1) {
     newEscalationLevel = Math.max(newEscalationLevel, 1);
-    // keep priority at least MEDIUM
     if (newPriority === "LOW") newPriority = "MEDIUM";
-    // policy can stay as-is
   }
 
   return {
@@ -50,12 +47,10 @@ function computeEscalationFromIgnoreCount(ignoreCount, current) {
     status: newStatus,
   };
 }
-
 // MAIN REMINDER ENGINE
 export async function runReminderEngine() {
   const now = new Date();
-
-  // ✅ Fetch all overdue followups (simple + safe)
+  //Fetch all overdue followups
   const overdue = await db
     .select()
     .from(followups)
@@ -68,11 +63,10 @@ export async function runReminderEngine() {
     );
 
   if (overdue.length === 0) {
-    console.log("✅ Reminder Engine: No overdue followups");
+    console.log("Reminder Engine: No overdue followups");
     return;
   }
-
-  // ✅ Apply cooldown logic in JS per followup policy
+  // Apply cooldown logic in JS per followup policy
   const dueFollowups = overdue.filter((f) => {
     if (!f.lastReminderSentAt) return true; // never reminded -> send now
     const cooldownMs = getCooldownMs(f.reminderPolicy);
@@ -81,29 +75,36 @@ export async function runReminderEngine() {
   });
 
   if (dueFollowups.length === 0) {
-    console.log("✅ Reminder Engine: Overdue followups exist, but all are in cooldown");
+    console.log("Reminder Engine: Overdue followups exist, but all are in cooldown");
     return;
   }
 
-  console.log(`⏰ Reminder Engine: Sending reminders for ${dueFollowups.length} followups`);
+  console.log(`Reminder Engine: Sending reminders for ${dueFollowups.length} followups`);
 
   for (const followup of dueFollowups) {
     try {
       const isRepeatReminder = !!followup.lastReminderSentAt;
 
-      // ✅ Ignore count increments only on repeat reminders
+      // Ignore count increments only on repeat reminders
       const newIgnoreCount = isRepeatReminder ? followup.ignoreCount + 1 : followup.ignoreCount;
 
-      // ✅ Escalation is derived from ignoreCount thresholds
+      // Escalation is derived from ignoreCount thresholds
       const escalationFields = computeEscalationFromIgnoreCount(newIgnoreCount, followup);
 
-      // 1) Create notification
-      await createNotification({
+      // 1) Create notification using NEW Service (supports Real-time)
+      await notificationService.notify({
         userId: followup.userId,
-        followupId: followup.id,
         type: "FOLLOWUP_DUE",
         title: `Reminder: ${followup.title}`,
         body: `Followup is due. Priority: ${escalationFields.priority}`,
+        severity: escalationFields.priority === "URGENT" || escalationFields.priority === "HIGH" ? "WARNING" : "INFO",
+        groupKey: `followup-${followup.id}`,
+        metadata: {
+            followupId: followup.id,
+            priority: escalationFields.priority,
+            escalationLevel: escalationFields.escalationLevel
+        },
+        actionType: "followup_due"
       });
 
       // 2) Log REMINDER_SENT event
@@ -123,13 +124,19 @@ export async function runReminderEngine() {
           message: `Escalated to level ${escalationFields.escalationLevel} (ignoreCount=${newIgnoreCount})`,
         });
 
-        // Optional: create escalation notification (you can keep/remove)
-        await createNotification({
+        // Optional: create escalation notification
+        await notificationService.notify({
           userId: followup.userId,
-          followupId: followup.id,
           type: "FOLLOWUP_ESCALATED",
           title: `Escalated: ${followup.title}`,
           body: `Now priority ${escalationFields.priority} (level ${escalationFields.escalationLevel})`,
+          severity: "WARNING",
+          groupKey: `followup-${followup.id}`, 
+          metadata: {
+              followupId: followup.id,
+              priority: escalationFields.priority,
+              escalationLevel: escalationFields.escalationLevel
+          }
         });
       }
 

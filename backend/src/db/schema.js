@@ -8,6 +8,7 @@ import {
   boolean,
   pgEnum,
   index,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -43,6 +44,9 @@ export const eventTypeEnum = pgEnum("event_type", [
 export const notificationTypeEnum = pgEnum("notification_type", [
   "FOLLOWUP_DUE",
   "FOLLOWUP_ESCALATED",
+  "FOLLOWUP_CREATED",
+  "FOLLOWUP_DONE",
+  "FOLLOWUP_SNOOZED",
   "REMINDER_SENT",
 ]);
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
@@ -127,7 +131,16 @@ export const followupEvents = pgTable(
   })
 );
 
+
 // Notifications table
+export const notificationSeverityEnum = pgEnum("notification_severity", [
+  "INFO",
+  "SUCCESS",
+  "WARNING",
+  "ERROR",
+  "CRITICAL",
+]);
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -136,10 +149,18 @@ export const notifications = pgTable(
     userId: uuid("user_id").notNull(),
     followupId: uuid("followup_id"), // optional
 
-    type: notificationTypeEnum("type").notNull(),
+    groupKey: varchar("group_key", { length: 255 }).default('legacy').notNull(), // Strict NOT NULL
+    
+    type: notificationTypeEnum("type").notNull(), // e.g. FOLLOWUP_DUE
+    severity: notificationSeverityEnum("severity").default("INFO").notNull(),
+    
     title: varchar("title", { length: 255 }).notNull(),
     body: text("body"),
-
+    
+    metadata: jsonb("metadata").default({}).notNull(),
+    
+    actionType: varchar("action_type", { length: 50 }), // e.g. OPEN_LINK, SNOOZE_MODAL
+    
     isRead: boolean("is_read").default(false).notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -149,9 +170,28 @@ export const notifications = pgTable(
   },
   (table) => ({
     userIdIdx: index("notifications_user_id_idx").on(table.userId),
+    groupKeyIdx: index("notifications_group_key_idx").on(table.groupKey),
     isReadIdx: index("notifications_is_read_idx").on(table.isRead),
   })
 );
+
+// User Notification Preferences
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id").primaryKey().references(() => usersTable.id, { onDelete: 'cascade' }),
+  
+  emailEnabled: boolean("email_enabled").default(true).notNull(),
+  inAppEnabled: boolean("in_app_enabled").default(true).notNull(),
+  
+  // JSONB array of disabled notification types (e.g. ["REMINDER_SENT"])
+  typesDisabled: jsonb("types_disabled").default([]).notNull(),
+  
+  quietHoursEnabled: boolean("quiet_hours_enabled").default(false).notNull(),
+  quietHoursStart: varchar("quiet_hours_start", { length: 5 }), // HH:MM
+  quietHoursEnd: varchar("quiet_hours_end", { length: 5 }), // HH:MM
+  
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 
 // Followup Templates table
 export const followupTemplates = pgTable(

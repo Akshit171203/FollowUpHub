@@ -1,0 +1,1 @@
+ALTER TABLE "notifications" ALTER COLUMN "group_key" SET DEFAULT 'legacy';
