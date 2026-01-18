@@ -3,6 +3,7 @@ import { notifications, notificationPreferences, followups, followupEvents } fro
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { logEvent } from "../events/event.service.js";
 import { getIO } from "../../socket.js";
+import { notificationService, getMetrics, getDebugEvents } from "../../services/notification.service.js";
 
 export const notificationController = {
   /**
@@ -386,6 +387,89 @@ export const notificationController = {
           return res.json({ success: true });
       } catch (err) {
           console.error("updatePreferences error:", err);
+          return res.status(500).json({ error: "Internal server error" });
+      }
+  },
+
+  /**
+   * GET /api/notifications/debug/me
+   * Returns metrics and debug events for the current user only
+   */
+  async getDebugMe(req, res) {
+      try {
+          const userId = req.user.id;
+          const metrics = getMetrics(userId);
+          const events = getDebugEvents(userId);
+          
+          return res.json({
+              metrics,
+              events,
+              note: "Showing data for current user only"
+          });
+      } catch (err) {
+          console.error("getDebugMe error:", err);
+          return res.status(500).json({ error: "Internal server error" });
+      }
+  },
+
+  /**
+   * GET /api/notifications/debug/admin
+   * Returns global metrics and all debug events
+   * SECURITY: Requires admin role
+   */
+  async getDebugAdmin(req, res) {
+      try {
+          // Check if user is admin
+          if (req.user.role !== "admin") {
+              return res.status(403).json({ error: "Forbidden: Admin access required" });
+          }
+
+          const metrics = getMetrics(); // All users
+          const events = getDebugEvents(); // All events
+          
+          return res.json({
+              metrics,
+              events,
+              note: "Global data (admin view)"
+          });
+      } catch (err) {
+          console.error("getDebugAdmin error:", err);
+          return res.status(500).json({ error: "Internal server error" });
+      }
+  },
+
+  /**
+   * POST /api/notifications/test
+   * Sends a test notification for the current user
+   * High value: helps debug sockets + permissions + preferences
+   */
+  async sendTestNotification(req, res) {
+      try {
+          const userId = req.user.id;
+          const testGroupKey = `test-${Date.now()}`;
+          
+          // Use the notification service to send test notification
+          const result = await notificationService.notify({
+              userId,
+              groupKey: testGroupKey,
+              type: "REMINDER_SENT",
+              severity: "INFO",
+              title: "Test Notification",
+              body: "This is a test notification to verify your setup is working correctly.",
+              metadata: {
+                  isTest: true,
+                  timestamp: new Date().toISOString()
+              },
+              actionType: "test"
+          });
+
+          return res.json({
+              success: true,
+              result,
+              message: "Test notification sent. Check your notifications or desktop alerts!"
+          });
+      } catch (err) {
+          console.error("sendTestNotification error:", err);
           return res.status(500).json({ error: "Internal server error" });
       }
   }

@@ -23,4 +23,14 @@ router.patch("/groups/:groupKey/read-all", authenticateUser, notificationControl
 router.get("/preferences", authenticateUser, notificationController.getPreferences);
 router.patch("/preferences", authenticateUser, notificationController.updatePreferences);
 
+// === OBSERVABILITY & DEBUGGING ===
+// User-specific debug endpoint (safe for all users)
+router.get("/debug/me", authenticateUser, notificationController.getDebugMe);
+
+// Admin-only debug endpoint (requires admin role)
+router.get("/debug/admin", authenticateUser, notificationController.getDebugAdmin);
+
+// Test notification endpoint
+router.post("/test", authenticateUser, notificationController.sendTestNotification);
+
 export default router;

@@ -149,8 +149,8 @@ export function Navbar() {
                <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 rounded-lg hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
                  <UserIcon className="w-4 h-4 text-zinc-400" /> Account
                </Link>
-               <Link href="/settings/preferences" className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 rounded-lg hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-                 <Settings className="w-4 h-4 text-zinc-400" /> Preferences
+               <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 rounded-lg hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                 <Settings className="w-4 h-4 text-zinc-400" /> Notification Settings
                </Link>
                
                <div className="my-1 h-[1px] bg-zinc-50"></div>

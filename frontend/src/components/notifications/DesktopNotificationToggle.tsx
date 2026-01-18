@@ -107,10 +107,14 @@ export function DesktopNotificationToggle() {
       size="sm"
       onClick={handleToggle}
       disabled={loading}
-      className="gap-2"
+      className={
+        isActive 
+          ? "gap-2 bg-teal-600 hover:bg-teal-700 text-white border-transparent" 
+          : "gap-2 text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
+      }
     >
       <Icon className="h-4 w-4" />
-      <span className="hidden sm:inline">{buttonText}</span>
+      <span className="hidden sm:inline font-medium">{buttonText}</span>
     </Button>
   );
 }
