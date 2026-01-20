@@ -125,12 +125,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
   }, []);
 
+  // Ref to prevent double-fetch in Strict Mode
+  const initialized = useRef(false);
+
   useEffect(() => {
-    // Socket listener cleanup - NO dependencies to prevent re-registration
+    // Socket connection
     const socket = connectSocket();
 
-    // Initial Fetch
-    fetchGroups();
+    // Initial Fetch - Prevent double fetch in Strict Mode
+    if (!initialized.current) {
+      fetchGroups();
+      initialized.current = true;
+    }
     
     // Cleanup throttle cache every 5 minutes
     const cleanupInterval = setInterval(cleanupThrottleCache, 5 * 60 * 1000);

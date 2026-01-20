@@ -91,6 +91,35 @@ router.get("/", authenticateUser, async (req, res) => {
 });
 
 /**
+ * GET /api/templates/:id
+ */
+router.get("/:id", authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    
+    // Validate UUID format to prevent 500s
+    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: "Invalid template ID" });
+    }
+
+    const rows = await db
+      .select()
+      .from(followupTemplates)
+      .where(and(eq(followupTemplates.id, id), eq(followupTemplates.userId, userId)));
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    return res.json({ template: rows[0] });
+  } catch (err) {
+    console.error("GET /templates/:id error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+/**
  * PATCH /api/templates/:id
  */
 router.patch("/:id", authenticateUser, async (req, res) => {

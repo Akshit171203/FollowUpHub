@@ -4,17 +4,13 @@ import { Search, Moon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { profile, User } from "@/lib/auth";
+import { UserProvider, useUser } from "@/components/ProtectedRoute";
 import Link from "next/link";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DesktopNotificationToggle } from "@/components/notifications/DesktopNotificationToggle";
 
 export function Header() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    profile().then(data => setUser(data.user)).catch(() => {});
-  }, []);
+  const { user } = useUser();
 
   const initials = user?.name 
     ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() 

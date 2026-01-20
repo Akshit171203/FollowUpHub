@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -31,9 +31,15 @@ export function NotificationSettings() {
   const [quietHoursEnd, setQuietHoursEnd] = useState("08:00");
   const [inAppEnabled, setInAppEnabled] = useState(true);
 
+  // Ref to prevent double-fetch in Strict Mode
+  const initialized = useRef(false);
+
   // Load preferences from backend
   useEffect(() => {
-    loadPreferences();
+    if (!initialized.current) {
+      initialized.current = true;
+      loadPreferences();
+    }
   }, []);
 
   const loadPreferences = async () => {

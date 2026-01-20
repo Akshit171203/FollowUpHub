@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 
 import {
   getFollowUp,
@@ -11,11 +12,14 @@ import {
   cancelFollowUp,
   deleteFollowUp,
   snoozeFollowUp,
+  updateFollowUp,
   type FollowUp,
 } from "@/lib/followups";
 import { isValidId } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function fmt(dateIso?: string | null) {
   if (!dateIso) return "—";
@@ -31,6 +35,15 @@ export default function FollowUpDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState<FollowUp | null>(null);
+  
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+      title: "",
+      target: "",
+      notes: "",
+      dueAt: "", // string for input value
+  });
 
   // Early validation for invalid IDs
   if (!isValidId(id)) {
@@ -74,6 +87,37 @@ export default function FollowUpDetailPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  function startEditing() {
+      if (!item) return;
+      setEditForm({
+          title: item.title,
+          target: item.target || "",
+          notes: item.notes || "",
+          dueAt: item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 16) : "",
+      });
+      setIsEditing(true);
+  }
+
+  async function saveEdit() {
+      if (!id) return;
+      try {
+          // Convert dueAt back to ISO if present
+          const updates = {
+              title: editForm.title,
+              target: editForm.target,
+              notes: editForm.notes,
+              dueAt: editForm.dueAt ? new Date(editForm.dueAt).toISOString() : null,
+          };
+          
+          await updateFollowUp(id, updates);
+          toast.success("Follow-up updated");
+          setIsEditing(false);
+          load();
+      } catch (e: any) {
+          toast.error(e?.message ?? "Failed to update");
+      }
+  }
 
   async function onDone() {
     if (!id) return;
@@ -134,14 +178,60 @@ export default function FollowUpDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Follow-up</CardTitle>
+            <CardTitle className="text-base flex items-center justify-between">
+                <span>Details</span>
+                {!isEditing && item && item.status !== "DONE" && item.status !== "CANCELLED" && (
+                    <Button variant="ghost" size="sm" onClick={startEditing}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                    </Button>
+                )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-sm text-muted-foreground">Loading…</div>
             ) : !item ? (
               <div className="text-sm text-muted-foreground">Not found</div>
+            ) : isEditing ? (
+              /* EDIT MODE */
+              <div className="space-y-4">
+                  <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input 
+                          value={editForm.title} 
+                          onChange={e => setEditForm({...editForm, title: e.target.value})} 
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Target</Label>
+                      <Input 
+                          value={editForm.target} 
+                          onChange={e => setEditForm({...editForm, target: e.target.value})} 
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Notes</Label>
+                      <Input 
+                          value={editForm.notes} 
+                          onChange={e => setEditForm({...editForm, notes: e.target.value})} 
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Due At</Label>
+                      <Input 
+                          type="datetime-local"
+                          value={editForm.dueAt} 
+                          onChange={e => setEditForm({...editForm, dueAt: e.target.value})} 
+                      />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                      <Button onClick={saveEdit}>Save Changes</Button>
+                      <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                  </div>
+              </div>
             ) : (
+              /* VIEW MODE */
               <div className="space-y-4">
                 <div>
                   <div className="text-sm text-muted-foreground">Title</div>

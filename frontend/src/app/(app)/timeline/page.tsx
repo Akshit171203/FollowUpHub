@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 import { getEventTimeline, type FollowUpEvent, type PaginationMeta } from "@/lib/events";
@@ -42,8 +42,16 @@ export default function TimelinePage() {
     }
   }
 
+  // Track loaded page to prevent duplicate fetch in Strict Mode
+  const loadedPage = useRef(0);
+
   useEffect(() => {
+    // Only fetch if we haven't already fetched this page
+    if (loadedPage.current === currentPage) return;
+    
+    loadedPage.current = currentPage;
     load(currentPage);
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 

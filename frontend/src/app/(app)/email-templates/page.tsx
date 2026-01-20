@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getTemplates, deleteTemplate, Template } from "@/lib/templates";
+import { getEmailTemplates, deleteEmailTemplate, EmailTemplate } from "@/lib/emailTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-export default function TemplatesPage() {
+export default function EmailTemplatesPage() {
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,66 +21,51 @@ export default function TemplatesPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getTemplates();
+      const data = await getEmailTemplates();
       setTemplates(data);
       setFilteredTemplates(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load templates");
-      toast.error(err.message || "Failed to load templates");
+      setError(err.message || "Failed to load email templates");
+      toast.error(err.message || "Failed to load email templates");
     } finally {
       setLoading(false);
     }
   };
 
-  // Ref to prevent double-fetch in Strict Mode
-  const initialized = useRef(false);
-
   useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
-      fetchTemplates();
-    }
+    fetchTemplates();
   }, []);
 
   useEffect(() => {
     const filtered = templates.filter((t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.title.toLowerCase().includes(search.toLowerCase())
+      t.name.toLowerCase().includes(search.toLowerCase())
     );
     setFilteredTemplates(filtered);
   }, [search, templates]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this template?")) return;
+    if (!confirm("Delete this email template?")) return;
     try {
-      await deleteTemplate(id);
-      toast.success("Template deleted");
+      await deleteEmailTemplate(id);
+      toast.success("Email template deleted");
       fetchTemplates();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete");
     }
   };
 
-  const handleApply = (id: string) => {
-    if (!id) {
-        toast.error("Invalid template data");
-        return;
-    }
-    router.push(`/followups/new?templateId=${id}`);
-  };
-
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Follow-up Templates</h1>
-        <Button onClick={() => router.push("/templates/new")}>
-          Create Template
+        <h1 className="text-3xl font-bold">Email Templates</h1>
+        <Button onClick={() => router.push("/email-templates/new")}>
+          Create Email Template
         </Button>
       </div>
 
       <div className="mb-6 flex gap-4">
         <Input
-          placeholder="Search templates..."
+          placeholder="Search email templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -103,7 +88,7 @@ export default function TemplatesPage() {
       {!loading && !error && filteredTemplates.length === 0 && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-muted-foreground">No templates found.</p>
+            <p className="text-muted-foreground">No email templates found.</p>
           </CardContent>
         </Card>
       )}
@@ -117,36 +102,20 @@ export default function TemplatesPage() {
                   <div className="flex-1">
                     <CardTitle className="mb-2">{template.name}</CardTitle>
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      <p>Title: {template.title}</p>
-                      {template.target && <p>Target: {template.target}</p>}
-                      {template.notes && <p>Notes: {template.notes}</p>}
-                      <p>Priority: {template.defaultPriority || "MEDIUM"}</p>
                       <p>
-                        Default Due:{" "}
-                        {template.defaultDueOffsetMinutes
-                          ? `${template.defaultDueOffsetMinutes} min`
-                          : "1440 min"}
+                        Type: <Badge variant="outline">{template.type}</Badge>
                       </p>
-                      <p>Reminder: {template.defaultReminderPolicy || "NORMAL"}</p>
-                      <p>Created: {new Date(template.createdAt!).toLocaleString()}</p>
+                      <p>Subject: {template.subject}</p>
+                      <p>Updated: {new Date(template.updatedAt!).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="flex gap-2">
-                <Button size="sm" onClick={() => handleApply(template.id)}>
-                  Apply
-                </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                      if (!template.id) {
-                          toast.error("Invalid template ID");
-                          return;
-                      }
-                      router.push(`/templates/${template.id}`);
-                  }}
+                  onClick={() => router.push(`/email-templates/${template.id}`)}
                 >
                   Edit
                 </Button>

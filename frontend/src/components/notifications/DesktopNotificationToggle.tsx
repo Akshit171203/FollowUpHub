@@ -109,7 +109,7 @@ export function DesktopNotificationToggle() {
       disabled={loading}
       className={
         isActive 
-          ? "gap-2 bg-teal-600 hover:bg-teal-700 text-white border-transparent" 
+          ? "gap-2 bg-indigo-600 hover:bg-indigo-700 text-white border-transparent" 
           : "gap-2 text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
       }
     >

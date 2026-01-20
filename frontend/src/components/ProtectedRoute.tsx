@@ -1,32 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { profile } from "@/lib/auth";
+import { profile, User } from "@/lib/auth";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+type UserContextType = {
+  user: User | null;
+  loading: boolean;
+  refreshUser: () => Promise<void>;
+};
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export function UserProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUser() {
+    try {
+      setLoading(true);
+      const data = await profile();
+      setUser(data.user);
+    } catch (error) {
+      setUser(null);
+      // Redirect to login with return URL
+      const returnUrl = encodeURIComponent(pathname);
+      router.push(`/login?returnUrl=${returnUrl}`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        await profile();
-        setIsAuthenticated(true);
-      } catch (error) {
-        setIsAuthenticated(false);
-        // Redirect to login with return URL
-        const returnUrl = encodeURIComponent(pathname);
-        router.push(`/login?returnUrl=${returnUrl}`);
-      }
-    }
-
-    checkAuth();
-  }, [router, pathname]);
+    fetchUser();
+  }, []);
 
   // Show loading state while checking authentication
-  if (isAuthenticated === null) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
         <div className="text-center">
@@ -38,10 +50,21 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   // Don't render children if not authenticated (will redirect)
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 
-  // Render protected content
-  return <>{children}</>;
+  return (
+    <UserContext.Provider value={{ user, loading, refreshUser: fetchUser }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+export function useUser() {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
 }

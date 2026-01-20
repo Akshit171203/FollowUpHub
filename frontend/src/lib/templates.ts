@@ -1,81 +1,89 @@
 // src/lib/templates.ts
 import { apiFetch } from "@/lib/api";
 
+export type Priority = "LOW" | "MEDIUM" | "HIGH";
+export type ReminderPolicy = "NORMAL" | "AGGRESSIVE" | "PASSIVE" | "NONE";
+
 export type Template = {
   id: string;
   userId: string;
   name: string;
-  content?: string | null;
-  createdAt?: string | null;
-  updatedAt?: string | null;
+  title: string;
+  target?: string | null;
+  notes?: string | null;
+  defaultDueOffsetMinutes?: number | null;
+  defaultPriority?: Priority | null;
+  defaultReminderPolicy?: ReminderPolicy | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type CreateTemplateInput = {
   name: string;
-  content?: string | null;
+  title: string;
+  target?: string;
+  notes?: string;
+  defaultDueOffsetMinutes?: number;
+  defaultPriority?: Priority;
+  defaultReminderPolicy?: ReminderPolicy;
 };
 
 export type UpdateTemplateInput = Partial<CreateTemplateInput>;
 
-export type PaginationMeta = {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-};
-
-type ListResp = { 
-  templates: Template[];
-  pagination?: PaginationMeta;
-};
-
-export async function getTemplates(params?: {
-  page?: number;
-  limit?: number;
-}): Promise<{ templates: Template[]; pagination?: PaginationMeta }> {
-  const queryParams = new URLSearchParams();
-  if (params?.page) queryParams.append("page", params.page.toString());
-  if (params?.limit) queryParams.append("limit", params.limit.toString());
-  
-  const queryString = queryParams.toString();
-  const url = `/api/templates${queryString ? `?${queryString}` : ""}`;
-
-  const res = await apiFetch<ListResp>(url, { method: "GET" });
+export async function getTemplates(): Promise<Template[]> {
+  const res = await apiFetch<any>("/api/templates", { method: "GET" });
   
   if (Array.isArray(res)) {
-    return { templates: res };
+    return res;
   }
+  if (res?.templates && Array.isArray(res.templates)) {
+    return res.templates;
+  }
+  return [];
+}
+
+export async function getTemplate(id: string): Promise<Template> {
+  const res = await apiFetch<any>(`/api/templates/${id}`, { method: "GET" });
   
-  return {
-    templates: Array.isArray(res?.templates) ? res.templates : [],
-    pagination: res?.pagination
-  };
+  if (res?.template) {
+    return res.template;
+  }
+  return res;
 }
 
-export async function getTemplate(id: string): Promise<Template | null> {
-  if (!id) return null;
-  return apiFetch<Template>(`/api/templates/${id}`, { method: "GET" });
-}
-
-export async function createTemplate(input: CreateTemplateInput) {
-  return apiFetch(`/api/templates`, {
+export async function createTemplate(input: CreateTemplateInput): Promise<Template> {
+  const res = await apiFetch<any>("/api/templates", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  
+  if (res?.template) {
+    return res.template;
+  }
+  return res;
 }
 
-export async function patchTemplate(id: string, input: UpdateTemplateInput) {
-  return apiFetch(`/api/templates/${id}`, {
+export async function updateTemplate(id: string, input: UpdateTemplateInput): Promise<Template> {
+  const res = await apiFetch<any>(`/api/templates/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
+  
+  if (res?.template) {
+    return res.template;
+  }
+  return res;
 }
 
-export async function deleteTemplate(id: string) {
-  return apiFetch(`/api/templates/${id}`, { method: "DELETE" });
+export async function deleteTemplate(id: string): Promise<void> {
+  await apiFetch(`/api/templates/${id}`, { method: "DELETE" });
 }
 
-// If your backend uses GET /api/templates/:id/apply:
-export async function applyTemplate(id: string) {
-  return apiFetch(`/api/templates/${id}/apply`, { method: "GET" });
+export async function applyTemplate(id: string): Promise<any> {
+  const res = await apiFetch<any>(`/api/templates/${id}/apply`, { method: "POST" });
+  
+  if (res?.followup) {
+    return res.followup;
+  }
+  return res;
 }

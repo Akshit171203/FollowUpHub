@@ -48,6 +48,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "FOLLOWUP_DONE",
   "FOLLOWUP_SNOOZED",
   "REMINDER_SENT",
+  "TODO_REMINDER",
 ]);
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
 
@@ -232,3 +233,68 @@ export const followupTemplates = pgTable(
     nameIdx: index("templates_name_idx").on(table.name),
   })
 );
+
+export const emailTemplateTypeEnum = pgEnum("email_template_type", [
+  "REMINDER",
+  "ESCALATION",
+  "DIGEST",
+]);
+
+export const emailTemplates = pgTable(
+  "email_templates",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    
+    name: varchar("name", { length: 120 }).notNull(),
+    type: emailTemplateTypeEnum("type").notNull(),
+    
+    subject: varchar("subject", { length: 255 }).notNull(),
+    bodyHtml: text("body_html").notNull(),
+    
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("email_templates_user_id_idx").on(table.userId),
+    typeIdx: index("email_templates_type_idx").on(table.type),
+  })
+);
+
+// Todo Status Enum  
+export const todoStatusEnum = pgEnum("todo_status", ["PENDING", "DONE"]);
+
+// Todos table
+export const todos = pgTable(
+  "todos",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    
+    userId: uuid("user_id").notNull(),
+    
+    title: varchar("title", { length: 255 }).notNull(),
+    notes: text("notes"),
+    
+    status: todoStatusEnum("status").default("PENDING").notNull(),
+    
+    forDate: timestamp("for_date", { mode: 'date' }).notNull(),
+    remindAt: timestamp("remind_at", { withTimezone: true }),
+    lastRemindedAt: timestamp("last_reminded_at", { withTimezone: true }),
+    
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdForDateIdx: index("todos_user_id_for_date_idx").on(table.userId, table.forDate),
+    userIdStatusIdx: index("todos_user_id_status_idx").on(table.userId, table.status),
+  })
+);
+

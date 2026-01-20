@@ -157,3 +157,45 @@ export async function runReminderEngine() {
     }
   }
 }
+
+
+/**
+ * TODO REMINDER ENGINE  
+ * Simpler than followups - no escalation, just simple reminders with cooldown
+ */
+export async function runTodoReminderEngine() {
+  const { getTodosDueForReminder, updateLastRemindedAt } = await import("../modules/todos/todo.service.js");
+  
+  const dueTodos = await getTodosDueForReminder();
+  
+  if (dueTodos.length === 0) {
+    console.log("Todo Reminder Engine: No todos due for reminder");
+    return;
+  }
+  
+  console.log(`Todo Reminder Engine: Sending reminders for ${dueTodos.length} todos`);
+  
+  for (const todo of dueTodos) {
+    try {
+      await notificationService.notify({
+        userId: todo.userId,
+        type: "TODO_REMINDER",
+        title: `Todo Reminder: ${todo.title}`,
+        body: `Due now (Today list)`,
+        severity: "INFO",
+        groupKey: `todo-${todo.id}`,
+        metadata: {
+          todoId: todo.id,
+          forDate: todo.forDate,
+        },
+        actionType: "todo_reminder",
+      });
+      
+      await updateLastRemindedAt(todo.id);
+      
+      console.log(`✅ Reminder sent for todo: ${todo.id}`);
+    } catch (err) {
+      console.error("❌ Todo Reminder Engine error for todo:", todo.id, err);
+    }
+  }
+}

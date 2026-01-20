@@ -1,78 +1,160 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createTemplate, Priority, ReminderPolicy } from "@/lib/templates";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-import { createTemplate } from "@/lib/templates";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-export default function CreateTemplatePage() {
+export default function NewTemplatePage() {
   const router = useRouter();
-
   const [name, setName] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
+  const [target, setTarget] = useState("");
+  const [notes, setNotes] = useState("");
+  const [defaultPriority, setDefaultPriority] = useState<Priority>("MEDIUM");
+  const [defaultDueOffsetMinutes, setDefaultDueOffsetMinutes] = useState<number | string>(1440);
+  const [defaultReminderPolicy, setDefaultReminderPolicy] = useState<ReminderPolicy>("NORMAL");
   const [submitting, setSubmitting] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Name is required");
+    if (!name.trim() || !title.trim()) {
+      toast.error("Name and Title are required");
       return;
     }
 
     try {
       setSubmitting(true);
-      await createTemplate({ name: name.trim(), content: content.trim() || null });
+      await createTemplate({
+        name: name.trim(),
+        title: title.trim(),
+        target: target.trim() || undefined,
+        notes: notes.trim() || undefined,
+        defaultPriority,
+        defaultDueOffsetMinutes: defaultDueOffsetMinutes ? Number(defaultDueOffsetMinutes) : 1440,
+        defaultReminderPolicy,
+      });
       toast.success("Template created");
       router.push("/templates");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to create template");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create template");
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Create template</h1>
-          <Button variant="outline" onClick={() => router.back()}>
-            Back
-          </Button>
-        </div>
+    <div className="mx-auto w-full max-w-5xl px-4 py-10">
+      <h1 className="mb-6 text-3xl font-bold">Create Follow-up Template</h1>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Template Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Follow Up with HR"
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label>Content</Label>
-                <Input
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Template text…"
-                />
-              </div>
+            <div>
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Salary Raise Discussion"
+                required
+              />
+            </div>
 
-              <Button className="w-full" disabled={submitting}>
+            <div>
+              <Label htmlFor="target">Target</Label>
+              <Input
+                id="target"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                placeholder="e.g., HR Manager"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                id="notes"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Additional notes..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="priority">Default Priority</Label>
+              <select
+                id="priority"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={defaultPriority}
+                onChange={(e) => setDefaultPriority(e.target.value as Priority)}
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="defaultDueOffset">Default Due Offset (Minutes)</Label>
+              <Input
+                id="defaultDueOffset"
+                type="number"
+                value={defaultDueOffsetMinutes}
+                onChange={(e) => setDefaultDueOffsetMinutes(e.target.value)}
+                placeholder="1440"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="reminderPolicy">Default Reminder Policy</Label>
+              <select
+                id="reminderPolicy"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={defaultReminderPolicy}
+                onChange={(e) => setDefaultReminderPolicy(e.target.value as ReminderPolicy)}
+              >
+                <option value="NORMAL">NORMAL</option>
+                <option value="AGGRESSIVE">AGGRESSIVE</option>
+                <option value="PASSIVE">PASSIVE</option>
+                <option value="NONE">NONE</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" disabled={submitting}>
                 {submitting ? "Creating..." : "Create"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/templates")}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
