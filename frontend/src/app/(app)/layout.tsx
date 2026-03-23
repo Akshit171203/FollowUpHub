@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
       <NotificationProvider>
-      <div className="flex min-h-screen bg-zinc-50/50">
+      <div className="flex flex-col md:flex-row min-h-screen bg-zinc-50/50">
           {/* Sidebar */}
           <Sidebar />
           

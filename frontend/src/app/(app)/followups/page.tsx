@@ -304,13 +304,13 @@ export default function FollowUpsPage() {
   }, [allItems]);
 
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden font-sans">
+    <div className="md:h-screen min-h-[100dvh] flex flex-col bg-white md:overflow-hidden font-sans">
       
       {/* Top Header */}
-      <div className="px-8 pt-8 pb-4">
+      <div className="px-4 md:px-8 pt-6 md:pt-8 pb-4">
          <div className="flex flex-col gap-6">
             {/* Title & Actions */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-[26px] font-bold text-zinc-900 tracking-tight">Follow Ups</h1>
                 <p className="text-zinc-500 text-sm mt-1 font-medium">Manage and track your communications</p>
@@ -402,7 +402,7 @@ export default function FollowUpsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-zinc-50/50 p-6 lg:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent">
+      <div className="flex-1 bg-zinc-50/50 p-4 md:p-6 lg:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent">
          {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[40vh] text-zinc-400">
                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
@@ -428,16 +428,16 @@ export default function FollowUpsPage() {
               {filteredItems.map(item => (
                 <div 
                   key={item.id} 
-                  className="bg-white border border-zinc-200 p-4 rounded-xl flex items-center justify-between hover:shadow-md transition-all cursor-pointer"
+                  className="bg-white border border-zinc-200 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:shadow-md transition-all cursor-pointer"
                   onClick={() => handleViewDetails(item.id)}
                 >
-                   <div className="flex items-center gap-4">
-                      <div className={cn("w-2 h-2 rounded-full", item.status === 'DONE' ? "bg-emerald-500" : "bg-blue-500")} />
-                      <span className="font-bold text-zinc-800">{item.title}</span>
+                   <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                      <div className={cn("w-2 h-2 rounded-full mt-1.5 sm:mt-0 shrink-0", item.status === 'DONE' ? "bg-emerald-500" : "bg-blue-500")} />
+                      <span className="font-bold text-zinc-800 line-clamp-2">{item.title}</span>
                    </div>
-                   <div className="flex items-center gap-4 text-sm text-zinc-500">
-                      <span>{item.target}</span>
-                      <span>{item.dueAt ? new Date(item.dueAt).toLocaleDateString() : '-'}</span>
+                   <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-zinc-500 ml-5 sm:ml-0 overflow-hidden w-full sm:w-auto shrink-0">
+                      <span className="truncate">{item.target || "-"}</span>
+                      <span className="shrink-0">{item.dueAt ? new Date(item.dueAt).toLocaleDateString() : '-'}</span>
                    </div>
                 </div>
               ))}

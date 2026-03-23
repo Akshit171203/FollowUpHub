@@ -430,8 +430,8 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-zinc-50/50 font-lato">
-      <div className="max-w-[1600px] w-full mx-auto px-6 pt-4 pb-2 flex-1 flex flex-col min-h-0 gap-4">
+    <div className="md:h-screen flex flex-col bg-zinc-50/50 font-lato md:overflow-hidden">
+      <div className="max-w-[1600px] w-full mx-auto px-4 md:px-6 pt-4 pb-2 flex-1 flex flex-col min-h-0 gap-4 overflow-y-auto md:overflow-y-visible">
         
         {/* Row 1: Header + KPI Grid */}
         <div className="flex-none space-y-3">
@@ -463,7 +463,7 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
             <KpiTile 
               label="Completion" 
               value={`${completionRate}%`} 
@@ -578,10 +578,10 @@ export default function DashboardPage() {
           </div>
 
         {/* Row 2: Chart & Sidebar */}
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 pb-2">
+        <div className="flex-1 md:min-h-0 flex flex-col lg:grid lg:grid-cols-12 gap-4 pb-2">
           
           {/* Main Chart (8 cols) */}
-          <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200/60 shadow-sm flex flex-col min-h-0 overflow-hidden h-full">
+          <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200/60 shadow-sm flex flex-col min-h-[300px] md:min-h-0 overflow-hidden h-full">
              <div className="p-3 border-b border-zinc-50 flex items-center justify-between shrink-0">
                <div>
                  <h3 className="text-sm font-bold text-zinc-900">Activity Trend</h3>
@@ -638,7 +638,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Sidebar (4 cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-4 h-full">
+          <div className="lg:col-span-4 flex flex-col gap-4 h-full min-h-[400px] md:min-h-0">
              
              {/* Quick Actions */}
              <div className="bg-white rounded-xl border border-zinc-200/60 shadow-sm p-3 flex flex-col justify-center gap-2 shrink-0">
@@ -696,7 +696,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-0 md:p-3 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-2 md:p-3 custom-scrollbar min-h-[200px]">
                    {todos.length > 0 ? (
                      <div className="flex flex-col gap-2">
                         {todos.map(todo => (

@@ -1,0 +1,468 @@
+================================================================================
+                         FOLLOWUPHUB – PROJECT SUMMARY
+================================================================================
+  Generated: 23 March 2026
+
+
+1. WHAT IS FOLLOWUPHUB?
+================================================================================
+
+FollowUpHub is a full-stack, real-time follow-up and task reminder management
+system. It helps users track professional follow-ups (emails, calls, meetings,
+etc.) and personal to-dos, with an intelligent reminder engine that escalates
+overdue items and notifies users via in-app real-time notifications and email.
+
+
+2. PROJECT GOALS
+================================================================================
+
+  • Build a personal CRM-style follow-up tracker so nothing falls through the
+    cracks — every follow-up is tracked until resolved.
+
+  • Intelligent Reminder Engine — automatic, policy-driven reminders with
+    configurable escalation (from NORMAL → PERSISTENT → AGGRESSIVE) so overdue
+    items become harder to ignore.
+
+  • Real-time Notifications — instant in-app push via WebSockets (Socket.IO),
+    plus email-based alerts so users are notified across channels.
+
+  • To-Do Management — a lightweight daily to-do list with optional reminders,
+    integrated alongside follow-ups for a unified productivity hub.
+
+  • Reusable Templates — create follow-up templates (e.g., "HR Follow-Up",
+    "Client Check-In") to quickly spawn new follow-ups from predefined patterns.
+
+  • Email Templates — customisable HTML email templates for reminders,
+    escalation notices, and digest emails.
+
+  • Timeline & Audit Trail — every follow-up records a chronological event
+    timeline (created, reminded, snoozed, escalated, done) for full traceability.
+
+  • Dashboard & Analytics — a visual dashboard with charts (Recharts) showing
+    follow-up statistics, overdue counts, and productivity insights.
+
+  • Modern, Premium UI — a responsive, animated, dark-mode-capable interface
+    with glassmorphism effects, micro-animations, and rich component design.
+
+
+3. TECHNOLOGY STACK
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                              BACKEND                                      │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │  Runtime       │ Node.js (ES Modules)                                     │
+  │  Framework     │ Express.js                                               │
+  │  ORM           │ Drizzle ORM (drizzle-kit for migrations)                 │
+  │  Database      │ PostgreSQL 16 (Dockerized)                               │
+  │  Cache / Pub   │ Redis 7 (Dockerized)                                     │
+  │  Real-time     │ Socket.IO + @socket.io/redis-adapter                     │
+  │  Cron Jobs     │ node-cron (runs every minute)                            │
+  │  Auth          │ JWT (cookie-based) + bcryptjs + Google OAuth              │
+  │  Email         │ Nodemailer (SMTP transport)                              │
+  │  Rate Limiting │ Custom Redis-backed rate limiter middleware               │
+  │  Env Mgmt      │ dotenvx / dotenv                                        │
+  │  Dev Tooling   │ nodemon (hot-reload in development)                      │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                              FRONTEND                                     │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │  Framework     │ Next.js 16 (App Router)                                  │
+  │  React         │ React 19                                                 │
+  │  Styling       │ Tailwind CSS v4 (@tailwindcss/postcss)                   │
+  │  UI Components │ Radix UI (Dialog, Dropdown, Popover, Checkbox,           │
+  │                │  Switch, Label, Separator, Scroll Area, Slot, Icons)     │
+  │  Animations    │ Framer Motion                                            │
+  │  Lottie        │ lottie-react (for animated illustrations)                │
+  │  Charts        │ Recharts + MUI X Charts                                  │
+  │  Icons         │ Lucide React + React Icons                               │
+  │  Drag & Drop   │ @dnd-kit (core + sortable + utilities)                   │
+  │  Real-time     │ socket.io-client                                         │
+  │  Theming       │ next-themes (dark / light mode)                          │
+  │  Toasts        │ Sonner                                                   │
+  │  Utilities     │ class-variance-authority, clsx, tailwind-merge, date-fns │
+  │  Animations    │ tailwindcss-animate, tw-animate-css                      │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                              INFRASTRUCTURE                               │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │  Containers    │ Docker Compose (postgres:16 + redis:7)                   │
+  │  Postgres Port │ Host 5434 → Container 5432                               │
+  │  Redis Port    │ Host 6379 → Container 6379                               │
+  │  Volumes       │ postgres_data, redis_data (persistent)                   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+
+4. DATABASE SCHEMA (PostgreSQL via Drizzle ORM)
+================================================================================
+
+  TABLES:
+  ───────
+  users                      User accounts
+    - id (UUID, PK)
+    - name, email (unique), password, salt
+    - verified (bool), role (USER | ADMIN)
+    - createdAt, updatedAt
+
+  followups                  Core follow-up items
+    - id (UUID, PK), userId (FK)
+    - title, target (person/entity), notes
+    - dueAt (timestamptz)
+    - status: PENDING | SNOOZED | ESCALATED | DONE
+    - priority: LOW | MEDIUM | HIGH | URGENT
+    - reminderPolicy: NORMAL | PERSISTENT | AGGRESSIVE
+    - ignoreCount, escalationLevel
+    - isActive (bool)
+    - createdAt, updatedAt, completedAt, lastReminderSentAt
+    - Indexes: userId, dueAt, status
+
+  followup_events            Timeline / audit trail
+    - id, followupId, userId
+    - eventType: CREATED | REMINDER_SENT | SNOOZED | RESCHEDULED | ESCALATED | DONE
+    - message, createdAt
+    - Index: followupId
+
+  notifications              In-app notification inbox
+    - id, userId, followupId (optional)
+    - groupKey (for deduplication)
+    - type: FOLLOWUP_DUE | FOLLOWUP_ESCALATED | FOLLOWUP_CREATED |
+            FOLLOWUP_DONE | FOLLOWUP_SNOOZED | REMINDER_SENT | TODO_REMINDER
+    - severity: INFO | SUCCESS | WARNING | ERROR | CRITICAL
+    - title, body, metadata (JSONB)
+    - actionType (e.g., OPEN_LINK, SNOOZE_MODAL)
+    - isRead (bool), readAt
+    - Indexes: userId, groupKey, isRead
+
+  notification_preferences   Per-user notification settings
+    - userId (PK, FK to users)
+    - emailEnabled, inAppEnabled
+    - typesDisabled (JSONB array)
+    - quietHoursEnabled, quietHoursStart, quietHoursEnd
+
+  followup_templates         Reusable follow-up blueprints
+    - id, userId
+    - name, title, target, notes
+    - defaultDueOffsetMinutes (e.g., 1440 = 1 day)
+    - defaultPriority, defaultReminderPolicy
+    - Indexes: userId, name
+
+  email_templates            Custom HTML email templates
+    - id, userId
+    - name, type: REMINDER | ESCALATION | DIGEST
+    - subject, bodyHtml
+    - Indexes: userId, type
+
+  todos                      Daily to-do items
+    - id, userId
+    - title, notes
+    - status: PENDING | DONE
+    - forDate (date-scoped)
+    - remindAt, lastRemindedAt
+    - Indexes: (userId, forDate), (userId, status)
+
+
+5. BACKEND ARCHITECTURE
+================================================================================
+
+  src/
+  ├── server.js              Entry point – boots Redis, Socket.IO, HTTP, cron
+  ├── app.js                 Express app – CORS, cookie parser, route mounting
+  ├── socket.js              Socket.IO init with Redis adapter + JWT auth middleware
+  │
+  ├── config/
+  │   ├── db.js              Drizzle ORM ↔ PostgreSQL connection
+  │   ├── redis.js           Redis client setup
+  │   ├── env.js             Environment variable helpers
+  │   └── mailer.js          Nodemailer SMTP transport
+  │
+  ├── db/
+  │   ├── schema.js          Full Drizzle schema (all tables + enums)
+  │   └── migrations/        Drizzle-kit generated SQL migrations
+  │
+  ├── middlewares/
+  │   ├── auth.middleware.js  JWT verification from cookies
+  │   ├── error.middleware.js Global error handler
+  │   └── rateLimiter.js     Redis-backed IP rate limiter
+  │
+  ├── modules/
+  │   ├── auth/              User registration, login, OAuth, admin
+  │   │   └── routes/        user.routes, oauth.routes, admin.routes
+  │   ├── followups/         CRUD + status transitions for follow-ups
+  │   ├── notifications/     Notification listing, read/unread, preferences
+  │   ├── templates/         Follow-up templates + email templates
+  │   ├── events/            Timeline event retrieval
+  │   └── todos/             To-do CRUD + reminder integration
+  │
+  ├── services/
+  │   ├── reminder.service.js      Main reminder engine + todo reminders
+  │   ├── notification.service.js  Create, group, emit real-time notifications
+  │   ├── notification.creator.js  Notification factory
+  │   └── event.service.js         Timeline event logger
+  │
+  ├── jobs/
+  │   └── reminder.job.js    Cron job (every minute) → runs both engines
+  │
+  ├── queue/
+  │   ├── queues.js          (Future) BullMQ / Redis-backed job queues
+  │   └── worker.js          (Future) Queue workers
+  │
+  └── utils/
+      ├── asyncHandler.js    Express async error wrapper
+      ├── googleOAuth.js     Google OAuth token exchange helper
+      └── response.js        Standardised API response helper
+
+
+  API ROUTES:
+  ────────────
+  POST/GET   /api/users           Registration, login, logout, profile, verify
+  POST/GET   /api/oauth           Google OAuth login/callback
+  GET        /api/admin           Admin-only endpoints
+  CRUD       /api/followups       Follow-up management (create, list, update, complete)
+  GET/PATCH  /api/notifications   Notification inbox, mark read, preferences
+  CRUD       /api/templates       Follow-up template management
+  CRUD       /api/email-templates Email template management
+  GET        /api/events          Timeline event retrieval
+  CRUD       /api/todos           To-do management
+  GET        /health              Health check
+
+
+6. REMINDER ENGINE (CORE INTELLIGENCE)
+================================================================================
+
+  How It Works:
+  1. A node-cron job runs every 60 seconds.
+  2. It queries all active, non-DONE followups where dueAt < now.
+  3. For each overdue followup, it checks cooldown:
+     - NORMAL    → 60 min cooldown between reminders
+     - PERSISTENT → 15 min cooldown
+     - AGGRESSIVE →  5 min cooldown
+  4. If the cooldown has elapsed, it sends a reminder notification
+     (in-app via Socket.IO + optionally email).
+  5. On every repeat reminder, ignoreCount increments.
+  6. Based on ignoreCount thresholds, automatic escalation kicks in:
+     - ignoreCount ≥ 1 → escalation level 1, LOW bumps to MEDIUM
+     - ignoreCount ≥ 3 → escalation level 2, priority → HIGH, policy → PERSISTENT,
+                          status → ESCALATED
+     - ignoreCount ≥ 5 → escalation level 3, priority → URGENT, policy → AGGRESSIVE,
+                          status → ESCALATED
+  7. Each action is logged to the timeline (REMINDER_SENT, ESCALATED events).
+
+  Todo Reminders:
+  - Runs after the followup engine in the same cron tick.
+  - Simpler: no escalation, just sends a notification if remindAt has passed
+    and cooldown has elapsed.
+
+
+7. REAL-TIME NOTIFICATIONS (SOCKET.IO)
+================================================================================
+
+  - Server initialises Socket.IO with a Redis Adapter so it scales across
+    multiple Node processes.
+  - Auth middleware extracts JWT from cookies on WebSocket handshake.
+  - Each user joins a room named by their userId.
+  - When the notification service creates a notification, it emits to the
+    user's room in real-time via `io.to(userId).emit()`.
+  - Frontend connects via socket.io-client, listens for new notifications,
+    and updates the notification bell and inbox live.
+
+
+8. FRONTEND ARCHITECTURE
+================================================================================
+
+  src/
+  ├── app/
+  │   ├── layout.tsx         Root layout (fonts, providers)
+  │   ├── page.tsx           Landing / redirect
+  │   ├── globals.css        Global Tailwind styles
+  │   │
+  │   ├── (auth)/            Auth route group
+  │   │   ├── layout.tsx     Auth layout (bento grid showcase)
+  │   │   ├── login/         Login page
+  │   │   ├── signup/        Signup page
+  │   │   ├── forgot-password/
+  │   │   ├── reset-password/
+  │   │   └── verify-email/
+  │   │
+  │   └── (app)/             Protected app route group
+  │       ├── layout.tsx     App shell (sidebar + topbar)
+  │       ├── dashboard/     Analytics dashboard with charts
+  │       ├── followups/     Follow-up list + detail views
+  │       ├── templates/     Follow-up template management
+  │       ├── email-templates/ Email template editor
+  │       ├── todos/         Daily to-do list with drag-and-drop
+  │       ├── timeline/      Event timeline viewer
+  │       ├── notifications/ Full notification inbox
+  │       └── settings/      User settings / preferences
+  │
+  ├── components/
+  │   ├── navbar.tsx         Top navigation bar
+  │   ├── AuthBentoGrid.tsx  Animated bento grid for auth pages
+  │   ├── ProtectedRoute.tsx Auth guard (redirect if not logged in)
+  │   ├── layout/            Sidebar and app shell components
+  │   ├── followups/         FollowUpDetail and related components
+  │   ├── notifications/     NotificationBell and notification list
+  │   └── ui/                Reusable UI primitives (Radix-based)
+  │                          dialog, dropdown, popover, checkbox,
+  │                          switch, label, separator, scroll-area, etc.
+  │
+  ├── context/
+  │   └── notification-context.tsx   Global notification state + Socket.IO
+  │
+  └── lib/
+      ├── api.ts             Axios / fetch wrapper for backend API
+      ├── auth.ts            Auth utility functions
+      ├── followups.ts       Follow-up API calls
+      ├── notifications.ts   Notification API calls
+      ├── templates.ts       Template API calls
+      ├── emailTemplates.ts  Email template API calls
+      ├── todos.ts           Todo API calls
+      ├── events.ts          Event / timeline API calls
+      ├── timeline.ts        Timeline helper functions
+      ├── socket.ts          Socket.IO client initialisation
+      ├── notificationPermission.ts  Browser notification permission
+      └── utils.ts           clsx + tailwind-merge helper
+
+
+9. FEATURES SUMMARY
+================================================================================
+
+  ✅ User Authentication
+     - Email/password signup with email verification
+     - Login with JWT (HTTP-only cookies)
+     - Google OAuth integration
+     - Forgot/reset password flow
+     - Role-based access (USER / ADMIN)
+
+  ✅ Follow-Up Management
+     - Create, edit, snooze, reschedule, complete follow-ups
+     - Set priority (LOW → URGENT) and reminder policy (NORMAL → AGGRESSIVE)
+     - Target tracking (who you're following up with)
+     - Rich notes support
+
+  ✅ Intelligent Reminder Engine
+     - Cron-based engine running every minute
+     - Policy-driven cooldown intervals
+     - Automatic escalation based on ignore count
+     - Priority and policy auto-upgrade on repeated ignores
+
+  ✅ Real-Time Notifications
+     - WebSocket-based push notifications via Socket.IO
+     - Redis adapter for multi-process scalability
+     - Notification inbox with read/unread management
+     - Grouped notifications by follow-up
+     - Severity levels (INFO → CRITICAL)
+
+  ✅ Email Notifications
+     - SMTP-based email delivery via Nodemailer
+     - Customisable HTML email templates (REMINDER, ESCALATION, DIGEST)
+
+  ✅ Notification Preferences
+     - Toggle email/in-app notifications
+     - Disable specific notification types
+     - Quiet hours configuration
+
+  ✅ To-Do List
+     - Daily to-do management with date scoping
+     - Optional reminder times per todo
+     - Drag-and-drop reordering (@dnd-kit)
+
+  ✅ Follow-Up Templates
+     - Create reusable templates with default priority, policy, due offset
+     - Quick-create follow-ups from templates
+
+  ✅ Email Templates
+     - HTML email template editor
+     - Types: REMINDER, ESCALATION, DIGEST
+
+  ✅ Timeline / Audit Trail
+     - Chronological event log per follow-up
+     - Events: CREATED, REMINDER_SENT, SNOOZED, RESCHEDULED, ESCALATED, DONE
+
+  ✅ Dashboard & Analytics
+     - Visual charts and statistics (Recharts + MUI X Charts)
+     - At-a-glance view of overdue, pending, and completed follow-ups
+
+  ✅ Modern Premium UI
+     - Dark/light mode with next-themes
+     - Framer Motion animations
+     - Lottie animated illustrations
+     - Radix UI accessible component primitives
+     - Responsive design with Tailwind CSS v4
+     - Sonner toast notifications
+
+  ✅ Security
+     - Redis-backed rate limiting on sensitive endpoints
+     - HTTP-only cookie-based JWT auth
+     - Password hashing with bcryptjs
+     - CORS configuration
+
+  ✅ API Protection
+     - Auth middleware on all protected routes
+     - Admin-only route group
+
+
+10. HOW TO RUN LOCALLY
+================================================================================
+
+  Prerequisites: Docker, Node.js (v18+), npm
+
+  1. Clone the repo:
+       git clone <repo-url>
+       cd followuphub
+
+  2. Start database and cache containers:
+       docker compose up -d
+     (Starts PostgreSQL on port 5434 and Redis on port 6379)
+
+  3. Start the backend:
+       cd backend
+       cp .env.example .env   # configure your env vars
+       npm install
+       npm run dev            # runs on http://localhost:5001
+
+  4. Start the frontend:
+       cd frontend
+       npm install
+       npm run dev            # runs on http://localhost:3000
+
+  5. Environment Variables (Backend .env):
+       PORT=5001
+       CLIENT_URL=http://localhost:3000
+       DATABASE_URL=postgres://postgres:postgres@localhost:5434/followuphub
+       REDIS_URL=redis://localhost:6379
+       LOGIN_SECRET_KEY=<your-jwt-secret>
+       SMTP_HOST=<smtp-host>
+       SMTP_PORT=<smtp-port>
+       SMTP_USER=<smtp-user>
+       SMTP_PASS=<smtp-pass>
+       GOOGLE_CLIENT_ID=<google-oauth-client-id>
+       GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
+
+  6. Database migrations:
+       cd backend
+       npm run db:generate    # generate migration files
+       npm run db:push        # push schema to database
+
+
+11. FUTURE ROADMAP / POTENTIAL ENHANCEMENTS
+================================================================================
+
+  • BullMQ Job Queue — queue infrastructure exists (queue/ directory), ready to
+    migrate from synchronous cron to distributed job processing.
+  • Mobile App — React Native or PWA support.
+  • Team/Organisation Support — shared follow-ups, delegation, team dashboards.
+  • Calendar Integration — Google Calendar / Outlook sync for due dates.
+  • Browser Push Notifications — Web Push API integration (notification
+    permission utilities already exist).
+  • Daily Digest Emails — automated summary emails using the DIGEST template.
+  • Advanced Analytics — trends, response rate tracking, SLA metrics.
+  • File Attachments — attach documents to follow-ups.
+  • Bulk Operations — bulk snooze, complete, or archive follow-ups.
+  • Search & Filters — full-text search across follow-ups, notes, and contacts.
+
+
+================================================================================
+                            END OF PROJECT SUMMARY
+================================================================================

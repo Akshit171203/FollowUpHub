@@ -47,12 +47,92 @@ function computeEscalationFromIgnoreCount(ignoreCount, current) {
     status: newStatus,
   };
 }
+
+/**
+ * Send Escalation Email to Manager for Jira tickets
+ */
+async function sendJiraManagerEscalation(followup, user, escalationLevel) {
+  console.log(`📧 [Escalation Email] Attempting for followup=${followup.id}, title="${followup.title}", level=${escalationLevel}`);
+  console.log(`📧 [Escalation Email] user.managerEmail = "${user.managerEmail}", user.email = "${user.email}", user.name = "${user.name}"`);
+  
+  if (!user.managerEmail) {
+    console.log(`📧 [Escalation Email] SKIPPED: managerEmail is empty/null for user ${user.id}`);
+    return false;
+  }
+
+  const now = new Date();
+  // 24-hour cooldown for manager spam (so we don't bombard them every minute)
+  if (
+    followup.lastManagerNotifiedAt &&
+    now.getTime() - new Date(followup.lastManagerNotifiedAt).getTime() < 24 * 60 * 60 * 1000
+  ) {
+    const remaining = 24 * 60 * 60 * 1000 - (now.getTime() - new Date(followup.lastManagerNotifiedAt).getTime());
+    console.log(`📧 [Escalation Email] SKIPPED: 24h cooldown active, ${Math.round(remaining / 60000)} min remaining. lastManagerNotifiedAt=${followup.lastManagerNotifiedAt}`);
+    return false; // Cooldown active
+  }
+
+  // Calculate delay
+  const delayMs = now.getTime() - new Date(followup.dueAt).getTime();
+  const delayDays = Math.floor(delayMs / (1000 * 60 * 60 * 24));
+  const delayHours = Math.floor(delayMs / (1000 * 60 * 60)) % 24;
+  const delayStr = delayDays > 0 ? `${delayDays} days, ${delayHours} hours` : `${delayHours} hours`;
+
+  // Determine Tiers
+  // Level 1 -> Dev (already handled by normal reminders)
+  // Level 2 -> Team Lead (we send to managerEmail for now, can extend later)
+  // Level 3 -> Manager
+  const tierName = escalationLevel >= 3 ? "Manager (Level 3)" : "Team Lead (Level 2)";
+
+  try {
+    const { sendEmail } = await import("../config/mailer.js");
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee;">
+        <h2 style="color: #d9534f;">⚠️ Jira Ticket Escalation: ${tierName}</h2>
+        <p>A Jira ticket assigned to <strong>${user.name}</strong> is critically overdue and requires attention.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Ticket:</strong></td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${followup.title}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Assignee:</strong></td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${user.name} (${user.email})</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Overdue By:</strong></td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #d9534f;">${delayStr}</td>
+          </tr>
+        </table>
+        <div style="margin-top: 25px;">
+          <a href="${followup.externalUrl}" style="background-color: #0052CC; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">View Ticket in Jira</a>
+        </div>
+      </div>
+    `;
+
+    console.log(`📧 [Escalation Email] Sending to ${user.managerEmail}...`);
+    await sendEmail({
+      to: user.managerEmail,
+      subject: `Escalation: Jira Ticket Overdue for ${user.name}`,
+      html,
+    });
+
+    console.log(`📧 [Escalation Email] ✅ SUCCESS - Email sent to ${user.managerEmail} for ticket "${followup.title}"`);
+    return true; // Sent successfully
+  } catch (err) {
+    console.error(`📧 [Escalation Email] ❌ FAILED to send to ${user.managerEmail}:`, err.message || err);
+    return false;
+  }
+}
 // MAIN REMINDER ENGINE
 export async function runReminderEngine() {
   const now = new Date();
   //Fetch all overdue followups
   const overdue = await db
-    .select()
+    .select({
+       followup: followups,
+       user: followups.userId // We'll manually join or fetch users to get managerEmail below
+    })
     .from(followups)
     .where(
       and(
@@ -66,22 +146,47 @@ export async function runReminderEngine() {
     console.log("Reminder Engine: No overdue followups");
     return;
   }
+  
+  // Actually, we must fetch the user details to have user mapping
+  const { usersTable } = await import("../db/schema.js");
+  const overdueWithUsers = await db
+    .select({
+      followup: followups,
+      user: usersTable
+    })
+    .from(followups)
+    .innerJoin(usersTable, eq(followups.userId, usersTable.id))
+    .where(
+      and(
+        lt(followups.dueAt, now),
+        ne(followups.status, "DONE"),
+        eq(followups.isActive, true)
+      )
+    );
+
+  if (overdueWithUsers.length === 0) {
+    console.log("Reminder Engine: No overdue followups with valid users");
+    return;
+  }
   // Apply cooldown logic in JS per followup policy
-  const dueFollowups = overdue.filter((f) => {
+  const dueFollowupsInfo = overdueWithUsers.filter(({ followup: f }) => {
     if (!f.lastReminderSentAt) return true; // never reminded -> send now
     const cooldownMs = getCooldownMs(f.reminderPolicy);
     const last = new Date(f.lastReminderSentAt).getTime();
     return now.getTime() - last >= cooldownMs;
   });
 
-  if (dueFollowups.length === 0) {
+  if (dueFollowupsInfo.length === 0) {
     console.log("Reminder Engine: Overdue followups exist, but all are in cooldown");
     return;
   }
 
-  console.log(`Reminder Engine: Sending reminders for ${dueFollowups.length} followups`);
+  console.log(`Reminder Engine: Sending reminders for ${dueFollowupsInfo.length} followups`);
 
-  for (const followup of dueFollowups) {
+  for (const info of dueFollowupsInfo) {
+    const followup = info.followup;
+    const user = info.user;
+    
     try {
       const isRepeatReminder = !!followup.lastReminderSentAt;
 
@@ -140,13 +245,35 @@ export async function runReminderEngine() {
         });
       }
 
-      // 3) Update followup
+      // 3) Jira specific escalation (manager notification)
+      let updatedManagerNotifiedAt = followup.lastManagerNotifiedAt;
+      console.log(`🔍 [Escalation Check] followup=${followup.id} externalSource="${followup.externalSource}" escalationLevel=${escalationFields.escalationLevel} (need >= 2)`);
+      if (followup.externalSource === "JIRA" && escalationFields.escalationLevel >= 2) {
+        console.log(`🔍 [Escalation Check] ✅ Conditions met, calling sendJiraManagerEscalation...`);
+        const sent = await sendJiraManagerEscalation(followup, user, escalationFields.escalationLevel);
+        if (sent) {
+           updatedManagerNotifiedAt = now;
+           await logEvent({
+            followupId: followup.id,
+            userId: followup.userId,
+            eventType: "ESCALATED",
+            message: `Jira Escalation dispatched to manager: ${user.managerEmail}`,
+          });
+        } else {
+          console.log(`🔍 [Escalation Check] Manager email was NOT sent (cooldown, missing email, or SMTP failure)`);
+        }
+      } else {
+        console.log(`🔍 [Escalation Check] ❌ Conditions NOT met: externalSource=${followup.externalSource}, escalationLevel=${escalationFields.escalationLevel}`);
+      }
+
+      // 4) Update followup
       await db
         .update(followups)
         .set({
           ignoreCount: newIgnoreCount,
           ...escalationFields,
           lastReminderSentAt: now,
+          lastManagerNotifiedAt: updatedManagerNotifiedAt,
           updatedAt: now,
         })
         .where(eq(followups.id, followup.id));

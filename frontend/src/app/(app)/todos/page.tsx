@@ -160,7 +160,7 @@ export default function TodosPage() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       {/* Header with Date Navigation */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-zinc-900">Daily Todos</h1>
           <p className="text-sm text-zinc-500 mt-1">Simple task list for the day</p>
@@ -194,32 +194,34 @@ export default function TodosPage() {
 
       {/* Add Todo Input */}
       <Card className="p-4 mb-6">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 w-full">
              <Input
                 placeholder="Add a new todo..."
                 value={newTodoTitle}
                 onChange={(e) => setNewTodoTitle(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleAddTodo()}
                 disabled={addingTodo}
-                className="pr-20" // space for time indicator if needed
+                className="pr-20"
               />
           </div>
           
-          {/* Time Picker for New Todo */}
-          <div className="w-32">
-             <Input 
-                type="time" 
-                value={newTodoTime}
-                onChange={(e) => setNewTodoTime(e.target.value)}
-                className="cursor-pointer"
-             />
-          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+             {/* Time Picker for New Todo */}
+             <div className="flex-1 sm:w-32">
+                <Input 
+                   type="time" 
+                   value={newTodoTime}
+                   onChange={(e) => setNewTodoTime(e.target.value)}
+                   className="cursor-pointer w-full"
+                />
+             </div>
 
-          <Button onClick={handleAddTodo} disabled={addingTodo}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
+             <Button onClick={handleAddTodo} disabled={addingTodo} className="shrink-0">
+               <Plus className="w-4 h-4 mr-2" />
+               Add
+             </Button>
+          </div>
         </div>
       </Card>
 

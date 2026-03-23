@@ -49,6 +49,8 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "FOLLOWUP_SNOOZED",
   "REMINDER_SENT",
   "TODO_REMINDER",
+  "JIRA_TICKET_REMINDER",
+  "JIRA_TICKET_ESCALATED",
 ]);
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
 
@@ -64,6 +66,12 @@ export const usersTable = pgTable("users", {
 
   verified: boolean("verified").default(false).notNull(),
   role: userRoleEnum("role").default("USER").notNull(),
+
+  // Jira Integration Fields
+  jiraEmail: varchar("jira_email", { length: 255 }),
+  jiraDomain: varchar("jira_domain", { length: 255 }), // e.g., company.atlassian.net
+  jiraApiToken: text("jira_api_token"), // Encrypted JSON string { iv, authTag, encryptedData }
+  managerEmail: varchar("manager_email", { length: 255 }),
 
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -103,11 +111,18 @@ export const followups = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     lastReminderSentAt: timestamp("last_reminder_sent_at", { withTimezone: true }),
 
+    // External Integrations (Jira etc.)
+    externalSource: varchar("external_source", { length: 50 }), // e.g., 'JIRA'
+    externalId: varchar("external_id", { length: 255 }),
+    externalUrl: text("external_url"),
+    lastManagerNotifiedAt: timestamp("last_manager_notified_at", { withTimezone: true }),
+
   },
   (table) => ({
     userIdIdx: index("followups_user_id_idx").on(table.userId),
     dueAtIdx: index("followups_due_at_idx").on(table.dueAt),
     statusIdx: index("followups_status_idx").on(table.status),
+    externalIdSourceIdx: index("followups_external_id_source_idx").on(table.externalId, table.externalSource),
   })
 );
 
@@ -295,6 +310,30 @@ export const todos = pgTable(
   (table) => ({
     userIdForDateIdx: index("todos_user_id_for_date_idx").on(table.userId, table.forDate),
     userIdStatusIdx: index("todos_user_id_status_idx").on(table.userId, table.status),
+  })
+);
+
+
+// Jira Sync Logs table
+export const jiraSyncStatusEnum = pgEnum("jira_sync_status", ["SUCCESS", "FAILED"]);
+
+export const jiraSyncLogs = pgTable(
+  "jira_sync_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: 'cascade' }),
+    
+    status: jiraSyncStatusEnum("status").notNull(),
+    ticketsSynced: integer("tickets_synced").default(0).notNull(),
+    errorMessage: text("error_message"),
+    
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("jira_sync_logs_user_id_idx").on(table.userId),
+    statusIdx: index("jira_sync_logs_status_idx").on(table.status),
   })
 );
 
