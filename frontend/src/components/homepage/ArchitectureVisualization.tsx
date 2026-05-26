@@ -90,8 +90,11 @@ export default function EcosystemVisualization() {
   return (
     <section className="relative w-full min-h-screen bg-slate-50 overflow-hidden font-inter py-32 flex flex-col justify-center">
       
-      {/* Clean Light Background */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Clean Light Background with Purplish Gradient matching SS1 */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0">
+        <div className="absolute w-[1000px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] mix-blend-multiply" />
+      </div>
+      <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] invert" />
       </div>
 
@@ -107,8 +110,8 @@ export default function EcosystemVisualization() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white mb-8 shadow-sm">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
               </span>
               <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-600">Intelligent Pipeline</span>
             </div>
@@ -117,7 +120,7 @@ export default function EcosystemVisualization() {
               <span className="text-slate-900 font-medium">
                 The Data{" "}
               </span>
-              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-500">
+              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
                 Ecosystem
               </span>
             </h2>
@@ -164,7 +167,6 @@ export default function EcosystemVisualization() {
               
               {/* Internal Grid & Ambient Glows */}
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] invert pointer-events-none" />
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-48 bg-blue-50 blur-[60px] pointer-events-none" />
               
               <div className="relative z-10 flex flex-col h-full">
                  {/* Header */}

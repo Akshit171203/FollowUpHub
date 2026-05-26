@@ -48,6 +48,6 @@
   body {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: var(--font-raleway), sans-serif;
+    font-family: var(--font-lato), sans-serif;
   }
 }

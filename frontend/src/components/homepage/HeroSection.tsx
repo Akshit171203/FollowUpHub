@@ -4,23 +4,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
-// --- Font Setup ---
-const fontStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-  @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,900&display=swap');
-
-  .font-cabinet {
-    font-family: 'Cabinet Grotesk', sans-serif;
-  }
-  .font-inter {
-    font-family: 'Inter', sans-serif;
-  }
-`;
-
 export default function HeroSection() {
   return (
     <section className="relative min-h-screen flex flex-col justify-center px-6 lg:px-8 overflow-hidden bg-[#03050A] text-slate-300 font-inter pt-20">
-      <style dangerouslySetInnerHTML={{ __html: fontStyles }} />
 
       {/* ATMOSPHERE & LIGHTING */}
       <div className="absolute inset-0 pointer-events-none">
@@ -64,26 +50,16 @@ export default function HeroSection() {
           </p>
 
           {/* Minimal Luxury CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+          <div className="flex justify-center mt-8">
             <Link href="/signup">
               <motion.button
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,1)", color: "#000" }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="bg-white/90 text-[#03050A] font-semibold text-sm tracking-wide px-10 py-4 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all"
+                className="bg-white/90 text-[#03050A] font-semibold text-[15px] tracking-wide px-10 py-4 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_50px_rgba(255,255,255,0.25)] transition-all flex items-center gap-2"
               >
-                Download for macOS
-              </motion.button>
-            </Link>
-
-            <Link href="#demo">
-              <motion.button
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="bg-transparent text-white font-medium text-sm tracking-wide px-10 py-4 rounded-full border border-white/10 hover:border-white/20 transition-all"
-              >
-                View Web App
+                Get Started
+                <Sparkles className="w-4 h-4" />
               </motion.button>
             </Link>
           </div>

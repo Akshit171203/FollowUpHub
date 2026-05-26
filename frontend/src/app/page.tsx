@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
-import { useState, useEffect } from "react";
 import HeroSection from "@/components/homepage/HeroSection";
 import FeatureBentoGrid from "@/components/homepage/FeatureBentoGrid";
 import RealTimeDemo from "@/components/homepage/RealTimeDemo";
 import ArchitectureVisualization from "@/components/homepage/ArchitectureVisualization";
 import SecuritySection from "@/components/homepage/SecuritySection";
+import Footer from "@/components/homepage/Footer";
 
 export default function HomePage() {
   return (
@@ -29,7 +29,7 @@ export default function HomePage() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {['Features', 'Architecture', 'Integrations', 'Security'].map((item) => (
+            {['Features', 'Demo', 'Architecture', 'Security'].map((item) => (
               <Link 
                 key={item}
                 href={`#${item.toLowerCase()}`} 
@@ -65,7 +65,7 @@ export default function HomePage() {
       </nav>
 
       {/* Main Content - Cinematic Scroll */}
-      <main className="flex flex-col pb-40">
+      <main className="flex flex-col">
         <HeroSection />
 
         <div id="features" className="scroll-mt-24">
@@ -85,18 +85,8 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer - Ultra Minimalist */}
-      <footer className="bg-[#030508] border-t border-white/[0.04]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-slate-500 text-sm font-light">
-            © {new Date().getFullYear()} FollowUpHub. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6 text-sm font-light">
-            <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">GitHub</a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">X (Twitter)</a>
-          </div>
-        </div>
-      </footer>
+      {/* Premium Footer */}
+      <Footer />
     </div>
   );
 }

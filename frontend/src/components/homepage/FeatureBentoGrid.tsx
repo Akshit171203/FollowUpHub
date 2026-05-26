@@ -2,38 +2,19 @@
 
 import { motion } from "framer-motion";
 import {
-  Brain,
-  Zap,
-  BarChart3,
-  Layers,
   Mail,
   GripVertical,
-  Activity,
-  Bell,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
   FileText,
   Sparkles
 } from "lucide-react";
-import { useState } from "react";
-import { BarChart, Bar, XAxis, ResponsiveContainer } from "recharts";
 import { FaJira, FaSlack } from "react-icons/fa";
-
-const chartData = [
-  { name: "Mon", value: 12 },
-  { name: "Tue", value: 19 },
-  { name: "Wed", value: 15 },
-  { name: "Thu", value: 25 },
-  { name: "Fri", value: 22 },
-];
 
 const cardVariants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" },
+    transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" as const },
   }),
 };
 
@@ -75,27 +56,35 @@ export default function FeatureBentoGrid() {
             {/* Visual mockup */}
             <div className="bg-gradient-to-br from-[#f5f3ff] to-[#faf5ff] rounded-[1.5rem] p-6 mb-6 min-h-[220px] relative overflow-hidden flex flex-col justify-center">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.12)_0%,transparent_70%)]" />
-              <div className="relative z-10 w-full max-w-[200px] mx-auto space-y-3">
+              <div className="relative z-10 w-full max-w-[220px] mx-auto space-y-3">
                 {[
-                  { label: "Normal", time: "60m", dot: "bg-violet-300", width: "w-[85%]" },
-                  { label: "Persistent", time: "15m", dot: "bg-violet-400", width: "w-[95%]" },
-                  { label: "Aggressive", time: "5m", dot: "bg-violet-600", width: "w-full" },
+                  { label: "NORMAL", time: "60m interval", intensity: 1, color: "text-blue-500", bg: "bg-blue-500", ping: false },
+                  { label: "PERSISTENT", time: "15m interval", intensity: 2, color: "text-violet-500", bg: "bg-violet-500", ping: false },
+                  { label: "AGGRESSIVE", time: "5m interval", intensity: 3, color: "text-purple-600", bg: "bg-purple-600", ping: true },
                 ].map((item, i) => (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, x: -12 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 + i * 0.1 }}
-                    className={`flex items-center justify-between bg-white/70 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-sm border border-white ${item.width}`}
+                    className="relative bg-white rounded-xl p-3 shadow-[0_8px_20px_rgb(0,0,0,0.03)] border border-gray-100 overflow-hidden flex items-center justify-between"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-2 h-2 rounded-full ${item.dot} shadow-[0_0_8px_currentColor] opacity-80`} />
-                      <span className="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">
-                        {item.label}
-                      </span>
+                    <div className="flex items-center gap-3 relative z-10">
+                      <div className={`w-2 h-2 rounded-full ${item.bg} relative`}>
+                        {item.ping && <div className={`absolute inset-0 rounded-full ${item.bg} animate-ping opacity-75`} />}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-gray-900 tracking-wider">{item.label}</span>
+                        <span className="text-[9px] font-mono text-gray-400">{item.time}</span>
+                      </div>
                     </div>
-                    <span className="text-[10px] text-gray-400 font-medium">{item.time}</span>
+                    
+                    <div className="flex gap-1 relative z-10">
+                      {[1, 2, 3].map(level => (
+                        <div key={level} className={`w-1.5 h-3 rounded-full ${level <= item.intensity ? item.bg : 'bg-gray-100'}`} />
+                      ))}
+                    </div>
                   </motion.div>
                 ))}
               </div>

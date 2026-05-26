@@ -163,9 +163,9 @@ export default function RealTimeDemo() {
                        backgroundColor: ["rgba(255,255,255,0.05)", "rgba(59,130,246,0.6)", "rgba(168,85,247,0.4)", "rgba(255,255,255,0.05)"]
                      }}
                      transition={{
-                       duration: 3 + Math.random() * 4,
+                       duration: 3 + ((i * 7) % 40) / 10,
                        repeat: Infinity,
-                       delay: Math.random() * 5,
+                       delay: ((i * 13) % 50) / 10,
                        ease: "easeInOut"
                      }}
                    />
@@ -249,7 +249,7 @@ function NotificationItem({ notification, isLatest }: { notification: Notificati
           </span>
           {isLatest && (
             <span className="text-[10px] font-mono text-emerald-400/80 ml-auto bg-emerald-500/10 px-1.5 rounded">
-              +{Math.floor(Math.random() * 5 + 1)}.{Math.floor(Math.random() * 99)}ms
+              +0.42ms
             </span>
           )}
         </div>

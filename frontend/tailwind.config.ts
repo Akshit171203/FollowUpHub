@@ -11,6 +11,7 @@ export default {
       fontFamily: {
         oswald: ["var(--font-oswald)", "sans-serif"],
         sans: ["var(--font-lato)", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"],
       },
     },
   },
