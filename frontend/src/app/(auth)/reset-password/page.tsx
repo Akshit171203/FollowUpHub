@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import { resetPassword } from "@/lib/auth";
 import Image from "next/image";
 
+import { Eye, EyeOff } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +19,7 @@ export default function ResetPasswordPage() {
 
   const token = useMemo(() => params.get("token") || "", [params]);
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -62,15 +65,22 @@ export default function ResetPasswordPage() {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Input
               id="newPassword"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="New password (min 6 chars)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="h-12 rounded-md bg-white border-gray-400 px-6 text-base placeholder:text-gray-500 focus:ring-1 focus:ring-black focus:border-black transition-all"
+              className="h-12 rounded-md bg-white border-gray-400 px-6 text-base placeholder:text-gray-500 focus:ring-1 focus:ring-black focus:border-black transition-all pr-12"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           {msg ? <p className="text-green-600 font-medium bg-green-50 p-2 rounded-lg text-sm">{msg}</p> : null}

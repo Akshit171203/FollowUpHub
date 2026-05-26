@@ -25,7 +25,6 @@ const sidebarItems = [
   { icon: Kanban, label: "Jira Integration", href: "/jira" },
   { icon: FileText, label: "Templates", href: "/templates" },
   { icon: LineChart, label: "Timeline", href: "/timeline" },
-  { icon: BarChart, label: "Analytics", href: "/analytics" },
 ];
 
 export function Sidebar() {
@@ -63,18 +62,7 @@ export function Sidebar() {
       {/* Navigation */}
       <div className="flex-1 py-6 px-4 space-y-6 overflow-y-auto">
         
-        {/* Workspace Section */}
         <div className="space-y-1">
-          <div className="px-3 mb-2">
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Workspace</h3>
-          </div>
-          {/* Search Placeholder */}
-          <div className="px-3 mb-3">
-            <div className="h-8 bg-zinc-50 border border-zinc-200 rounded-lg flex items-center px-2.5">
-               <span className="text-zinc-400 text-xs">Search...</span>
-               <div className="ml-auto w-4 h-4 rounded-[3px] border border-zinc-200 bg-white flex items-center justify-center text-[9px] text-zinc-400 font-medium">⌘K</div>
-            </div>
-          </div>
 
           {sidebarItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -99,21 +87,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Storage Widget (Bottom) */}
-      <div className="p-4 mt-auto border-t border-zinc-100 flex-shrink-0">
-        <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Storage</span>
-            <span className="text-xs font-medium text-zinc-400">75%</span>
-          </div>
-          <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-indigo-600 w-[75%] rounded-full" />
-          </div>
-          <p className="text-xs text-zinc-500">
-            <span className="font-medium text-zinc-700">7.5 GB</span> of 10 GB used
-          </p>
-        </div>
-      </div>
     </>
   );
 

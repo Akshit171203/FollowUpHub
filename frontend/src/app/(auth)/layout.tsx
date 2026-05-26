@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-4 lg:p-8 relative">
       {/* Absolute Logo Top-Left */}
-      <div className="absolute -top-3 left-4 z-10 hidden md:block">
+      <div className="absolute top-0 mt-4 left-4 z-10 hidden md:block">
          <Link href="/" className="className='block'">
             <Image
               src="/FollowUpHub.png"

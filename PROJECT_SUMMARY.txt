@@ -1,7 +1,7 @@
 ================================================================================
                          FOLLOWUPHUB – PROJECT SUMMARY
 ================================================================================
-  Generated: 23 March 2026
+  Generated: 25 March 2026
 
 
 1. WHAT IS FOLLOWUPHUB?
@@ -9,8 +9,9 @@
 
 FollowUpHub is a full-stack, real-time follow-up and task reminder management
 system. It helps users track professional follow-ups (emails, calls, meetings,
-etc.) and personal to-dos, with an intelligent reminder engine that escalates
-overdue items and notifies users via in-app real-time notifications and email.
+Jira tickets, etc.) and personal to-dos, with an intelligent reminder engine that 
+escalates overdue items and notifies users via in-app real-time notifications, 
+email, and even Slack for critical tickets.
 
 
 2. PROJECT GOALS
@@ -25,6 +26,9 @@ overdue items and notifies users via in-app real-time notifications and email.
 
   • Real-time Notifications — instant in-app push via WebSockets (Socket.IO),
     plus email-based alerts so users are notified across channels.
+
+  • Third-Party Integrations — fetch and sync tasks from external sources (e.g., Jira) 
+    and push critical escalations to external channels (e.g., Slack).
 
   • To-Do Management — a lightweight daily to-do list with optional reminders,
     integrated alongside follow-ups for a unified productivity hub.
@@ -57,11 +61,12 @@ overdue items and notifies users via in-app real-time notifications and email.
   │  Database      │ PostgreSQL 16 (Dockerized)                               │
   │  Cache / Pub   │ Redis 7 (Dockerized)                                     │
   │  Real-time     │ Socket.IO + @socket.io/redis-adapter                     │
-  │  Cron Jobs     │ node-cron (runs every minute)                            │
-  │  Auth          │ JWT (cookie-based) + bcryptjs + Google OAuth              │
+  │  Cron Jobs     │ node-cron (runs every minute and 30 minutes)             │
+  │  Auth          │ JWT (cookie-based) + bcryptjs + Google/GitHub OAuth      │
   │  Email         │ Nodemailer (SMTP transport)                              │
-  │  Rate Limiting │ Custom Redis-backed rate limiter middleware               │
-  │  Env Mgmt      │ dotenvx / dotenv                                        │
+  │  Rate Limiting │ Custom Redis-backed rate limiter middleware              │
+  │  Env Mgmt      │ dotenvx / dotenv                                         │
+  │  Integrations  │ Jira REST API, Slack Webhooks                            │
   │  Dev Tooling   │ nodemon (hot-reload in development)                      │
   └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -104,6 +109,7 @@ overdue items and notifies users via in-app real-time notifications and email.
     - id (UUID, PK)
     - name, email (unique), password, salt
     - verified (bool), role (USER | ADMIN)
+    - jiraEmail, jiraDomain, jiraApiToken (encrypted), managerEmail
     - createdAt, updatedAt
 
   followups                  Core follow-up items
@@ -113,10 +119,17 @@ overdue items and notifies users via in-app real-time notifications and email.
     - status: PENDING | SNOOZED | ESCALATED | DONE
     - priority: LOW | MEDIUM | HIGH | URGENT
     - reminderPolicy: NORMAL | PERSISTENT | AGGRESSIVE
+    - externalSource (e.g., JIRA), externalId, externalUrl
     - ignoreCount, escalationLevel
     - isActive (bool)
-    - createdAt, updatedAt, completedAt, lastReminderSentAt
+    - createdAt, updatedAt, completedAt, lastReminderSentAt, lastManagerNotifiedAt
     - Indexes: userId, dueAt, status
+
+  jira_sync_logs             Jira Sync Audit Logs
+    - id, userId
+    - status: SUCCESS | FAILED
+    - ticketsSynced, errorMessage
+    - createdAt
 
   followup_events            Timeline / audit trail
     - id, followupId, userId
@@ -190,6 +203,7 @@ overdue items and notifies users via in-app real-time notifications and email.
   │   ├── auth/              User registration, login, OAuth, admin
   │   │   └── routes/        user.routes, oauth.routes, admin.routes
   │   ├── followups/         CRUD + status transitions for follow-ups
+  │   ├── jira/              Jira integrations (connect, sync, disconnect)
   │   ├── notifications/     Notification listing, read/unread, preferences
   │   ├── templates/         Follow-up templates + email templates
   │   ├── events/            Timeline event retrieval
@@ -199,10 +213,13 @@ overdue items and notifies users via in-app real-time notifications and email.
   │   ├── reminder.service.js      Main reminder engine + todo reminders
   │   ├── notification.service.js  Create, group, emit real-time notifications
   │   ├── notification.creator.js  Notification factory
-  │   └── event.service.js         Timeline event logger
+  │   ├── event.service.js         Timeline event logger
+  │   ├── jira.service.js          Jira ticket fetch mapping & sync
+  │   └── slack.service.js         Slack webhook notifications
   │
   ├── jobs/
-  │   └── reminder.job.js    Cron job (every minute) → runs both engines
+  │   ├── reminder.job.js    Cron job (every minute) → runs both engines
+  │   └── jira-sync.job.js   Cron job (every 30 mins) → syncs active Jira users
   │
   ├── queue/
   │   ├── queues.js          (Future) BullMQ / Redis-backed job queues
@@ -211,15 +228,17 @@ overdue items and notifies users via in-app real-time notifications and email.
   └── utils/
       ├── asyncHandler.js    Express async error wrapper
       ├── googleOAuth.js     Google OAuth token exchange helper
+      ├── encryption.js      AES-256-GCM encryption/decryption (tokens)
       └── response.js        Standardised API response helper
 
 
   API ROUTES:
   ────────────
   POST/GET   /api/users           Registration, login, logout, profile, verify
-  POST/GET   /api/oauth           Google OAuth login/callback
+  POST/GET   /api/oauth           Google/GitHub OAuth login/callback
   GET        /api/admin           Admin-only endpoints
   CRUD       /api/followups       Follow-up management (create, list, update, complete)
+  POST/DEL   /api/jira            Jira Account linking and sync (/api/jira/connect, sync, disconnect)
   GET/PATCH  /api/notifications   Notification inbox, mark read, preferences
   CRUD       /api/templates       Follow-up template management
   CRUD       /api/email-templates Email template management
@@ -248,6 +267,8 @@ overdue items and notifies users via in-app real-time notifications and email.
      - ignoreCount ≥ 5 → escalation level 3, priority → URGENT, policy → AGGRESSIVE,
                           status → ESCALATED
   7. Each action is logged to the timeline (REMINDER_SENT, ESCALATED events).
+  8. Manager & Slack Escalation — If a Jira-sourced ticket reaches Escalation Level 2+, 
+     it dynamically triggers a Slack webhook notification and an email to the user's manager.
 
   Todo Reminders:
   - Runs after the followup engine in the same cron tick.
@@ -332,6 +353,7 @@ overdue items and notifies users via in-app real-time notifications and email.
      - Email/password signup with email verification
      - Login with JWT (HTTP-only cookies)
      - Google OAuth integration
+     - GitHub OAuth integration
      - Forgot/reset password flow
      - Role-based access (USER / ADMIN)
 
@@ -346,6 +368,15 @@ overdue items and notifies users via in-app real-time notifications and email.
      - Policy-driven cooldown intervals
      - Automatic escalation based on ignore count
      - Priority and policy auto-upgrade on repeated ignores
+
+  ✅ Jira Integration
+     - Securely connect Jira accounts (AES-256 encrypted API tokens)
+     - Bi-directional sync mapping Jira tickets and Atlassian Document Formats to FollowUps
+     - Background cron job to keep tickets continuously synced every 30 mins
+  
+  ✅ Slack Escalation
+     - Critical overdue tickets (Level 2+) seamlessly trigger specific Slack Webhooks.
+     - Sends task summary, delay calculations, and direct Jira links to connected Slack channel.
 
   ✅ Real-Time Notifications
      - WebSocket-based push notifications via Socket.IO
@@ -439,6 +470,9 @@ overdue items and notifies users via in-app real-time notifications and email.
        SMTP_PASS=<smtp-pass>
        GOOGLE_CLIENT_ID=<google-oauth-client-id>
        GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
+       GITHUB_CLIENT_ID=<github-oauth-client-id>
+       GITHUB_CLIENT_SECRET=<github-oauth-client-secret>
+       SLACK_WEBHOOK_URL=<slack-webhook-url>
 
   6. Database migrations:
        cd backend

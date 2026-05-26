@@ -4,6 +4,7 @@ import { and, eq, lt, ne } from "drizzle-orm";
 
 import { notificationService } from "./notification.service.js";
 import { logEvent } from "./event.service.js";
+import { sendSlackNotification } from "./slack.service.js";
 
 // Cooldown mapping
 function getCooldownMs(policy) {
@@ -17,6 +18,18 @@ function getCooldownMs(policy) {
       return 60 * 60 * 1000; // 60 min
   }
 }
+
+function calculateDelay(dueAt) {
+  const now = new Date();
+  const diff = now - new Date(dueAt);
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} day(s)`;
+  return `${hours} hour(s)`;
+}
+
 // Only escalate based on ignoreCount thresholds
 function computeEscalationFromIgnoreCount(ignoreCount, current) {
   let newPriority = current.priority;
@@ -249,6 +262,13 @@ export async function runReminderEngine() {
       let updatedManagerNotifiedAt = followup.lastManagerNotifiedAt;
       console.log(`🔍 [Escalation Check] followup=${followup.id} externalSource="${followup.externalSource}" escalationLevel=${escalationFields.escalationLevel} (need >= 2)`);
       if (followup.externalSource === "JIRA" && escalationFields.escalationLevel >= 2) {
+        await sendSlackNotification({
+          title: followup.title,
+          assignee: user.email,
+          delay: calculateDelay(followup.dueAt),
+          link: followup.externalUrl
+        });
+
         console.log(`🔍 [Escalation Check] ✅ Conditions met, calling sendJiraManagerEscalation...`);
         const sent = await sendJiraManagerEscalation(followup, user, escalationFields.escalationLevel);
         if (sent) {
