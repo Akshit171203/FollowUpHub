@@ -5,6 +5,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
 import { encrypt } from "../../utils/encryption.js";
 import { syncUserJiraTickets } from "../../services/jira.service.js";
+import { validate } from "../../middlewares/validate.js";
+import { connectJiraSchema, listFollowupsQuery } from "../../middlewares/schemas.js";
 
 const router = express.Router();
 
@@ -12,7 +14,7 @@ const router = express.Router();
  * POST /api/jira/connect
  * Connect Jira Account securely
  */
-router.post("/connect", authenticateUser, async (req, res) => {
+router.post("/connect", authenticateUser, validate(connectJiraSchema), async (req, res) => {
   try {
     const { jiraEmail, jiraDomain, jiraApiToken, managerEmail } = req.body;
 
@@ -67,7 +69,7 @@ router.get("/sync", authenticateUser, async (req, res) => {
  * GET /api/jira/tickets
  * List synced Jira tickets
  */
-router.get("/tickets", authenticateUser, async (req, res) => {
+router.get("/tickets", authenticateUser, validate(listFollowupsQuery), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Mail,
   GripVertical,
@@ -23,24 +24,31 @@ export default function FeatureBentoGrid() {
     <section className="py-24 px-4 bg-[#f8f9fa]">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-inter text-[3rem] sm:text-[4rem] lg:text-[4.5rem] tracking-[-0.03em] leading-[1] mb-4">
-            <span className="text-gray-900 font-medium">Everything </span>
-            <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-500">
-              You Need
-            </span>
-          </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            A complete suite of features designed to keep you on top of every
-            follow-up, task, and deadline.
-          </p>
-        </motion.div>
+        <div className="w-full flex flex-col items-center text-center z-20 mb-16 lg:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex flex-col items-center"
+          >
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white border border-slate-200 shadow-sm mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-600">Platform Capabilities</span>
+            </div>
+
+            <h2 className="font-inter text-4xl sm:text-5xl lg:text-7xl tracking-[-0.02em] leading-tight mb-6">
+              <span className="text-slate-900 font-medium">Everything </span>
+              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+                You Need.
+              </span>
+            </h2>
+            
+            <p className="text-slate-500 text-lg sm:text-xl leading-relaxed max-w-5xl font-light">
+              A complete suite of features designed to keep you on top of every follow-up, task, and deadline.
+            </p>
+          </motion.div>
+        </div>
 
         {/* Row 1: 3 equal cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -54,7 +62,7 @@ export default function FeatureBentoGrid() {
             className="bg-white rounded-[2rem] p-2 pb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/80 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow"
           >
             {/* Visual mockup */}
-            <div className="bg-gradient-to-br from-[#f5f3ff] to-[#faf5ff] rounded-[1.5rem] p-6 mb-6 min-h-[220px] relative overflow-hidden flex flex-col justify-center">
+            <div className="bg-gradient-to-br from-[#f5f3ff] to-[#faf5ff] rounded-[1.5rem] p-6 mb-6 h-[250px] relative overflow-hidden flex flex-col justify-center">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.12)_0%,transparent_70%)]" />
               <div className="relative z-10 w-full max-w-[220px] mx-auto space-y-3">
                 {[
@@ -109,35 +117,54 @@ export default function FeatureBentoGrid() {
             className="bg-white rounded-[2rem] p-2 pb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/80 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow"
           >
             {/* Visual mockup */}
-            <div className="bg-gradient-to-br from-[#f0f4ff] to-[#f5f3ff] rounded-[1.5rem] p-6 mb-6 min-h-[220px] relative overflow-hidden flex flex-col items-center justify-center">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.12)_0%,transparent_70%)]" />
-              <div className="relative z-10 flex flex-col items-center gap-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-white">
-                    <FaJira className="w-6 h-6 text-[#0052CC]" />
+            <div className="bg-gradient-to-br from-[#f5f3ff] to-[#faf5ff] rounded-[1.5rem] p-5 mb-6 h-[250px] relative overflow-hidden flex flex-col justify-center">
+              {/* Background Glow */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1)_0%,transparent_70%)]" />
+              
+              <div className="relative z-10 flex items-start justify-between w-full max-w-[240px] mx-auto mt-[-24px]">
+                
+                {/* Left Side (Jira) */}
+                <div className="flex flex-col items-center gap-3 relative">
+                  <div className="relative z-10">
+                    <FaJira className="w-11 h-11 text-[#0052CC] drop-shadow-sm" />
+                    <div className="absolute -top-1 -right-2 w-5 h-5 bg-[#0052CC] text-white text-[9px] font-bold flex items-center justify-center rounded-full border-[2.5px] border-white shadow-sm">3</div>
                   </div>
-                  <motion.div
-                    animate={{ x: [0, 8, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="flex gap-1.5"
-                  >
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        animate={{ opacity: [0.2, 0.8, 0.2] }}
-                        transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
-                        className="w-1.5 h-1.5 rounded-full bg-indigo-400"
-                      />
-                    ))}
-                  </motion.div>
-                  <div className="w-12 h-12 bg-[#030303] rounded-2xl flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-5 h-5 text-white" />
+                  <span className="text-[9px] font-bold text-gray-400 tracking-widest">WORKSPACE</span>
+                </div>
+
+                {/* Center Sync Indicator */}
+                <div className="flex flex-col justify-center items-center flex-1 px-3 h-[44px]">
+                   <div className="w-full relative flex flex-col items-center gap-2">
+                     <span className="text-[8px] font-bold text-blue-500/80 tracking-[0.2em] uppercase">Webhooks</span>
+                     {/* Single animated line */}
+                     <div className="h-[2.5px] w-full bg-blue-100 rounded-full overflow-hidden relative">
+                        <motion.div 
+                          className="absolute top-0 bottom-0 left-0 w-1/3 bg-blue-500 rounded-full"
+                          animate={{ x: ["-100%", "300%"] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        />
+                     </div>
+                     <span className="text-[8px] font-bold text-purple-500/80 tracking-[0.2em] uppercase">REST API</span>
+                   </div>
+                </div>
+
+                {/* Right Side (App) */}
+                <div className="flex flex-col items-center gap-3 relative">
+                  <div className="relative z-10">
+                    <Image 
+                      src="/FollowUpHubIcon.png" 
+                      alt="FollowUpHub" 
+                      width={44} 
+                      height={44} 
+                      className="w-11 h-11 object-contain drop-shadow-md"
+                    />
                   </div>
+                  <span className="text-[9px] font-bold text-gray-400 tracking-widest">ENGINE</span>
                 </div>
-                <div className="bg-white/70 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm border border-white text-[11px] font-medium text-gray-600">
-                  Bi-directional sync active
-                </div>
+
               </div>
+
+
             </div>
             <div className="px-5">
               <h3 className="text-[17px] font-semibold text-gray-900 mb-2">
@@ -159,7 +186,7 @@ export default function FeatureBentoGrid() {
             className="bg-white rounded-[2rem] p-2 pb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/80 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow"
           >
             {/* Visual mockup */}
-            <div className="bg-gradient-to-br from-[#fdf4ff] to-[#f5f3ff] rounded-[1.5rem] p-6 mb-6 min-h-[220px] relative overflow-hidden flex flex-col justify-center">
+            <div className="bg-gradient-to-br from-[#fdf4ff] to-[#f5f3ff] rounded-[1.5rem] p-6 mb-6 h-[250px] relative overflow-hidden flex flex-col justify-center">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(217,70,239,0.08)_0%,transparent_70%)]" />
               <div className="relative z-10 w-full max-w-[220px] mx-auto space-y-4">
                 {/* Slack message bubble */}

@@ -2,15 +2,20 @@ import cron from "node-cron";
 import { runReminderEngine, runTodoReminderEngine } from "../services/reminder.service.js";
 
 export function startReminderJob() {
-  console.log(" Reminder Cron Job started (runs every minute) at", new Date().toISOString());
+  console.log("[Cron] Reminder Job started (every minute) at", new Date().toISOString());
 
   const job = cron.schedule("* * * * *", async () => {
     const now = new Date();
-    console.log(` [${now.toISOString()}] Running reminder engine...`);
-    await runReminderEngine();
-    await runTodoReminderEngine();
-    console.log(` [${now.toISOString()}] Reminder engine completed.`);
+    console.log(`[Cron] [${now.toISOString()}] Running reminder engine...`);
+    try {
+      await runReminderEngine();
+      await runTodoReminderEngine();
+    } catch (err) {
+      console.error(`[Cron] [${now.toISOString()}] Reminder engine error:`, err);
+    }
+    console.log(`[Cron] [${now.toISOString()}] Reminder engine completed.`);
   });
 
-  console.log(" Cron job scheduled:", job ? "SUCCESS" : "FAILED");
+  console.log("[Cron] Reminder job scheduled:", job ? "SUCCESS" : "FAILED");
+  return job;
 }

@@ -1,6 +1,12 @@
 import express from "express";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
 import * as todoService from "./todo.service.js";
+import { validate } from "../../middlewares/validate.js";
+import {
+  createTodoSchema,
+  updateTodoSchema,
+  followupIdParam,
+} from "../../middlewares/schemas.js";
 
 const router = express.Router();
 
@@ -24,7 +30,7 @@ router.get("/", authenticateUser, async (req, res) => {
  * POST /api/todos
  * Create a new todo
  */
-router.post("/", authenticateUser, async (req, res) => {
+router.post("/", authenticateUser, validate(createTodoSchema), async (req, res) => {
   try {
     const { title, notes, remindAt, forDate } = req.body;
     
@@ -53,7 +59,7 @@ router.post("/", authenticateUser, async (req, res) => {
  * PATCH /api/todos/:id
  * Update a todo
  */
-router.patch("/:id", authenticateUser, async (req, res) => {
+router.patch("/:id", authenticateUser, validate(updateTodoSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, notes, status, remindAt } = req.body;
@@ -84,7 +90,7 @@ router.patch("/:id", authenticateUser, async (req, res) => {
  * DELETE /api/todos/:id
  * Delete a todo
  */
-router.delete("/:id", authenticateUser, async (req, res) => {
+router.delete("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -105,7 +111,7 @@ router.delete("/:id", authenticateUser, async (req, res) => {
  * POST /api/todos/:id/promote
  * Promote todo to followup
  */
-router.post("/:id/promote", authenticateUser, async (req, res) => {
+router.post("/:id/promote", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const { id } = req.params;
     

@@ -62,12 +62,22 @@ export default function RealTimeDemo() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex flex-col items-start"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-6">
-              Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Intelligence</span>
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/5 border border-white/10 shadow-sm mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-300">Live Engine</span>
+            </div>
+
+            <h2 className="font-inter text-4xl sm:text-5xl lg:text-7xl tracking-[-0.02em] leading-tight mb-6">
+              <span className="text-white font-medium">Live </span>
+              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+                Intelligence.
+              </span>
             </h2>
-            <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
+            
+            <p className="text-slate-400 text-lg sm:text-xl leading-relaxed max-w-xl font-light">
               A realtime orchestration layer that never sleeps. Instant synchronization across your entire workspace, powered by an intelligent event stream.
             </p>
           </motion.div>

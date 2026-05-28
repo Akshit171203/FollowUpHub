@@ -7,6 +7,14 @@ import jwt from "jsonwebtoken";
 import { authenticateUser } from "../../../middlewares/auth.middleware.js";
 import { sendEmail } from "../../../config/mailer.js";
 import { rateLimit } from "../../../middlewares/rateLimiter.js";
+import { validate } from "../../../middlewares/validate.js";
+import {
+  signupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  resendVerificationSchema,
+} from "../../../middlewares/schemas.js";
 
 
 const router = express.Router();
@@ -15,6 +23,7 @@ const router = express.Router();
 router.post(
   "/signup",
   rateLimit({ keyPrefix: "signup", limit: 5, windowSec: 300 }),
+  validate(signupSchema),
   async (req, res) => {
     const { email, password, name } = req.body;
 
@@ -82,6 +91,7 @@ router.post(
 router.post(
   "/login",
   rateLimit({ keyPrefix: "login", limit: 8, windowSec: 300 }),
+  validate(loginSchema),
   async (req, res) => {
     const { email, password } = req.body;
 
@@ -183,6 +193,7 @@ router.get("/verify-email", async (req, res) => {
 router.post(
   "/forgot-password",
   rateLimit({ keyPrefix: "forgot", limit: 3, windowSec: 300 }),
+  validate(forgotPasswordSchema),
   async (req, res) => {
     const { email } = req.body;
 
@@ -224,7 +235,7 @@ router.post(
 );
 
 // RESET PASSWORD
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", validate(resetPasswordSchema), async (req, res) => {
   const { token, newPassword } = req.body;
 
   if (!token) return res.status(400).json({ message: "Reset token missing" });
@@ -262,6 +273,7 @@ router.post("/reset-password", async (req, res) => {
 router.post(
   "/resend-verification",
   rateLimit({ keyPrefix: "resendverify", limit: 3, windowSec: 300 }),
+  validate(resendVerificationSchema),
   async (req, res) => {
     const { email } = req.body;
 

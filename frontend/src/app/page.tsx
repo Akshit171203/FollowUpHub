@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Menu } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import HeroSection from "@/components/homepage/HeroSection";
 import FeatureBentoGrid from "@/components/homepage/FeatureBentoGrid";
 import RealTimeDemo from "@/components/homepage/RealTimeDemo";
+import JiraIntegrationSection from "@/components/homepage/JiraIntegrationSection";
 import ArchitectureVisualization from "@/components/homepage/ArchitectureVisualization";
 import SecuritySection from "@/components/homepage/SecuritySection";
 import Footer from "@/components/homepage/Footer";
@@ -13,27 +15,27 @@ import Footer from "@/components/homepage/Footer";
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#03050A] font-sans text-slate-300 antialiased selection:bg-cyan-500/30">
-      {/* Navigation - Floating Modern UI */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4 md:px-0">
-        <div className="bg-[#0A0C10]/95 backdrop-blur-3xl border border-white/10 rounded-full px-4 md:px-6 py-2.5 flex items-center justify-between shadow-[0_16px_40px_rgba(0,0,0,0.5)] transition-all duration-300">
+      {/* Navigation - Dark Pill */}
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[95%] xl:max-w-[1100px] transition-all duration-300">
+        <div className="bg-black rounded-2xl px-6 py-3.5 flex items-center justify-between border border-white/5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <motion.div whileHover={{ scale: 1.05 }} className="flex items-center shrink-0">
+          <Link href="/" className="flex items-center gap-2 pl-2">
+            <motion.div whileHover={{ scale: 1.02 }} className="flex items-center shrink-0 transition-transform">
               <img 
                 src="/FollowUpHub.png" 
                 alt="FollowUpHub" 
-                className="h-6 md:h-7 w-auto object-contain drop-shadow-md brightness-0 invert"
+                className="h-6 md:h-7 w-auto object-contain brightness-0 invert opacity-90"
               />
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {['Features', 'Demo', 'Architecture', 'Security'].map((item) => (
+          <div className="hidden md:flex items-center space-x-8">
+            {['Features', 'Integration', 'Architecture', 'Security'].map((item) => (
               <Link 
                 key={item}
                 href={`#${item.toLowerCase()}`} 
-                className="px-4 py-2 text-[13px] font-medium rounded-full transition-all duration-300 text-slate-300 hover:text-white hover:bg-white/5"
+                className="text-[13px] font-medium text-slate-300 hover:text-white transition-colors"
               >
                 {item}
               </Link>
@@ -41,23 +43,23 @@ export default function HomePage() {
           </div>
 
           {/* Auth Buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-5">
             <Link
               href="/login"
-              className="hidden sm:block text-[13px] font-medium px-4 py-2 rounded-full transition-all duration-300 text-slate-300 hover:text-white hover:bg-white/5"
+              className="hidden sm:block text-[13px] font-medium text-slate-300 hover:text-white transition-colors"
             >
-              Sign In
+              Sign in
             </Link>
             <Link href="/signup">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="font-semibold text-[13px] px-5 py-2 rounded-full transition-all bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="font-semibold text-[13px] px-6 py-2.5 rounded-xl transition-all bg-white text-black hover:bg-slate-50"
               >
                 Get Started
               </motion.button>
             </Link>
-            <button className="md:hidden p-2 text-slate-400 hover:text-white">
+            <button className="md:hidden p-2 text-slate-300 hover:text-white">
               <Menu className="w-5 h-5" />
             </button>
           </div>
@@ -70,6 +72,10 @@ export default function HomePage() {
 
         <div id="features" className="scroll-mt-24">
           <FeatureBentoGrid />
+        </div>
+
+        <div id="integration" className="scroll-mt-24">
+          <JiraIntegrationSection />
         </div>
 
         <div id="demo" className="scroll-mt-24">

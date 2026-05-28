@@ -5,16 +5,16 @@ import { motion } from "framer-motion";
 import { FaJira, FaSlack, FaGoogle, FaGithub } from "react-icons/fa";
 import { Activity, Database, Network, Server, Zap, Globe } from "lucide-react";
 
-// --- Data Models ---
+// --- Data Models (Monochrome Shades) ---
 const sources = [
-  { id: "jira", title: "Jira", sub: "Ticket Webhooks", icon: FaJira, hex: "#4C9AFF" },
-  { id: "slack", title: "Slack", sub: "Channel Events", icon: FaSlack, hex: "#E01E5A" },
-  { id: "github", title: "GitHub", sub: "PR Triggers", icon: FaGithub, hex: "#64748b" }, // slate-500 for better visibility in light mode
+  { id: "jira", title: "Jira", sub: "Ticket Webhooks", icon: FaJira, hex: "#111827" }, // gray-900
+  { id: "slack", title: "Slack", sub: "Channel Events", icon: FaSlack, hex: "#374151" }, // gray-700
+  { id: "github", title: "GitHub", sub: "PR Triggers", icon: FaGithub, hex: "#4B5563" }, // gray-600
 ];
 
 const storage = [
-  { id: "postgres", title: "PostgreSQL", sub: "Primary Datastore", icon: Database, hex: "#06b6d4" }, // cyan-500
-  { id: "redis", title: "Redis", sub: "Event Cache & Queue", icon: Zap, hex: "#ef4444" }, // red-500
+  { id: "postgres", title: "PostgreSQL", sub: "Primary Datastore", icon: Database, hex: "#1F2937" }, // gray-800
+  { id: "redis", title: "Redis", sub: "Event Cache & Queue", icon: Zap, hex: "#4B5563" }, // gray-600
 ];
 
 // --- Subcomponents ---
@@ -29,25 +29,22 @@ const NodeCard = ({ title, sub, icon: Icon, hex, delay }: any) => (
   >
     {/* Hover Outer Glow */}
     <div 
-      className="absolute -inset-0.5 opacity-0 group-hover:opacity-[0.15] blur-md transition-all duration-500 rounded-2xl" 
+      className="absolute -inset-0.5 opacity-0 group-hover:opacity-[0.10] blur-md transition-all duration-500 rounded-2xl" 
       style={{ background: `linear-gradient(to right, ${hex}, transparent)` }}
     />
     
     <div className="relative h-full p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-4 hover:border-slate-300 transition-all overflow-hidden">
        {/* Inner subtle ambient glow */}
-       <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.04] blur-2xl pointer-events-none transition-opacity group-hover:opacity-[0.08]" style={{ backgroundColor: hex }} />
+       <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] blur-2xl pointer-events-none transition-opacity group-hover:opacity-[0.06]" style={{ backgroundColor: hex }} />
        
-       <div 
-         className="w-12 h-12 rounded-lg flex items-center justify-center border shadow-inner relative z-10 transition-transform group-hover:scale-105"
-         style={{ backgroundColor: `${hex}10`, borderColor: `${hex}30`, boxShadow: `inset 0 0 12px ${hex}10` }}
-       >
-          <Icon className="w-6 h-6" style={{ color: hex }} />
+       <div className="w-12 h-12 flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
+          <Icon className="w-7 h-7" style={{ color: hex }} />
        </div>
        
        <div className="flex-1 relative z-10">
           <div className="flex items-center justify-between mb-0.5">
              <h4 className="text-slate-900 text-[15px] font-semibold tracking-wide">{title}</h4>
-             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse shadow-[0_0_8px_rgba(148,163,184,0.5)]" />
           </div>
           <p className="text-slate-500 text-[12px] font-medium leading-tight">{sub}</p>
        </div>
@@ -70,17 +67,32 @@ const HorizontalPipe = ({ color, delay, reverse = false }: { color: string, dela
   </div>
 );
 
-const InternalModule = ({ title, sub, icon: Icon, hex }: any) => (
-  <div className="group flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-    <div 
-      className="w-10 h-10 rounded-lg flex items-center justify-center border shadow-inner transition-transform group-hover:scale-105"
-      style={{ backgroundColor: `${hex}10`, borderColor: `${hex}25`, boxShadow: `inset 0 0 12px ${hex}15` }}
-    >
-      <Icon className="w-5 h-5" style={{ color: hex }} />
+const InternalModule = ({ title, sub, icon: Icon, metric, statusColor, sparkline }: any) => (
+  <div className="group flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-200 transition-all shadow-sm">
+    <div className="flex items-center gap-3.5">
+      <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-200 shadow-inner transition-transform group-hover:scale-105">
+        <Icon className="w-4 h-4 text-slate-700" />
+      </div>
+      <div>
+        <h4 className="text-slate-800 text-[13px] font-bold tracking-wide">{title}</h4>
+        <p className="text-slate-500 text-[11px] font-medium mt-0.5">{sub}</p>
+      </div>
     </div>
-    <div>
-      <h4 className="text-slate-800 text-[14px] font-semibold">{title}</h4>
-      <p className="text-slate-500 text-[11px] font-medium mt-0.5">{sub}</p>
+    
+    <div className="flex flex-col items-end gap-1.5">
+       <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`} />
+          <span className="text-[10px] font-mono font-medium text-slate-500">{metric}</span>
+       </div>
+       <div className="flex gap-[3px] items-end h-3">
+          {sparkline.map((height: number, i: number) => (
+             <div 
+               key={i} 
+               className="w-1 rounded-sm bg-slate-200 group-hover:bg-slate-300 transition-colors"
+               style={{ height: `${height}px` }}
+             />
+          ))}
+       </div>
     </div>
   </div>
 );
@@ -101,31 +113,27 @@ export default function EcosystemVisualization() {
       <div className="relative w-full z-10 flex flex-col gap-24 px-4 sm:px-6 max-w-7xl mx-auto">
         
         {/* HEADER */}
-        <div className="w-full text-center max-w-3xl mx-auto">
+        <div className="w-full flex flex-col items-center text-center z-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex flex-col items-center"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white mb-8 shadow-sm">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
-              </span>
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-600">Intelligent Pipeline</span>
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white border border-slate-200 shadow-sm mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-600">Intelligent Pipeline</span>
             </div>
 
-            <h2 className="font-inter text-[3rem] sm:text-[4rem] lg:text-[4.5rem] tracking-[-0.03em] leading-[1] text-center">
-              <span className="text-slate-900 font-medium">
-                The Data{" "}
-              </span>
-              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
-                Ecosystem
+            <h2 className="font-inter text-4xl sm:text-5xl lg:text-7xl tracking-[-0.02em] leading-tight mb-6">
+              <span className="text-slate-900 font-medium">The Data </span>
+              <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+                Ecosystem.
               </span>
             </h2>
             
-            <p className="mt-8 text-slate-600 text-lg md:text-xl leading-[1.6] mx-auto font-light">
+            <p className="text-slate-500 text-lg sm:text-xl leading-relaxed max-w-3xl font-light">
               A high-performance orchestration layer. Real-time events from your stack stream into a central nervous system that never sleeps.
             </p>
           </motion.div>
@@ -170,28 +178,26 @@ export default function EcosystemVisualization() {
               
               <div className="relative z-10 flex flex-col h-full">
                  {/* Header */}
-                 <div className="flex items-center justify-between pb-6 border-b border-slate-100 mb-6">
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center shadow-sm">
-                          <Server className="w-5 h-5 text-blue-600" />
+                 <div className="flex items-start justify-between pb-6 border-b border-slate-100 mb-6">
+                    <div className="flex items-start gap-3.5">
+                       <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center shadow-md">
+                          <Server className="w-5 h-5 text-white" />
                        </div>
                        <div>
-                         <h3 className="text-slate-900 text-[15px] font-bold uppercase tracking-widest">Core Engine</h3>
-                         <div className="text-slate-500 text-[10px] font-mono mt-0.5 tracking-wider">FOLLOWUPHUB-V2.0</div>
+                         <h3 className="text-slate-900 text-[15px] font-bold uppercase tracking-widest mb-1">Core Engine</h3>
+                         <p className="text-slate-500 text-[11px] leading-relaxed max-w-[240px]">
+                           High-throughput orchestration layer processing events in real-time.
+                         </p>
                        </div>
-                    </div>
-                    <div className="px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-mono uppercase font-bold flex items-center gap-1.5 shadow-sm">
-                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                       99.99% OK
                     </div>
                  </div>
                  
                  {/* Processing Modules */}
-                 <div className="flex-1 flex flex-col justify-between gap-2">
-                    <InternalModule icon={Globe} title="Edge Network" sub="Global Request Routing" hex="#0284c7" />
-                    <InternalModule icon={Network} title="WebSocket Mesh" sub="Real-time Client Sync" hex="#059669" />
-                    <InternalModule icon={Server} title="Express Router" sub="Event Ingestion & API" hex="#7c3aed" />
-                    <InternalModule icon={Activity} title="Worker Pool" sub="Async Background Jobs" hex="#ea580c" />
+                 <div className="flex-1 flex flex-col justify-between gap-3">
+                    <InternalModule icon={Network} title="Webhook Receiver" sub="Ingests Jira Events" metric="12ms avg" statusColor="bg-emerald-500" sparkline={[4, 7, 5, 10, 6, 8, 5]} />
+                    <InternalModule icon={Activity} title="SLA Rules Engine" sub="Evaluates Ticket Staleness" metric="85K ops/s" statusColor="bg-blue-500" sparkline={[6, 9, 8, 12, 7, 9, 10]} />
+                    <InternalModule icon={Server} title="Escalation Manager" sub="Routes Alerts to Teams" metric="< 1ms lat" statusColor="bg-purple-500" sparkline={[3, 4, 3, 5, 4, 3, 4]} />
+                    <InternalModule icon={Database} title="State Synchronizer" sub="Maintains Ticket State" metric="Synced" statusColor="bg-emerald-500" sparkline={[8, 7, 9, 8, 7, 8, 9]} />
                  </div>
               </div>
             </div>

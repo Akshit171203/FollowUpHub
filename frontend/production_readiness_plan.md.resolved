@@ -1,0 +1,393 @@
+# 🚀 FollowUpHub — Production Readiness Plan
+
+## Audit Summary
+
+After a deep review of the entire codebase, I've identified **35+ issues** across security, reliability, DevOps, and code quality that need attention before this project is production-ready.
+
+---
+
+## P0 — Critical (Must Fix Before Deploy)
+
+### 1. 🔴 Secrets Leaked in `.env` (Committed to Git)
+**File:** `backend/.env`
+- Real Gmail credentials, Google/GitHub OAuth secrets, Slack webhook URL, and JWT secrets are **committed to the repo**.
+- `.gitignore` has `.env` and `.env.*` but the file was already tracked before the ignore rule was added.
+
+**Fix:**
+- Remove `.env` from git tracking: `git rm --cached backend/.env`
+- Rotate ALL compromised credentials immediately (Gmail app password, OAuth secrets, Slack webhook, JWT secrets)
+- Create a `backend/.env.example` with placeholder values
+- Add `frontend/.env.local` to `.gitignore` (already there, but verify)
+
+---
+
+### 2. 🔴 Hardcoded `localhost` URLs in Email Templates
+**File:** `backend/src/modules/auth/routes/user.routes.js`
+- Line 64: `http://localhost:5001/api/users/verify-email?token=...`
+- Line 209: `http://localhost:3000/reset-password?token=...`
+- Line 303: `http://localhost:3000/api/users/verify-email?token=...` (also wrong path — should be backend URL)
+
+**Fix:**
+- Use `process.env.SERVER_URL` and `process.env.CLIENT_URL` for all email link generation
+- Fix the inconsistent verify-email URL on line 303 (points to frontend but should point to backend)
+
+---
+
+### 3. 🔴 Cookie Security Settings Hardcoded for Dev
+**File:** `backend/src/modules/auth/routes/user.routes.js`
+- Lines 115-118 and 140-143: `secure: false`, `sameSite: "lax"` hardcoded
+- In production with HTTPS, `secure` MUST be `true`
+
+**Fix:**
+- Read from env: `secure: process.env.NODE_ENV === 'production'`
+- Use `sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'`
+- Set `domain` for cross-subdomain cookie sharing if needed
+
+---
+
+### 4. 🔴 JWT Token Expires in Only 1 Hour (No Refresh Token)
+**File:** `backend/src/modules/auth/routes/user.routes.js` (line 112)
+- Token expires in `1h` → users get logged out every hour
+- No refresh token mechanism → forces full re-login
+
+**Fix:**
+- Implement a refresh token flow (short-lived access token + long-lived refresh token in HTTP-only cookie)
+- OR extend token expiry to `7d` (simpler, less secure) with `JWT_EXPIRES_IN` env var (which exists in `.env` but isn't used!)
+
+---
+
+### 5. 🔴 No Global Error Handler Middleware Mounted
+**File:** `backend/src/app.js`
+- `error.middleware.js` exists but is **never imported or mounted** in `app.js`
+- Unhandled errors will crash the process or leak stack traces
+
+**Fix:**
+- Import and mount after all routes: `app.use(errorHandler)`
+
+---
+
+### 6. 🔴 No Input Validation / Sanitization
+**Files:** All route handlers
+- No validation on request bodies (signup accepts any shape, followup creation accepts any values)
+- SQL injection risk is mitigated by Drizzle ORM, but XSS via `notes`, `title`, `bodyHtml` fields is possible
+
+**Fix:**
+- Add `zod` or `joi` validation schemas for all API inputs
+- Sanitize HTML in `bodyHtml` fields (email templates)
+
+---
+
+### 7. 🔴 No Graceful Shutdown
+**File:** `backend/src/server.js`
+- Process crash = dropped connections, incomplete DB writes, orphaned cron jobs
+- No `SIGTERM`/`SIGINT` handlers
+
+**Fix:**
+- Add graceful shutdown: stop cron jobs, close DB pool, close Redis, close HTTP server
+
+---
+
+### 8. 🔴 Missing `express` and Other Core Dependencies
+**File:** `backend/package.json`
+- `express`, `cors`, `cookie-parser`, `dotenv`, `jsonwebtoken`, `nodemailer`, `jwt` are all **used but NOT listed** in `package.json`
+- Only 7 deps listed but ~15+ are imported
+
+**Fix:**
+- Run `npm ls` to identify missing deps and add them to `package.json`
+
+---
+
+## P1 — High Priority (Fix Before Production Traffic)
+
+### 9. 🟠 No Helmet Security Headers
+**File:** `backend/src/app.js`
+- No `helmet` middleware for security headers (CSP, X-Frame-Options, HSTS, etc.)
+
+**Fix:**
+```js
+import helmet from 'helmet';
+app.use(helmet());
+```
+
+---
+
+### 10. 🟠 CORS Origin Not Production-Ready
+**File:** `backend/src/app.js` (line 23)
+- Single origin string: `process.env.CLIENT_URL || "http://localhost:3000"`
+- Doesn't support multiple origins or regex patterns
+
+**Fix:**
+- Support comma-separated origins in env: `CLIENT_URL=https://app.followuphub.com,https://www.followuphub.com`
+- Parse and validate dynamically
+
+---
+
+### 11. 🟠 No Request Body Size Limit
+**File:** `backend/src/app.js`
+- `app.use(express.json())` has no size limit → vulnerable to large payload DoS
+
+**Fix:**
+```js
+app.use(express.json({ limit: '1mb' }));
+```
+
+---
+
+### 12. 🟠 Database Pool Not Configured for Production
+**File:** `backend/src/config/db.js`
+- No pool size, idle timeout, or connection timeout configured
+- Default `pg.Pool` settings may be insufficient under load
+
+**Fix:**
+```js
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
+```
+
+---
+
+### 13. 🟠 Mailer Creates New Transport on Every Email
+**File:** `backend/src/config/mailer.js`
+- `nodemailer.createTransport()` is called inside `sendEmail()` → creates a new SMTP connection per email
+- Inefficient and slow under load
+
+**Fix:**
+- Create transport once at module level, reuse for all calls
+
+---
+
+### 14. 🟠 Reminder Engine Does Redundant Double Query
+**File:** `backend/src/services/reminder.service.js` (lines 144-178)
+- First queries overdue followups (lines 144-156), then immediately queries again with a JOIN (lines 165-178)
+- The first query result is never used
+
+**Fix:**
+- Remove the first query, keep only the joined query
+
+---
+
+### 15. 🟠 `console.log` Everywhere — No Structured Logging
+**Files:** All backend files
+- Emojis and `console.log/error` used everywhere
+- No log levels, no structured JSON output, no correlation IDs
+
+**Fix:**
+- Add `pino` or `winston` with JSON output
+- Add request ID middleware for traceability
+
+---
+
+### 16. 🟠 No Health Check for Dependencies
+**File:** `backend/src/app.js` (line 42)
+- Health endpoint returns `{ ok: true }` without checking DB or Redis connectivity
+
+**Fix:**
+- Check DB `pool.query('SELECT 1')` and Redis `redisClient.ping()` in health endpoint
+
+---
+
+### 17. 🟠 Encryption Key Fallback is Insecure
+**File:** `backend/src/utils/encryption.js` (lines 10-12)
+- Falls back to a hardcoded `'fallback_secret_password'` when `ENCRYPTION_KEY` env var is missing
+- This means Jira API tokens could be encrypted with a known key
+
+**Fix:**
+- In production, throw an error if `ENCRYPTION_KEY` is not set (no fallback)
+
+---
+
+### 18. 🟠 Frontend Metadata is "MVP"
+**File:** `frontend/src/app/layout.tsx` (line 11)
+- `description: "MVP"` — Not production-appropriate SEO metadata
+
+**Fix:**
+- Add proper title, description, Open Graph tags, favicon configuration
+
+---
+
+## P2 — Medium Priority (Should Fix for Production Quality)
+
+### 19. 🟡 Docker Compose Not Production-Ready
+**File:** `docker-compose.yml`
+- No resource limits, no health checks, no logging drivers
+- No backend/frontend services defined (only DB + Redis)
+- Port mapping (`5434:5432`) is dev-specific
+
+**Fix:**
+- Add backend + frontend services
+- Add health checks, resource limits, restart policies
+- Create `docker-compose.prod.yml` override
+
+---
+
+### 20. 🟡 No Database Migration Strategy
+**Files:** `backend/drizzle.config.js`, `backend/package.json`
+- Only `db:generate` and `db:push` scripts — `db:push` is not safe for production
+- No `db:migrate` command for applying migrations
+
+**Fix:**
+- Add `"db:migrate": "drizzle-kit migrate"` script
+- Use migrations (not push) in production
+
+---
+
+### 21. 🟡 Frontend Build Not Tested
+- No CI/CD pipeline
+- No `next build` verification script
+
+**Fix:**
+- Add build verification: `"build:check": "next build"`
+- Set up GitHub Actions for CI
+
+---
+
+### 22. 🟡 No Rate Limiting on Most Endpoints
+**File:** `backend/src/modules/auth/routes/user.routes.js`
+- Only signup, login, forgot-password, and resend-verification have rate limits
+- Follow-up CRUD, notifications, templates have **no** rate limiting
+
+**Fix:**
+- Add a global rate limiter (e.g., 100 req/min per user)
+- Add stricter limits on write endpoints
+
+---
+
+### 23. 🟡 No CSRF Protection
+- Cookie-based auth without CSRF tokens
+- `sameSite: lax` helps but doesn't fully protect POST requests from subdomains
+
+**Fix:**
+- Add CSRF token middleware or use `sameSite: strict` in production
+
+---
+
+### 24. 🟡 `next.config.ts` is Empty
+**File:** `frontend/next.config.ts`
+- No image domains, no rewrites/redirects, no security headers, no output config
+
+**Fix:**
+- Add `output: 'standalone'` for Docker deployment
+- Add security headers
+- Configure image domains if using external images
+
+---
+
+### 25. 🟡 Stale/Unnecessary Files in Repository
+**Files:**
+- `frontend/fix_glows.py` — Python script, doesn't belong
+- `backend/test-*.js` (6 files) — Test scripts in root, should be in a `tests/` dir or removed
+- `frontend/HOMEPAGE_*.md`, `frontend/ARCHITECTURE_UPGRADE.md` — Dev docs in production code
+- `frontend/QUICK_START.md` — Duplicate of root README info
+
+**Fix:**
+- Clean up or move to a `docs/` directory
+- Add to `.gitignore` or delete
+
+---
+
+### 26. 🟡 No Error Boundaries in Frontend
+**File:** `frontend/src/app/(app)/layout.tsx`
+- No React error boundaries → white screen on component errors
+
+**Fix:**
+- Add `error.tsx` files in route segments
+- Add a global error boundary
+
+---
+
+### 27. 🟡 Socket.IO Reconnection Not Handled
+**File:** `frontend/src/lib/socket.ts`
+- No reconnection strategy, no exponential backoff
+- Connection errors just log to console
+
+**Fix:**
+- Add reconnection config: `reconnectionAttempts`, `reconnectionDelay`
+- Show connection status in UI
+
+---
+
+## P3 — Nice to Have (Polish for Production)
+
+### 28. 🔵 No Compression Middleware
+**File:** `backend/src/app.js`
+- No gzip/brotli compression for API responses
+
+**Fix:**
+```js
+import compression from 'compression';
+app.use(compression());
+```
+
+---
+
+### 29. 🔵 No API Versioning
+- Routes are `/api/users`, `/api/followups` — no version prefix
+- Breaking changes will affect all clients
+
+**Fix:**
+- Prefix routes with `/api/v1/`
+
+---
+
+### 30. 🔵 No Request Timeout
+- Long-running requests can hang indefinitely
+
+**Fix:**
+- Add server timeout: `httpServer.timeout = 30000;`
+
+---
+
+### 31. 🔵 Missing `robots.txt` and `sitemap.xml`
+**Dir:** `frontend/public/`
+- No SEO files for the landing page
+
+---
+
+### 32. 🔵 No Loading/Error States for All Routes
+- Only `ProtectedRoute` has a loading state
+- Individual pages may flash or show raw data
+
+---
+
+### 33. 🔵 PWA Support
+- `manifest.json` missing
+- No service worker
+- No offline support
+
+---
+
+### 34. 🔵 No Monitoring / APM
+- No error tracking (Sentry, Bugsnag)
+- No performance monitoring
+- No uptime monitoring
+
+---
+
+### 35. 🔵 README.md is Minimal
+**File:** `README.md`
+- Only 29 lines, no badges, no architecture diagram, no deployment guide
+
+---
+
+## Implementation Order
+
+I recommend tackling these in this order:
+
+| Phase | Items | Effort |
+|-------|-------|--------|
+| **Phase 1: Security** | #1, #2, #3, #4, #5, #6, #8, #9, #17 | ~4 hours |
+| **Phase 2: Reliability** | #7, #11, #12, #13, #14, #15, #16 | ~3 hours |
+| **Phase 3: DevOps** | #19, #20, #21, #24, #25, #18 | ~3 hours |
+| **Phase 4: Polish** | #10, #22, #23, #26, #27, #28-#35 | ~4 hours |
+
+---
+
+> [!IMPORTANT]
+> **Phase 1 is non-negotiable** — the leaked secrets (#1) should be addressed immediately, and the hardcoded localhost URLs (#2) will break all email flows in production.
+
+Would you like me to start implementing these fixes? I'd suggest starting with **Phase 1 (Security)** — shall I proceed?

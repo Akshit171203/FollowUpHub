@@ -1,14 +1,14 @@
 {
-  "name": "backend",
+  "name": "followuphub-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "FollowUpHub — Real-time follow-up and task reminder management backend",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "dev": "NODE_ENV=development nodemon src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
@@ -16,15 +16,24 @@
   "type": "module",
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
+    "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
     "cookie": "^1.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.9",
     "pg": "^8.16.3",
     "redis": "^5.10.0",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.8"
+    "drizzle-kit": "^0.31.8",
+    "nodemon": "^3.1.14"
   }
 }

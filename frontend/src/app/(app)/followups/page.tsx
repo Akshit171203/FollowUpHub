@@ -222,7 +222,7 @@ export default function FollowUpsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await getAllFollowUps({ limit: 5000 }); 
+      const res = await getAllFollowUps({ limit: 2000 }); 
       setAllItems(res.followups);
     } catch (e) {
       toast.error("Failed to load followups");

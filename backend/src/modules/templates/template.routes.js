@@ -4,13 +4,20 @@ import { followupTemplates, followups } from "../../db/schema.js";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
 import { and, eq, desc } from "drizzle-orm";
 import { logEvent } from "../events/event.service.js";
+import { validate } from "../../middlewares/validate.js";
+import {
+  createTemplateSchema,
+  updateTemplateSchema,
+  followupIdParam,
+  listFollowupsQuery,
+} from "../../middlewares/schemas.js";
 
 const router = express.Router();
 
 /**
  * POST /api/templates
  */
-router.post("/", authenticateUser, async (req, res) => {
+router.post("/", authenticateUser, validate(createTemplateSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const {
@@ -51,7 +58,7 @@ router.post("/", authenticateUser, async (req, res) => {
 /**
  * GET /api/templates with pagination
  */
-router.get("/", authenticateUser, async (req, res) => {
+router.get("/", authenticateUser, validate(listFollowupsQuery), async (req, res) => {
   try {
     const userId = req.user.id;
     const page = parseInt(req.query.page) || 1;
@@ -93,7 +100,7 @@ router.get("/", authenticateUser, async (req, res) => {
 /**
  * GET /api/templates/:id
  */
-router.get("/:id", authenticateUser, async (req, res) => {
+router.get("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -122,7 +129,7 @@ router.get("/:id", authenticateUser, async (req, res) => {
 /**
  * PATCH /api/templates/:id
  */
-router.patch("/:id", authenticateUser, async (req, res) => {
+router.patch("/:id", authenticateUser, validate(updateTemplateSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -166,7 +173,7 @@ router.patch("/:id", authenticateUser, async (req, res) => {
 /**
  * DELETE /api/templates/:id
  */
-router.delete("/:id", authenticateUser, async (req, res) => {
+router.delete("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -191,7 +198,7 @@ router.delete("/:id", authenticateUser, async (req, res) => {
  * POST /api/templates/:id/apply
  * Creates a followup using template defaults
  */
-router.post("/:id/apply", authenticateUser, async (req, res) => {
+router.post("/:id/apply", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;

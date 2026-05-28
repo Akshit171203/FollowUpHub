@@ -252,7 +252,7 @@ export default function SecuritySection() {
   };
 
   return (
-    <section className="relative w-full bg-[#FAFAFA] font-inter pt-32 pb-64">
+    <section className="relative w-full bg-[#FAFAFA] font-inter pt-32 pb-32">
       
       {/* Master Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -277,7 +277,7 @@ export default function SecuritySection() {
             </div>
 
             <h2 className="font-inter text-4xl sm:text-5xl lg:text-7xl tracking-[-0.02em] leading-tight mb-6">
-              <span className="text-slate-900 font-medium">Built for Defense. </span>
+              <span className="text-slate-900 font-medium">Built For Defense. </span>
               <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
                 Already.
               </span>

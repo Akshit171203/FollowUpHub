@@ -3,6 +3,14 @@ import { db } from "../../config/db.js";
 import { followups } from "../../db/schema.js";
 import { eq, desc, and, or, sql } from "drizzle-orm";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
+import { validate } from "../../middlewares/validate.js";
+import {
+  createFollowupSchema,
+  updateFollowupSchema,
+  snoozeFollowupSchema,
+  followupIdParam,
+  listFollowupsQuery,
+} from "../../middlewares/schemas.js";
 import {
   followupEvents,
   followups as followupsTable,
@@ -16,7 +24,7 @@ const router = express.Router();
  * POST /api/followups
  * Create followup
  */
-router.post("/", authenticateUser, async (req, res) => {
+router.post("/", authenticateUser, validate(createFollowupSchema), async (req, res) => {
   try {
     const { title, target, notes, dueAt, reminderPolicy, priority } = req.body;
 
@@ -68,7 +76,7 @@ router.post("/", authenticateUser, async (req, res) => {
  * GET /api/followups
  * List followups for logged-in user with pagination
  */
-router.get("/", authenticateUser, async (req, res) => {
+router.get("/", authenticateUser, validate(listFollowupsQuery), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -107,7 +115,7 @@ router.get("/", authenticateUser, async (req, res) => {
 });
 
 //Get Followup by ID
-router.get("/:id", authenticateUser, async (req, res) => {
+router.get("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;
 
@@ -130,7 +138,7 @@ router.get("/:id", authenticateUser, async (req, res) => {
  * PATCH /api/followups/:id/done
  * Mark followup done
  */
-router.patch("/:id/done", authenticateUser, async (req, res) => {
+router.patch("/:id/done", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -203,7 +211,7 @@ router.patch("/:id/done", authenticateUser, async (req, res) => {
 });
 
 // UPDATE followup (edit)
-router.patch("/:id", authenticateUser, async (req, res) => {
+router.patch("/:id", authenticateUser, validate(updateFollowupSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -246,7 +254,7 @@ router.patch("/:id", authenticateUser, async (req, res) => {
 });
 
 // SNOOZE
-router.patch("/:id/snooze", authenticateUser, async (req, res) => {
+router.patch("/:id/snooze", authenticateUser, validate(snoozeFollowupSchema), async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;
   const { snoozeMinutes } = req.body;
@@ -354,7 +362,7 @@ router.get("/:id/events", authenticateUser, async (req, res) => {
  * PATCH /api/followups/:id/cancel
  * Cancel a followup
  */
-router.patch("/:id/cancel", authenticateUser, async (req, res) => {
+router.patch("/:id/cancel", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -416,7 +424,7 @@ router.patch("/:id/cancel", authenticateUser, async (req, res) => {
  * DELETE /api/followups/:id
  * Delete a followup permanently
  */
-router.delete("/:id", authenticateUser, async (req, res) => {
+router.delete("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;

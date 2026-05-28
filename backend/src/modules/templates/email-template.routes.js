@@ -3,13 +3,20 @@ import { db } from "../../config/db.js";
 import { emailTemplates } from "../../db/schema.js";
 import { authenticateUser } from "../../middlewares/auth.middleware.js";
 import { and, eq, desc } from "drizzle-orm";
+import { validate } from "../../middlewares/validate.js";
+import {
+  createEmailTemplateSchema,
+  updateEmailTemplateSchema,
+  followupIdParam,
+  listFollowupsQuery,
+} from "../../middlewares/schemas.js";
 
 const router = express.Router();
 
 /**
  * GET /api/email-templates
  */
-router.get("/", authenticateUser, async (req, res) => {
+router.get("/", authenticateUser, validate(listFollowupsQuery), async (req, res) => {
   try {
     const userId = req.user.id;
     const page = parseInt(req.query.page) || 1;
@@ -49,7 +56,7 @@ router.get("/", authenticateUser, async (req, res) => {
 /**
  * GET /api/email-templates/:id
  */
-router.get("/:id", authenticateUser, async (req, res) => {
+router.get("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -73,7 +80,7 @@ router.get("/:id", authenticateUser, async (req, res) => {
 /**
  * POST /api/email-templates
  */
-router.post("/", authenticateUser, async (req, res) => {
+router.post("/", authenticateUser, validate(createEmailTemplateSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { name, type, subject, bodyHtml } = req.body;
@@ -106,7 +113,7 @@ router.post("/", authenticateUser, async (req, res) => {
 /**
  * PATCH /api/email-templates/:id
  */
-router.patch("/:id", authenticateUser, async (req, res) => {
+router.patch("/:id", authenticateUser, validate(updateEmailTemplateSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -141,7 +148,7 @@ router.patch("/:id", authenticateUser, async (req, res) => {
 /**
  * DELETE /api/email-templates/:id
  */
-router.delete("/:id", authenticateUser, async (req, res) => {
+router.delete("/:id", authenticateUser, validate(followupIdParam), async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
