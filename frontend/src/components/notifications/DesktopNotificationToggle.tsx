@@ -16,7 +16,7 @@ import {
  * Shows current status and handles permission request
  * Polls permission status to stay in sync with browser settings
  */
-export function DesktopNotificationToggle() {
+export function DesktopNotificationToggle({ iconOnly = false }: { iconOnly?: boolean }) {
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>("default");
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -100,6 +100,23 @@ export function DesktopNotificationToggle() {
   const isActive = enabled && permissionStatus === "granted";
   const buttonText = isActive ? "Desktop Alerts On" : "Desktop Alerts Off";
   const Icon = isActive ? Bell : BellOff;
+
+  if (iconOnly) {
+    return (
+      <button 
+        onClick={handleToggle}
+        disabled={loading}
+        title={buttonText}
+        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+          isActive 
+            ? "text-indigo-600 hover:bg-indigo-50" 
+            : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100"
+        }`}
+      >
+        <Icon className="w-[18px] h-[18px]" />
+      </button>
+    );
+  }
 
   return (
     <Button

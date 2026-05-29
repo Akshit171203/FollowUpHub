@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import { getJiraTickets, connectJira, syncJira, disconnectJira } from "@/lib/jira";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Loader2, RefreshCw, Trash2, ExternalLink, Kanban, CheckCircle2, Search, ArrowRight, ShieldCheck, Mail } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Loader2, RefreshCw, Trash2, ExternalLink, Kanban, Search, ArrowRight, ShieldCheck, Mail, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Ticket = {
@@ -118,7 +113,7 @@ export default function JiraPage() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
   };
 
   const itemVariants = {
@@ -128,274 +123,312 @@ export default function JiraPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[70vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      <div className="flex h-screen items-center justify-center bg-[#FAFAFA]">
+        <div className="flex flex-col items-center gap-3 text-zinc-400">
+           <div className="w-6 h-6 border-2 border-[#0052CC]/20 border-t-[#0052CC] rounded-full animate-spin" />
+           <span className="text-[14px] font-medium">Loading workspace...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-8 max-w-6xl py-6 md:py-8 space-y-6 md:space-y-8 animate-in fade-in duration-500">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-inner">
-              <Kanban className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600">Jira Integration</h1>
-          </div>
-          <p className="text-zinc-500 max-w-xl">
-            Auto-sync your assigned tickets from Jira, track them effortlessly, and automatically escalate to your manager when breached.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#FAFAFA] font-sans pb-24">
+      <div className="max-w-[1100px] mx-auto px-4 md:px-8 pt-10 md:pt-16">
         
-        {isConnected && (
-          <div className="flex items-center gap-3">
-             <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={handleDisconnect} disabled={disconnecting}>
-               {disconnecting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-               Disconnect
-             </Button>
-             <Button className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-md transition-all shadow-indigo-200" onClick={handleSync} disabled={syncing}>
-               {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-               Sync Now
-             </Button>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#0052CC] shadow-sm">
+                <Kanban className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Jira Integration</h1>
+            </div>
+            <p className="text-[15px] font-medium text-zinc-500 max-w-xl">
+              Auto-sync your assigned tickets, track them effortlessly, and escalate automatically when SLAs are breached.
+            </p>
+          </div>
+          
+          {isConnected && (
+            <div className="flex items-center gap-3">
+               <button 
+                 onClick={handleDisconnect} 
+                 disabled={disconnecting}
+                 className="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-[14px] font-semibold rounded-xl transition-colors shadow-sm disabled:opacity-50"
+               >
+                 {disconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                 Disconnect
+               </button>
+               <button 
+                 onClick={handleSync} 
+                 disabled={syncing}
+                 className="flex items-center gap-2 px-5 py-2.5 bg-[#0052CC] hover:bg-[#0047b3] text-white text-[14px] font-semibold rounded-xl transition-all shadow-sm disabled:opacity-50"
+               >
+                 {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                 Sync Now
+               </button>
+            </div>
+          )}
+        </div>
+
+        {!isConnected ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} className="grid lg:grid-cols-5 gap-10 items-start">
+            
+            {/* Connection Form Card */}
+            <div className="lg:col-span-3">
+               <div className="bg-white border-t-[3px] border-t-[#0052CC] border-x border-b border-zinc-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden">
+                 <div className="p-8 pb-6 border-b border-zinc-100">
+                    <h2 className="text-xl font-bold text-zinc-900 mb-2">Connect your workspace</h2>
+                    <p className="text-[14px] text-zinc-500 leading-relaxed">
+                      Securely link your Atlassian ecosystem. Your API tokens are guarded with <strong className="text-[#0052CC] font-semibold">AES-256-GCM encryption</strong> at rest.
+                    </p>
+                 </div>
+                 
+                 <div className="p-8">
+                   <form onSubmit={handleConnect} className="space-y-6">
+                     <div className="space-y-2">
+                       <label htmlFor="jiraDomain" className="text-[13px] font-semibold text-zinc-900 px-1">Workspace Domain</label>
+                       <input 
+                         id="jiraDomain" 
+                         placeholder="e.g. company.atlassian.net" 
+                         required 
+                         value={jiraDomain} 
+                         onChange={e => setJiraDomain(e.target.value)} 
+                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                       />
+                     </div>
+                     
+                     <div className="space-y-2">
+                       <label htmlFor="jiraEmail" className="text-[13px] font-semibold text-zinc-900 px-1">Atlassian Email</label>
+                       <input 
+                         id="jiraEmail" 
+                         placeholder="e.g. user@company.com" 
+                         required 
+                         value={jiraEmail} 
+                         onChange={e => setJiraEmail(e.target.value)} 
+                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                       />
+                     </div>
+                     
+                     <div className="space-y-2">
+                       <div className="flex justify-between items-center px-1">
+                         <label htmlFor="jiraApiToken" className="text-[13px] font-semibold text-zinc-900">API Token</label>
+                         <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noreferrer" className="text-[12px] font-bold text-[#0052CC] hover:text-[#0047b3] flex items-center gap-1 transition-colors">
+                           Get Token <ExternalLink className="w-3 h-3" />
+                         </a>
+                       </div>
+                       <input 
+                         id="jiraApiToken" 
+                         type="password"
+                         placeholder="Paste your API token..." 
+                         required 
+                         value={jiraApiToken} 
+                         onChange={e => setJiraApiToken(e.target.value)} 
+                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 font-mono text-[14px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                       />
+                     </div>
+                     
+                     <div className="pt-6 border-t border-zinc-100 space-y-2">
+                       <label htmlFor="managerEmail" className="text-[13px] font-semibold text-zinc-900 px-1 flex items-center gap-2">
+                         <Mail className="w-4 h-4 text-zinc-400" />
+                         Manager's Email <span className="text-zinc-400 font-medium">(Optional)</span>
+                       </label>
+                       <input 
+                         id="managerEmail" 
+                         placeholder="manager@company.com" 
+                         value={managerEmail} 
+                         onChange={e => setManagerEmail(e.target.value)} 
+                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                       />
+                       <p className="text-[12.5px] font-medium text-zinc-500 mt-1.5 px-1">
+                         Triggers an automated escalation email if you ignore a ticket past Level 2.
+                       </p>
+                     </div>
+                     
+                     <div className="pt-4">
+                       <button 
+                         type="submit" 
+                         disabled={connecting}
+                         className="w-full flex items-center justify-center gap-2 bg-[#0052CC] hover:bg-[#0047b3] disabled:opacity-70 disabled:cursor-not-allowed text-white text-[15px] font-semibold py-3.5 rounded-xl shadow-md transition-all"
+                       >
+                         {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                         Authenticate & Activate Sync
+                       </button>
+                     </div>
+                   </form>
+                 </div>
+               </div>
+            </div>
+            
+            {/* Feature Blocks */}
+            <div className="lg:col-span-2 space-y-4">
+               {/* Feature 1 */}
+               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4">
+                     <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="text-[15px] font-bold text-zinc-900 mb-1.5">Bank-Grade Encryption</h3>
+                  <p className="text-[14px] text-zinc-500 leading-relaxed">
+                     Your tokens are never exposed to the frontend, never logged, and ciphered with AES-256-GCM.
+                  </p>
+               </div>
+               
+               {/* Feature 2 */}
+               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
+                     <Zap className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-[15px] font-bold text-zinc-900 mb-1.5">Intelligent Sync Loop</h3>
+                  <p className="text-[14px] text-zinc-500 leading-relaxed">
+                     We quietly poll Jira every 5 minutes in the background utilizing JQL batches so you're never rate-limited.
+                  </p>
+               </div>
+
+               {/* Feature 3 */}
+               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
+                     <Mail className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <h3 className="text-[15px] font-bold text-zinc-900 mb-1.5">Automatic Accountability</h3>
+                  <p className="text-[14px] text-zinc-500 leading-relaxed">
+                     Connect your Manager's email and our escalation engine alerts your Lead when you repeatedly breach SLAs.
+                  </p>
+               </div>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="space-y-8">
+            {/* Live Syncing Header Card */}
+            <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm overflow-hidden relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+              
+              <div className="space-y-2 relative z-10">
+                <h3 className="font-bold text-[16px] text-zinc-900 flex items-center gap-2.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  Live Syncing Active
+                </h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-medium text-zinc-500">
+                  <span className="flex items-center gap-1.5 text-[#0052CC] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                     {settings?.jiraDomain}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                     <Mail className="w-3.5 h-3.5 text-zinc-400"/> {settings?.jiraEmail}
+                  </span>
+                  {settings?.managerEmail && (
+                    <span className="flex items-center gap-1.5">
+                       <ShieldCheck className="w-3.5 h-3.5 text-zinc-400"/> Escalation Target: {settings?.managerEmail}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="relative w-full md:w-auto z-10">
+                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                 <input 
+                    placeholder="Search tickets..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full md:w-[280px] pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-200/80 rounded-xl text-[14px] text-zinc-900 outline-none focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] transition-all"
+                 />
+              </div>
+            </div>
+
+            {/* Tickets Grid */}
+            <AnimatePresence mode="wait">
+               {tickets.length === 0 ? (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-20 text-center bg-white border border-zinc-200/80 rounded-2xl shadow-sm">
+                   <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-5">
+                     <Kanban className="w-8 h-8 text-[#0052CC]/60" />
+                   </div>
+                   <h3 className="text-xl font-bold text-zinc-900 tracking-tight">No active tickets</h3>
+                   <p className="text-[15px] font-medium text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                     You are fully caught up! Any new assigned issues on Jira will automatically appear here within 5 minutes.
+                   </p>
+                   <button 
+                     onClick={handleSync} 
+                     disabled={syncing}
+                     className="mt-8 flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-zinc-900 text-[14px] font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
+                   >
+                      {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      Poll Again
+                   </button>
+                 </motion.div>
+               ) : filteredTickets.length === 0 ? (
+                 <div className="text-center py-16 text-[15px] font-medium text-zinc-500 bg-white rounded-2xl border border-zinc-200/80 shadow-sm">
+                    No tickets match your search.
+                 </div>
+               ) : (
+                 <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {filteredTickets.map((ticket) => (
+                     <motion.div key={ticket.id} variants={itemVariants} className="group flex h-full">
+                        <div className="w-full flex flex-col bg-white border border-zinc-200/80 rounded-2xl overflow-hidden hover:border-zinc-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-300 relative">
+                          
+                          {ticket.escalationLevel >= 2 && (
+                            <div className="absolute top-0 right-0 left-0 h-[3px] bg-gradient-to-r from-red-500 to-orange-500" />
+                          )}
+                          
+                          <div className="p-5 flex-none space-y-4">
+                             <div className="flex items-start justify-between gap-3">
+                               <div className="flex gap-2 items-center flex-wrap">
+                                 <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${
+                                   ticket.status === 'DONE' ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-600'
+                                 }`}>
+                                    {ticket.status}
+                                 </span>
+                                 <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${
+                                   ticket.priority === 'URGENT' ? 'bg-red-50 text-red-700 border border-red-100' :
+                                   ticket.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
+                                   ticket.priority === 'LOW' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                                   'bg-blue-50 text-blue-700 border border-blue-100'
+                                 }`}>
+                                    {ticket.priority}
+                                 </span>
+                               </div>
+                               <a 
+                                 href={ticket.externalUrl} 
+                                 target="_blank" 
+                                 rel="noreferrer"
+                                 className="text-zinc-400 hover:text-[#0052CC] p-1 rounded-md hover:bg-blue-50 transition-colors"
+                               >
+                                 <ExternalLink className="w-4 h-4" />
+                               </a>
+                             </div>
+                             
+                             <h4 className="text-[15px] font-semibold text-zinc-900 leading-snug line-clamp-2" title={ticket.title}>
+                               {ticket.title}
+                             </h4>
+                          </div>
+                          
+                          <div className="mt-auto flex-none p-4 pt-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+                             <div className="flex flex-col">
+                               <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Due Date</span>
+                               <span className="text-[13px] font-medium text-zinc-700">
+                                 {format(new Date(ticket.dueAt), "MMM d, yyyy")}
+                               </span>
+                             </div>
+                             
+                             {ticket.escalationLevel >= 2 ? (
+                               <div className="px-2 py-1 rounded-md bg-red-100 text-red-700 text-[11px] font-bold border border-red-200">
+                                  Escalated (Lv {ticket.escalationLevel})
+                               </div>
+                             ) : (
+                               <div className="text-[12px] font-semibold text-zinc-400">
+                                  Level {ticket.escalationLevel}
+                               </div>
+                             )}
+                          </div>
+                        </div>
+                     </motion.div>
+                   ))}
+                 </motion.div>
+               )}
+            </AnimatePresence>
           </div>
         )}
       </div>
-
-      {!isConnected ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} className="grid md:grid-cols-2 gap-8 items-start">
-          <Card className="shadow-lg border-zinc-200/60 overflow-hidden relative">
-            {/* Glassmorphism accent */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
-            
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl flex items-center gap-2">
-                Connect your workspace
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Securely link your Atlassian ecosystem. API tokens are guarded with <strong className="text-indigo-600">AES-256-GCM encryption</strong> at rest.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleConnect} className="space-y-5">
-                <div className="space-y-1.5 focus-within:text-indigo-600 transition-colors">
-                  <Label htmlFor="jiraDomain" className="font-semibold">Workspace Domain</Label>
-                  <Input 
-                    id="jiraDomain" 
-                    placeholder="e.g. company.atlassian.net" 
-                    className="border-zinc-200 focus-visible:ring-indigo-500/30 h-11"
-                    required 
-                    value={jiraDomain} 
-                    onChange={e => setJiraDomain(e.target.value)} 
-                  />
-                </div>
-                
-                <div className="space-y-1.5 focus-within:text-indigo-600 transition-colors">
-                  <Label htmlFor="jiraEmail" className="font-semibold">Atlassian Email</Label>
-                  <Input 
-                    id="jiraEmail" 
-                    placeholder="e.g. user@company.com" 
-                    className="border-zinc-200 focus-visible:ring-indigo-500/30 h-11"
-                    required 
-                    value={jiraEmail} 
-                    onChange={e => setJiraEmail(e.target.value)} 
-                  />
-                </div>
-                
-                <div className="space-y-1.5 focus-within:text-indigo-600 transition-colors">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="jiraApiToken" className="font-semibold">API Token</Label>
-                    <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noreferrer" className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-colors">
-                      Get Token <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                  <Input 
-                    id="jiraApiToken" 
-                    type="password"
-                    placeholder="Paste your API token..." 
-                    className="border-zinc-200 focus-visible:ring-indigo-500/30 h-11 font-mono text-sm"
-                    required 
-                    value={jiraApiToken} 
-                    onChange={e => setJiraApiToken(e.target.value)} 
-                  />
-                </div>
-                
-                <div className="pt-4 border-t border-zinc-100 space-y-1.5 focus-within:text-indigo-600 transition-colors">
-                  <Label htmlFor="managerEmail" className="font-semibold flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-zinc-400" />
-                    Manager's Email <span className="text-zinc-400 font-normal text-xs">(Optional)</span>
-                  </Label>
-                  <Input 
-                    id="managerEmail" 
-                    placeholder="manager@company.com" 
-                    className="border-zinc-200 focus-visible:ring-indigo-500/30 h-11"
-                    value={managerEmail} 
-                    onChange={e => setManagerEmail(e.target.value)} 
-                  />
-                  <p className="text-xs text-zinc-500 mt-1">
-                    Triggers an automated escalation email if you ignore a ticket past Level 2.
-                  </p>
-                </div>
-                
-                <div className="pt-2">
-                  <Button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 shadow-md hover:shadow-lg transition-all" disabled={connecting}>
-                    {connecting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ArrowRight className="mr-2 h-5 w-5" />}
-                    Authenticate & Activate Sync
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-          
-          <div className="space-y-6 lg:pl-8 pt-8">
-            <div className="space-y-2">
-               <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-800">
-                  <ShieldCheck className="w-5 h-5 text-indigo-500" />
-                  Bank-Grade Encryption
-               </h3>
-               <p className="text-sm text-zinc-500">
-                  We don't play around with your company's credentials. Your token is never exposed to the frontend, never logged, and ciphered with AES-256-GCM.
-               </p>
-            </div>
-            <div className="space-y-2">
-               <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-800">
-                  <RefreshCw className="w-5 h-5 text-blue-500" />
-                  Intelligent Sync Loop
-               </h3>
-               <p className="text-sm text-zinc-500">
-                  FollowUpHub will quietly poll Jira every 5 minutes in the background utilizing JQL batches so you're never rate-limited.
-               </p>
-            </div>
-             <div className="space-y-2">
-               <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-800">
-                  <Mail className="w-5 h-5 text-rose-500" />
-                  Automatic Accountability
-               </h3>
-               <p className="text-sm text-zinc-500">
-                  Connect your Manager's email and our escalation engine takes over. Slipped tickets trigger visual warnings before alerting your Lead when you repeatedly breach SLAs.
-               </p>
-            </div>
-          </div>
-        </motion.div>
-      ) : (
-        <div className="space-y-6">
-          <Card className="shadow-sm border-indigo-100 bg-gradient-to-r from-indigo-50/50 to-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[500px] h-full bg-blue-50/50 -skew-x-12 translate-x-1/4 pointer-events-none"></div>
-            <CardContent className="pt-6 relative z-10">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-zinc-900 flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                    </span>
-                    Live Syncing
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-600">
-                    <span className="font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">{settings?.jiraDomain}</span>
-                    <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-zinc-400"/> {settings?.jiraEmail}</span>
-                    {settings?.managerEmail && (
-                      <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-zinc-400"/> Escalation Target: {settings?.managerEmail}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="relative">
-                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-                   <Input 
-                      placeholder="Search tickets..." 
-                      className="pl-9 w-full sm:w-[250px] bg-white"
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                   />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <AnimatePresence mode="wait">
-             {tickets.length === 0 ? (
-               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-20 bg-white rounded-xl border border-zinc-200 border-dashed shadow-sm">
-                 <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 border border-indigo-100">
-                   <Kanban className="w-8 h-8 text-indigo-300" />
-                 </div>
-                 <h3 className="text-base font-bold text-zinc-900">No active tickets</h3>
-                 <p className="text-sm text-zinc-500 mt-2 max-w-sm mx-auto">
-                   You are fully caught up! Any new assigned issues on Jira will automatically appear here within 5 minutes.
-                 </p>
-                 <Button variant="outline" className="mt-6" onClick={handleSync} disabled={syncing}>
-                    {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                    Poll Again
-                 </Button>
-               </motion.div>
-             ) : filteredTickets.length === 0 ? (
-               <div className="text-center py-12 text-zinc-500 text-sm bg-white rounded-lg border border-zinc-100 shadow-sm">
-                  No tickets match your search.
-               </div>
-             ) : (
-               <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                 {filteredTickets.map((ticket) => (
-                   <motion.div key={ticket.id} variants={itemVariants} className="group flex h-full">
-                      <Card className="shadow-sm border-zinc-200/80 hover:shadow-md hover:border-indigo-200 transition-all duration-300 w-full flex flex-col bg-white overflow-hidden relative">
-                        {ticket.escalationLevel >= 2 && (
-                          <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
-                        )}
-                        <CardHeader className="pb-3 flex-none space-y-3">
-                           <div className="flex items-start justify-between gap-2">
-                             <div className="flex gap-2 items-center flex-wrap">
-                               <Badge variant={ticket.status === 'DONE' ? 'default' : 'secondary'} className={`rounded-sm font-semibold tracking-wide ${ticket.status === 'DONE' ? 'bg-green-500 hover:bg-green-600' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>
-                                  {ticket.status}
-                               </Badge>
-                               <Badge variant="outline" className={`rounded-sm border-none font-semibold px-2 ${
-                                 ticket.priority === 'URGENT' ? 'bg-red-50 text-red-700' :
-                                 ticket.priority === 'HIGH' ? 'bg-orange-50 text-orange-700' :
-                                 ticket.priority === 'LOW' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
-                               }`}>
-                                  {ticket.priority}
-                               </Badge>
-                             </div>
-                             <a 
-                               href={ticket.externalUrl} 
-                               target="_blank" 
-                               rel="noreferrer"
-                               className="text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-md transition-colors"
-                             >
-                               <ExternalLink className="w-4 h-4" />
-                             </a>
-                           </div>
-                           <CardTitle className="text-base leading-snug line-clamp-2" title={ticket.title}>
-                             {ticket.title}
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="mt-auto flex-none pt-2 border-t border-zinc-50 bg-zinc-50/30">
-                           <div className="flex items-center justify-between">
-                              <div className="text-xs text-zinc-500">
-                                <span className="block font-medium text-zinc-700 mb-0.5">Due Date</span>
-                                {format(new Date(ticket.dueAt), "MMM d, yyyy")}
-                              </div>
-                              {ticket.escalationLevel >= 2 ? (
-                                <div className="text-right">
-                                   <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-200 border-none rounded">
-                                      Escalated (Lv {ticket.escalationLevel})
-                                   </Badge>
-                                </div>
-                              ) : (
-                                <div className="text-right text-xs text-zinc-400">
-                                   Level {ticket.escalationLevel}
-                                </div>
-                              )}
-                           </div>
-                        </CardContent>
-                      </Card>
-                   </motion.div>
-                 ))}
-               </motion.div>
-             )}
-          </AnimatePresence>
-        </div>
-      )}
     </div>
   );
 }

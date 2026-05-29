@@ -1,229 +1,111 @@
 "use client";
-
-import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useEffect, useState, useRef } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar, Cell } from "recharts";
 import { 
-  Bell, 
   Calendar, 
-  Activity,
-  AlertCircle,
-  ArrowRight,
+  MoreHorizontal,
+  ChevronDown,
+  Plus,
+  Link as LinkIcon,
+  Sparkles,
+  TrendingUp,
+  Check,
   CheckCircle2,
   Clock,
-  Plus,
-  Layout,
-  MoreHorizontal,
-  ArrowUpRight,
-  TrendingUp,
-  Filter,
-  ChevronDown,
-  X,
-  Check,
-  Search,
-  ExternalLink,
-  ChevronRight,
-  AlertTriangle
+  Briefcase,
+  FileText
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
-import { 
-  getAllFollowUps, 
-  FollowUp, 
-  markDone, 
-  snoozeFollowUp 
-} from "@/lib/followups";
-import { 
-  getEventTimeline, 
-  TimelineEvent 
-} from "@/lib/timeline";
-import { 
-  getUnreadNotifications, 
-  getUnreadCount,
-  markAllRead,
-  markNotificationRead
-} from "@/lib/notifications";
-import { format } from "date-fns";
-import type { Notification } from "@/lib/notifications";
-import { profile, logout, User } from "@/lib/auth";
+import { getAllFollowUps, FollowUp } from "@/lib/followups";
+import { getEventTimeline, TimelineEvent } from "@/lib/timeline";
 import { listTodos, updateTodo, createTodo, Todo } from "@/lib/todos";
+import { getTemplates, Template } from "@/lib/templates";
+import { getJiraTickets } from "@/lib/jira";
+import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/components/ProtectedRoute";
 
 // --- Components ---
 
-function KpiTile({ 
-  label, 
-  value, 
-  icon: Icon, 
-  color, 
-  trend,
-  href,
-  tooltip,
-  children,
-  className
-}: { 
-  label: string, 
-  value: string | number, 
-  icon: any, 
-  color: "indigo" | "emerald" | "rose" | "amber", 
-  trend?: "up" | "down" | "neutral",
-  href?: string,
-  tooltip?: string,
-  children?: React.ReactNode,
-  className?: string
-}) {
-  const colorStyles = {
-    indigo: "bg-indigo-50/50 text-indigo-600 border-indigo-100",
-    emerald: "bg-emerald-50/50 text-emerald-600 border-emerald-100",
-    rose: "bg-rose-50/50 text-rose-600 border-rose-100",
-    amber: "bg-amber-50/50 text-amber-600 border-amber-100",
-  };
-
-  const Content = (
-    <div className={cn(
-      "bg-white rounded-xl p-4 border border-zinc-200/60 shadow-sm flex flex-col h-full min-h-[100px] transition-all group relative overflow-hidden",
-      href ? "hover:border-zinc-300 hover:shadow-md cursor-pointer" : "",
-      className
-    )}>
-       {/* Background Decoration */}
-       <div className={cn("absolute -right-4 -top-4 w-16 h-16 rounded-full opacity-[0.03] transition-transform group-hover:scale-110", 
-         color === 'indigo' ? 'bg-indigo-600' : 
-         color === 'emerald' ? 'bg-emerald-600' : 
-         color === 'rose' ? 'bg-rose-600' : 'bg-amber-600'
-       )}></div>
-
-       <div className="flex items-start justify-between relative z-10">
-         <div className={cn("p-2 rounded-lg border", colorStyles[color])}>
-           <Icon className="w-4 h-4" />
-         </div>
-         {trend && (
-           <div className={cn("flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-             trend === 'up' ? "bg-emerald-50 text-emerald-700" :
-             trend === 'down' ? "bg-rose-50 text-rose-700" : "bg-zinc-50 text-zinc-500"
-           )}>
-             {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : trend === 'down' ? <TrendingUp className="w-3 h-3 rotate-180" /> : null}
-             {trend === 'up' ? '+2.4%' : trend === 'neutral' ? '-' : '-1.1%'}
-           </div>
-         )}
-       </div>
-       <div className="relative z-10 mt-4 flex-1">
-         <div className="flex items-center gap-1.5">
-            <p className="text-zinc-500 text-[11px] font-medium uppercase tracking-wide">{label}</p>
-            {tooltip && (
-               <div className="group/tooltip relative">
-                 <AlertCircle className="w-3 h-3 text-zinc-300 cursor-help" />
-                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 text-white text-[10px] rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                   {tooltip}
-                 </div>
-               </div>
-            )}
-         </div>
-         <h3 className="text-2xl font-bold font-oswald text-zinc-900 tracking-tight mt-0.5">{value}</h3>
-         {children}
-       </div>
-    </div>
-  );
-
-  if (href) {
-    return <Link href={href}>{Content}</Link>;
-  }
-  return Content;
-}
-
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-zinc-50/50 p-6 flex flex-col gap-6 animate-pulse">
-       <div className="h-8 w-48 bg-zinc-200 rounded-lg"></div>
-       <div className="grid grid-cols-4 gap-4">
-         {[1,2,3,4].map(i => <div key={i} className="h-[100px] bg-zinc-200 rounded-xl"></div>)}
-       </div>
+    <div className="min-h-screen bg-transparent p-6 flex flex-col gap-6 animate-pulse w-full max-w-[1400px] mx-auto">
+       <div className="h-12 w-64 bg-white rounded-xl shadow-sm"></div>
        <div className="grid grid-cols-12 gap-6 flex-1">
-         <div className="col-span-8 bg-zinc-200 rounded-xl h-full min-h-[400px]"></div>
-         <div className="col-span-4 flex flex-col gap-4">
-            <div className="h-[200px] bg-zinc-200 rounded-xl"></div>
-            <div className="h-[200px] bg-zinc-200 rounded-xl"></div>
-         </div>
+         <div className="col-span-12 xl:col-span-8 bg-white rounded-[32px] min-h-[450px] shadow-sm"></div>
+         <div className="col-span-12 xl:col-span-4 bg-white rounded-[32px] min-h-[450px] shadow-sm"></div>
        </div>
     </div>
   );
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { user } = useUser();
-  const initials = user?.name 
-    ? user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() 
-    : "JD";
   const [loading, setLoading] = useState(true);
+  const { user } = useUser();
   
   // Data States
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
-  const [recentActivity, setRecentActivity] = useState<TimelineEvent[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [jiraData, setJiraData] = useState<{ isConnected: boolean; tickets: any[] }>({ isConnected: false, tickets: [] });
+  
   const [newTodoInput, setNewTodoInput] = useState("");
   const [isAddingTodo, setIsAddingTodo] = useState(false);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [mainChartData, setMainChartData] = useState<any[]>([]);
   
-  // Notification States
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [unreadList, setUnreadList] = useState<Notification[]>([]);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-  
-  // Alerts State
-  const [desktopAlertsEnabled, setDesktopAlertsEnabled] = useState(false);
-
-  // Ref to prevent double-fetch in Strict Mode
   const initialized = useRef(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [followUpsData, timelineData, unreadCountData, unreadListData, todosData] = await Promise.all([
-          getAllFollowUps({ limit: 1000 }), // Increased limit for accurate KPIs
-          getEventTimeline({ limit: 20 }), // Recent activity
-          getUnreadCount(),
-          getUnreadNotifications(),
-          listTodos(format(new Date(), "yyyy-MM-dd")) // Fetch today's todos (Local Time)
+        const [followUpsData, todosData, timelineData, templatesData, jiraRes] = await Promise.all([
+          getAllFollowUps({ limit: 1000 }), 
+          listTodos(format(new Date(), "yyyy-MM-dd")),
+          getEventTimeline({ limit: 10 }),
+          getTemplates(),
+          getJiraTickets(1, 5).catch(() => null) // catch error if not configured
         ]);
 
-        const allFollowUps = followUpsData.followups;
+        const allFollowUps = followUpsData.followups || [];
         setFollowUps(allFollowUps);
-        setRecentActivity(timelineData.events);
-        setUnreadCount(unreadCountData);
-        setUnreadList(unreadListData);
-        setTodos(todosData);
-
-        // --- Chart Data: Daily Trend (Last 14 Days) ---
-        const today = new Date();
-        const last14Days = Array.from({ length: 14 }, (_, i) => {
-          const d = new Date(today);
-          d.setDate(d.getDate() - (13 - i));
-          return d.toISOString().split('T')[0];
-        });
-
-        const dailyData = last14Days.map(dateStr => {
-          // Created per day
-          const createdCount = allFollowUps.filter(f => f.createdAt && f.createdAt.startsWith(dateStr)).length;
-          // Completed per day
-          const completedCount = allFollowUps.filter(f => f.status === 'DONE' && f.completedAt && f.completedAt.startsWith(dateStr)).length;
-          
-          return {
-            date: new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            fullDate: dateStr,
-            created: createdCount,
-            completed: completedCount
-          };
-        });
-        setChartData(dailyData);
+        setTodos(todosData || []);
+        setTimelineEvents(timelineData?.events || []);
+        setTemplates(templatesData || []);
         
-        // check permission
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          setDesktopAlertsEnabled(true);
+        if (jiraRes && jiraRes.settings) {
+           setJiraData({ isConnected: jiraRes.settings.isConnected, tickets: jiraRes.tickets || [] });
         }
+
+        // Build chart: last 6 months ending at current month, year-aware
+        const now = new Date();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Create a map keyed by "YYYY-MM" for accuracy across years
+        const monthMap = new Map<string, number>();
+        allFollowUps.forEach(f => {
+           if (f.createdAt) {
+             const d = new Date(f.createdAt);
+             const key = `${d.getFullYear()}-${d.getMonth()}`;
+             monthMap.set(key, (monthMap.get(key) || 0) + 1);
+           }
+        });
+        
+        // Generate the last 6 months dynamically
+        const chartMonths: { month: string; value: number }[] = [];
+        for (let i = 5; i >= 0; i--) {
+           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+           const key = `${d.getFullYear()}-${d.getMonth()}`;
+           chartMonths.push({
+              month: monthNames[d.getMonth()],
+              value: monthMap.get(key) || 0,
+           });
+        }
+        
+        setMainChartData(chartMonths);
       } catch (error) {
         console.error("Dashboard fetch error:", error);
         toast.error("Failed to load dashboard data");
@@ -238,8 +120,6 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // --- Handlers ---
-  
   const handleQuickAddTodo = async () => {
     if (!newTodoInput.trim()) return;
     
@@ -262,81 +142,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllRead();
-      setUnreadCount(0);
-      setUnreadList([]);
-      toast.success("All notifications marked as read");
-    } catch (e) {
-      toast.error("Failed to mark notifications read");
-    }
-  };
-
-  const handleMarkRead = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    try {
-      await markNotificationRead(id);
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      setUnreadList(prev => prev.filter(n => n.id !== id));
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleToggleAlerts = async () => {
-    if (desktopAlertsEnabled) {
-      // Cannot revoke permission programmatically in most browsers, just disable logic if we had it
-      // For now, assume state tracks permission mainly.
-      toast.info("To disable alerts, please reset permissions in your browser settings.");
-      return;
-    }
-    
-    if (typeof Notification === 'undefined') {
-      toast.error("This browser does not support desktop notifications");
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      setDesktopAlertsEnabled(true);
-      toast.success("Desktop alerts enabled");
-      new Notification("Alerts Enabled", { body: "You will now receive desktop notifications." });
-    } else {
-      setDesktopAlertsEnabled(false);
-      toast.error("Permission denied. Please enable notifications in your browser settings.");
-    }
-  };
-
-  const handleMarkDone = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      await markDone(id);
-      toast.success("Marked as done");
-      // Optimistic update
-      setFollowUps(prev => prev.map(f => f.id === id ? { ...f, status: 'DONE', completedAt: new Date().toISOString() } : f));
-    } catch (error) {
-       toast.error("Failed to update status");
-    }
-  };
-
-  const handleSnooze = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      await snoozeFollowUp(id, 24 * 60); // Snooze for 1 day
-      toast.success("Snoozed for 1 day");
-      setFollowUps(prev => prev.map(f => f.id === id ? { ...f, status: 'SNOOZED' } : f));
-    } catch (error) {
-       toast.error("Failed to snooze");
-    }
-  };
-
   const handleToggleTodo = async (todo: Todo) => {
     try {
       const newStatus = todo.status === "DONE" ? "PENDING" : "DONE";
-      // Optimistic update
       setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, status: newStatus } : t));
       
       await updateTodo(todo.id, { status: newStatus });
@@ -344,413 +152,445 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Failed to toggle todo:", error);
       toast.error("Failed to update todo");
-      // Revert on failure
       setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, status: todo.status } : t));
     }
   };
-
-  // --- Render Helpers ---
-  const formatActivity = (event: TimelineEvent) => {
-    let title = "Activity Recorded";
-    let subtitle = event.message || event.type || "No details";
-    let icon = Activity;
-    let color = "text-zinc-500 bg-zinc-100";
-
-    if (event.type === 'CREATED') {
-      title = "New Follow-up";
-      subtitle = `Created by ${user?.name || 'User'}`;
-      icon = Plus;
-      color = "text-indigo-600 bg-indigo-50";
-    } else if (event.type === 'DONE') {
-      title = "Task Completed";
-      subtitle = "Marked as done";
-      icon = CheckCircle2;
-      color = "text-emerald-600 bg-emerald-50";
-    } else if (event.type === 'SNOOZED') {
-      title = "Task Snoozed";
-      icon = Clock;
-      color = "text-amber-600 bg-amber-50";
-    } else if (event.type === 'REMINDER_SENT') {
-       title = "Reminder Sent";
-       icon = Bell;
-       color = "text-indigo-600 bg-indigo-50/50";
-    } else if (event.type === 'ESCALATED') {
-       title = "Escalated";
-       subtitle = "Priority level increased";
-       icon = TrendingUp;
-       color = "text-rose-600 bg-rose-50";
-    }
-
-    // Attempt to make message human readable if it's raw
-    if (subtitle.includes("ignoreCount=") || subtitle.includes("repeat=")) {
-       subtitle = "System automated action";
-    }
-    
-    return { title, subtitle, icon, color };
-  };
-
-
+  
   if (loading) return <LoadingSkeleton />;
 
   // --- Metrics Calculation ---
   const now = new Date();
-  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  
   const completedFollowUps = followUps.filter(f => f.status === 'DONE');
-  const completionRate = followUps.length > 0 ? Math.round((completedFollowUps.length / followUps.length) * 100) : 0;
+  const activePending = followUps.filter(f => f.status !== 'DONE' && f.status !== 'CANCELLED' && (!f.dueAt || new Date(f.dueAt) > now));
+  const overdueItems = followUps.filter(f => f.status !== 'DONE' && f.status !== 'CANCELLED' && f.dueAt && new Date(f.dueAt) < now);
 
-  const activePending = followUps.filter(f => 
-    f.status !== 'DONE' && 
-    f.status !== 'CANCELLED' && 
-    (f.isActive !== false) && 
-    (!f.dueAt || new Date(f.dueAt) > now)
-  );
+  const total = followUps.length || 1; // avoid div by 0
+  const completedPct = Math.round((completedFollowUps.length / total) * 100);
 
-  const overdueItems = followUps.filter(f => 
-    f.status !== 'DONE' && 
-    f.status !== 'CANCELLED' && 
-    (f.isActive !== false) && 
-    f.dueAt && new Date(f.dueAt) < now
-  );
+  // Priority Breakdown for active pending tasks
+  const highPriority = activePending.filter(f => f.priority === 'HIGH');
+  const mediumPriority = activePending.filter(f => f.priority === 'MEDIUM');
+  const lowPriority = activePending.filter(f => f.priority === 'LOW' || !f.priority); // default to low if null
+  
+  const activeTotal = activePending.length || 1;
+  const highPct = Math.round((highPriority.length / activeTotal) * 100);
+  const mediumPct = Math.round((mediumPriority.length / activeTotal) * 100);
+  const lowPct = Math.round((lowPriority.length / activeTotal) * 100);
 
-  const dueThisWeekItems = followUps.filter(f => {
-     if (f.status === 'DONE' || f.status === 'CANCELLED') return false;
-     if (!f.dueAt) return false;
-     const d = new Date(f.dueAt);
-     return d >= now && d <= oneWeekFromNow;
+  const dueToday = activePending.filter(f => {
+    if (!f.dueAt) return false;
+    const d = new Date(f.dueAt);
+    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
 
-  const dueSoonList = [...dueThisWeekItems]
-    .sort((a, b) => new Date(a.dueAt!).getTime() - new Date(b.dueAt!).getTime())
-    .slice(0, 5);
+  const dueThisWeek = activePending.filter(f => {
+    if (!f.dueAt) return false;
+    const d = new Date(f.dueAt);
+    const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return d > now && d <= oneWeek;
+  });
 
-  const overdueList = [...overdueItems]
-    .sort((a, b) => new Date(a.dueAt!).getTime() - new Date(b.dueAt!).getTime())
-    .slice(0, 5);
-
+  const urgencyTotal = (overdueItems.length + dueToday.length + dueThisWeek.length) || 1;
+  const overduePct = Math.round((overdueItems.length / urgencyTotal) * 100);
+  const todayPct = Math.round((dueToday.length / urgencyTotal) * 100);
+  const weekPct = Math.round((dueThisWeek.length / urgencyTotal) * 100);
 
   return (
-    <div className="md:h-screen flex flex-col bg-zinc-50/50 font-lato md:overflow-hidden">
-      <div className="max-w-[1600px] w-full mx-auto px-4 md:px-6 pt-4 pb-2 flex-1 flex flex-col min-h-0 gap-4 overflow-y-auto md:overflow-y-visible">
+    <div className="flex flex-col font-sans w-full max-w-[1400px] mx-auto px-4 md:px-8 pb-12 gap-6 relative z-10">
         
-        {/* Row 1: Header + KPI Grid */}
-        <div className="flex-none space-y-3">
-          <div className="flex md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold font-oswald text-zinc-900 tracking-tight flex items-center gap-2">
-                Dashboard
-                
-              </h1>
-              <p className="text-zinc-500 text-[10px] mt-0.5">Welcome back, {user?.name}.</p>
+      {/* Header Row */}
+      <motion.div 
+         initial={{ opacity: 0, y: -10 }}
+         animate={{ opacity: 1, y: 0 }}
+         transition={{ duration: 0.6, ease: "easeOut" }}
+         className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2"
+      >
+         <div className="flex items-center gap-3">
+            <h1 className="text-[40px] font-medium text-zinc-900 tracking-tight">
+               Overview
+            </h1>
+            <div className="w-8 h-8 rounded-full bg-white shadow-sm border border-zinc-200 flex items-center justify-center cursor-pointer hover:bg-zinc-50 transition-colors">
+               <LinkIcon className="w-4 h-4 text-zinc-500" />
             </div>
-            
-            {/* Header Actions */}
-            <div className="flex items-center gap-4">
-               
-               {/* Notification Bell */}
-               <NotificationBell />
+         </div>
 
-               <div className="h-6 w-px bg-zinc-200" />
-               
-               {/* Profile */}
-               <Link href="/settings">
-                 <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white cursor-pointer hover:opacity-90 transition-opacity">
-                   {initials}
-                 </div>
-               </Link>
+         <div className="flex flex-wrap items-center gap-2">
+            <Link href="/followups/new">
+               <div className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl shadow-[0_4px_14px_0_rgb(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:-translate-y-0.5 hover:bg-black transition-all duration-200 cursor-pointer">
+                  <Plus className="w-4 h-4 text-white" />
+                  <span className="text-[14px] font-semibold">New Follow-up</span>
+               </div>
+            </Link>
+         </div>
+      </motion.div>
+
+      {/* Main Content Area (Chart + Sides) */}
+      <div className="grid grid-cols-12 gap-6 mt-4">
+         
+         {/* Main Chart Section (8 cols) */}
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="col-span-12 xl:col-span-8 bg-white rounded-[32px] p-8 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[480px]"
+         >
+            <div className="flex justify-between items-start mb-8">
+               <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Follow-ups Performance</h2>
+               <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                  <MoreHorizontal className="w-5 h-5 text-zinc-400" />
+               </div>
             </div>
+
+            {/* Stat Row - Real Data */}
+            <div className="grid grid-cols-4 gap-4 mb-10">
+               <div className="border-r border-zinc-100 pr-4">
+                  <p className="text-[12px] font-medium text-zinc-400 mb-2">Total Created</p>
+                  <p className="text-[28px] font-semibold text-zinc-800">{followUps.length}</p>
+               </div>
+               <div className="border-r border-zinc-100 px-4">
+                  <p className="text-[12px] font-medium text-zinc-400 mb-2">Active Pending</p>
+                  <p className="text-[28px] font-semibold text-zinc-800">{activePending.length}</p>
+               </div>
+               <div className="border-r border-zinc-100 px-4">
+                  <p className="text-[12px] font-medium text-zinc-900 mb-2 font-semibold">Successfully Completed</p>
+                  <p className="text-[28px] font-semibold text-zinc-900">{completedFollowUps.length}</p>
+               </div>
+               <div className="pl-4">
+                  <p className="text-[12px] font-medium text-zinc-400 mb-2">Overdue Tasks</p>
+                  <p className="text-[28px] font-semibold text-zinc-400">{overdueItems.length}</p>
+               </div>
             </div>
-          </div>
 
-          {/* KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-            <KpiTile 
-              label="Completion" 
-              value={`${completionRate}%`} 
-              icon={CheckCircle2} 
-              color="emerald"
-              trend="up"
-              tooltip="Percentage of total tasks marked as done"
-              className="h-[180px]"
-            >
-               <div className="mt-4 space-y-2">
-                 <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${completionRate}%` }}
-                    />
-                 </div>
-                 <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-zinc-500 font-medium">Progress</span>
-                    <span className="text-zinc-900 font-bold">{completedFollowUps.length} / {followUps.length} Tasks</span>
-                 </div>
-               </div>
-            </KpiTile>
-
-            <KpiTile 
-              label="Pending" 
-              value={activePending.length} 
-              icon={Clock} 
-              color="indigo"
-              trend="neutral"
-              tooltip="Active tasks that are not done"
-              href="/followups?status=PENDING"
-              className="h-[180px]"
-            >
-               {activePending.length > 0 && (
-                 <div className="mt-2 space-y-1.5 border-t border-indigo-100 pt-2">
-                    {activePending.slice(0, 2).map(f => (
-                      <div key={f.id} className="flex items-start justify-between group/item">
-                         <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-medium text-zinc-900 truncate">{f.title}</p>
-                            <p className="text-[9px] text-zinc-400 truncate">{f.target || "No target"}</p>
-                         </div>
-                         <span className="text-[9px] font-bold text-indigo-500 whitespace-nowrap ml-2">
-                            {f.dueAt ? new Date(f.dueAt).toLocaleDateString(undefined, {month:'numeric', day:'numeric'}) : '-'}
-                         </span>
-                      </div>
-                    ))}
-                    {activePending.length > 2 && (
-                      <p className="text-[9px] text-indigo-400 font-medium">+ {activePending.length - 2} more</p>
-                    )}
-                 </div>
-               )}
-            </KpiTile>
-
-             <KpiTile 
-               label="Overdue" 
-               value={overdueItems.length} 
-               icon={AlertCircle} 
-               color="rose"
-               trend={overdueItems.length > 0 ? "down" : "up"}
-               tooltip="Tasks past their due date"
-               href="/followups?status=OVERDUE"
-               className="h-[180px]"
-             >
-                {overdueItems.length > 0 && (
-                  <div className="mt-2 space-y-1.5 border-t border-rose-100 pt-2">
-                     {overdueItems.slice(0, 2).map(f => (
-                       <div key={f.id} className="flex items-start justify-between group/item">
-                          <div className="min-w-0 flex-1">
-                             <p className="text-[10px] font-medium text-zinc-900 truncate">{f.title}</p>
-                             {f.target && <p className="text-[9px] text-zinc-400 truncate">{f.target}</p>}
-                          </div>
-                          <span className="text-[9px] font-bold text-rose-500 whitespace-nowrap ml-2">
-                             {new Date(f.dueAt!).toLocaleDateString(undefined, {month:'numeric', day:'numeric'})}
-                          </span>
-                       </div>
-                     ))}
-                     {overdueItems.length > 2 && (
-                       <p className="text-[9px] text-rose-400 font-medium">+ {overdueItems.length - 2} more</p>
-                     )}
-                  </div>
-                )}
-             </KpiTile>
-             
-             <KpiTile 
-               label="Due This Week" 
-               value={dueThisWeekItems.length} 
-               icon={Calendar} 
-               color="amber"
-               trend="neutral"
-               tooltip="Tasks due in the next 7 days"
-               className="h-[180px]"
-             >
-                {dueThisWeekItems.length > 0 && (
-                  <div className="mt-2 space-y-1.5 border-t border-amber-100 pt-2">
-                     {dueThisWeekItems.slice(0, 2).map(f => (
-                       <div key={f.id} className="flex items-start justify-between group/item">
-                          <div className="min-w-0 flex-1">
-                             <p className="text-[10px] font-medium text-zinc-900 truncate">{f.title}</p>
-                             {f.target && <p className="text-[9px] text-zinc-400 truncate">{f.target}</p>}
-                          </div>
-                          <span className="text-[9px] font-bold text-amber-500 whitespace-nowrap ml-2">
-                             {new Date(f.dueAt!).toLocaleDateString(undefined, {weekday: 'short'})}
-                          </span>
-                       </div>
-                     ))}
-                     {dueThisWeekItems.length > 2 && (
-                       <p className="text-[9px] text-amber-400 font-medium">+ {dueThisWeekItems.length - 2} more</p>
-                     )}
-                  </div>
-                )}
-             </KpiTile>
-          </div>
-
-        {/* Row 2: Chart & Sidebar */}
-        <div className="flex-1 md:min-h-0 flex flex-col lg:grid lg:grid-cols-12 gap-4 pb-2">
-          
-          {/* Main Chart (8 cols) */}
-          <div className="lg:col-span-8 bg-white rounded-xl border border-zinc-200/60 shadow-sm flex flex-col min-h-[300px] md:min-h-0 overflow-hidden h-full">
-             <div className="p-3 border-b border-zinc-50 flex items-center justify-between shrink-0">
-               <div>
-                 <h3 className="text-sm font-bold text-zinc-900">Activity Trend</h3>
-                 <div className="flex items-center gap-2 mt-0.5">
-                   <p className="text-[10px] text-zinc-500">Last 14 days</p>
-                   {/* ... stats ... */}
-                 </div>
-               </div>
-               <div className="flex gap-3">
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Created
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Completed
-                  </div>
-               </div>
-             </div>
-             
-             <div className="flex-1 w-full min-h-0 p-2">
-               <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <div className="flex-1 w-full relative z-10 mt-auto">
+               <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={mainChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }} barGap={0} barCategoryGap="20%">
                     <defs>
-                      <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f4f4f5" />
                     <XAxis 
-                      dataKey="date" 
+                      dataKey="month" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#a1a1aa', fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: '#a1a1aa', fontSize: 12, fontWeight: 500 }}
                       dy={10}
                     />
                     <YAxis 
                        axisLine={false}
                        tickLine={false}
-                       tick={{ fill: '#a1a1aa', fontSize: 10 }}
+                       tick={{ fill: '#a1a1aa', fontSize: 12, fontWeight: 500 }}
                     />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '8px', fontSize: '11px' }}
-                      cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                      cursor={{fill: 'transparent'}}
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e4e4e7', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', padding: '8px 12px' }}
+                      itemStyle={{ color: '#18181b', fontSize: '13px', fontWeight: 600 }}
+                      labelStyle={{ display: 'none' }}
                     />
-                    <Area type="monotone" dataKey="created" name="Created" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCreated)" />
-                    <Area type="monotone" dataKey="completed" name="Completed" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorCompleted)" />
-                  </AreaChart>
+                    <Bar dataKey="value" fill="url(#barGradient)" radius={[4, 4, 0, 0]}>
+                       {mainChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === mainChartData.length - 1 ? '#2563eb' : 'url(#barGradient)'} /> 
+                       ))}
+                    </Bar>
+                  </BarChart>
                </ResponsiveContainer>
-             </div>
-          </div>
+            </div>
+         </motion.div>
 
-          {/* Sidebar (4 cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-4 h-full min-h-[400px] md:min-h-0">
-             
-             {/* Quick Actions */}
-             <div className="bg-white rounded-xl border border-zinc-200/60 shadow-sm p-3 flex flex-col justify-center gap-2 shrink-0">
-                 <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider mb-1">Quick Actions</h3>
-                 <div className="grid grid-cols-2 gap-2">
-                    <Link href="/followups/new" className="col-span-2">
-                      <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-xs font-semibold shadow-sm shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-1.5 group">
-                        <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" /> New Follow-up
-                      </button>
-                    </Link>
-                    <Link href="/templates">
-                      <button className="w-full bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 py-2.5 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm">
-                        <Layout className="w-3.5 h-3.5 text-zinc-400" /> Templates
-                      </button>
-                    </Link>
-                    <Link href="/timeline">
-                      <button className="w-full bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 py-2.5 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm">
-                        <Activity className="w-3.5 h-3.5 text-zinc-400" /> Timeline
-                      </button>
-                    </Link>
-                 </div>
-             </div>
-
-             {/* Daily Todos */}
-             <div className="flex-1 bg-white rounded-xl border border-zinc-200/60 shadow-sm flex flex-col overflow-hidden min-h-0">
-                <div className="p-3 border-b border-zinc-50 flex items-center justify-between shrink-0">
-                   <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-zinc-50">
-                         <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500" />
-                      </div>
-                      <h3 className="text-xs font-bold text-zinc-900">Daily Todos</h3>
-                   </div>
-                   <Link href="/todos" className="text-[10px] text-indigo-600 font-medium hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors">View All</Link>
-                </div>
-                
-                {/* Quick Add Input */}
-                <div className="p-3 pb-0 shrink-0">
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      placeholder="Add a new todo..." 
-                      className="w-full text-xs pl-3 pr-8 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
-                      value={newTodoInput}
-                      onChange={(e) => setNewTodoInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleQuickAddTodo()}
-                      disabled={isAddingTodo}
-                    />
-                    <button 
-                      onClick={handleQuickAddTodo}
-                      disabled={isAddingTodo || !newTodoInput.trim()}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+         {/* Side Panel (4 cols) - Split into two stacked cards */}
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="col-span-12 xl:col-span-4 flex flex-col gap-6"
+         >
+            {/* Top Card: Active Pipeline */}
+            <div className="bg-white rounded-[32px] p-6 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-1 flex flex-col justify-between">
+               <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-[18px] font-semibold text-zinc-900 tracking-tight">Active Pipeline</h2>
+                  <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                     <MoreHorizontal className="w-4 h-4 text-zinc-400" />
                   </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-2 md:p-3 custom-scrollbar min-h-[200px]">
-                   {todos.length > 0 ? (
-                     <div className="flex flex-col gap-2">
-                        {todos.map(todo => (
-                          <div key={todo.id} className={cn(
-                             "p-2.5 rounded-lg border border-zinc-100 bg-white hover:bg-zinc-50/50 transition-all flex items-start gap-3 group relative select-none",
-                             todo.status === 'DONE' && "bg-zinc-50/30"
-                          )}>
-                             <button 
-                                onClick={() => handleToggleTodo(todo)}
-                                className={cn(
-                                   "w-4 h-4 mt-0.5 rounded border flex items-center justify-center transition-all shrink-0 active:scale-95",
-                                   todo.status === 'DONE' 
-                                      ? "bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-200" 
-                                      : "border-zinc-300 bg-white hover:border-indigo-400 hover:shadow-sm"
-                                )}
-                             >
-                                {todo.status === 'DONE' && <Check className="w-3 h-3 stroke-[3]" />}
-                             </button>
-                             
-                             <div className="min-w-0 flex-1">
-                                <p className={cn(
-                                   "text-[11px] font-medium text-zinc-900 truncate transition-all", 
-                                   todo.status === 'DONE' && "line-through text-zinc-400"
-                                )}>
-                                   {todo.title}
-                                </p>
-                                {todo.notes && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{todo.notes}</p>}
-                                
-                                {todo.remindAt && (
-                                   <div className={cn(
-                                      "mt-1.5 text-[9px] font-medium inline-flex items-center gap-1 px-1.5 py-0.5 rounded border",
-                                      todo.status === 'DONE' ? "text-zinc-300 border-zinc-100 bg-transparent" : "text-amber-600 bg-amber-50 border-amber-100"
-                                   )}>
-                                      <Clock className="w-2.5 h-2.5" />
-                                      {new Date(todo.remindAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                   </div>
-                                )}
-                             </div>
-                          </div>
-                        ))}
+               </div>
+               
+               <div className="flex items-center gap-4 mb-4">
+                  <h3 className="text-[40px] font-medium text-zinc-900 tracking-tight leading-none">{activePending.length}</h3>
+                  <div className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-[11px] font-bold flex items-center mt-2">
+                     <TrendingUp className="w-3 h-3 mr-1" /> Pending
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">High Priority</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{highPriority.length}</p>
                      </div>
-                   ) : (
-                     <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                        <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-300 mb-2">
-                           <CheckCircle2 className="w-5 h-5" />
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-rose-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${highPct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
                         </div>
-                        <p className="text-xs font-semibold text-zinc-600">No todos for today</p>
-                        <p className="text-[10px] text-zinc-400 mt-1">Add a task above to get started!</p>
                      </div>
-                   )}
-                </div>
-             </div>
-          </div>
-        </div>
+                  </div>
+
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">Medium Priority</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{mediumPriority.length}</p>
+                     </div>
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${mediumPct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">Low Priority</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{lowPriority.length}</p>
+                     </div>
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${lowPct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Bottom Card: Urgency Status */}
+            <div className="bg-white rounded-[32px] p-6 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-1 flex flex-col justify-between">
+               <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-[18px] font-semibold text-zinc-900 tracking-tight">Urgency Overview</h2>
+                  <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                     <Clock className="w-4 h-4 text-zinc-400" />
+                  </div>
+               </div>
+               
+               <div className="flex items-center gap-4 mb-4">
+                  <h3 className="text-[40px] font-medium text-zinc-900 tracking-tight leading-none">{overdueItems.length}</h3>
+                  <div className="bg-rose-50 text-rose-600 px-2 py-1 rounded-full text-[11px] font-bold flex items-center mt-2">
+                     Overdue
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">Overdue Items</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{overdueItems.length}</p>
+                     </div>
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-pink-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${overduePct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">Due Today</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{dueToday.length}</p>
+                     </div>
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${todayPct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <p className="text-[13px] font-medium text-zinc-500">Due This Week</p>
+                        <p className="text-[13px] font-semibold text-zinc-900">{dueThisWeek.length}</p>
+                     </div>
+                     <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full relative overflow-hidden transition-all duration-1000" style={{ width: `${weekPct}%` }}>
+                           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, white 5px, white 10px)' }}></div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </motion.div>
+      </div>
+
+      {/* Bottom Row - Domain Specific Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
+         
+         {/* 1. Recent Activity Timeline */}
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="bg-white rounded-[32px] p-8 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-[320px] flex flex-col"
+         >
+            <div className="flex justify-between items-start mb-6">
+               <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Recent Activity</h2>
+               <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                  <MoreHorizontal className="w-5 h-5 text-zinc-400" />
+               </div>
+            </div>
+            
+            <div className="flex-1 w-full relative overflow-y-auto custom-scrollbar pr-2">
+               {timelineEvents.length > 0 ? (
+                  <div className="flex flex-col">
+                     {timelineEvents.map((event, index) => {
+                        const isLast = index === timelineEvents.length - 1;
+                        const eventType = (event.type || "").toLowerCase();
+                        
+                        // Pick icon and color based on event type
+                        let IconToUse = Clock;
+                        let bgClass = "bg-zinc-100 text-zinc-500";
+                        if (eventType.includes("complete") || eventType.includes("done")) {
+                           IconToUse = Check;
+                           bgClass = "bg-emerald-100 text-emerald-600";
+                        } else if (eventType.includes("create") || eventType.includes("new")) {
+                           IconToUse = Plus;
+                           bgClass = "bg-blue-100 text-blue-600";
+                        } else if (eventType.includes("alert") || eventType.includes("escalate")) {
+                           IconToUse = Clock; // Reusing clock, or could use alert
+                           bgClass = "bg-rose-100 text-rose-600";
+                        }
+
+                        return (
+                           <div key={event.id} className="flex gap-4 group cursor-pointer">
+                              <div className="flex flex-col items-center">
+                                 <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-110", bgClass)}>
+                                    <IconToUse className="w-4 h-4" />
+                                 </div>
+                                 {!isLast && <div className="w-[2px] h-full bg-zinc-100 my-1 group-hover:bg-zinc-200 transition-colors" />}
+                              </div>
+                              <div className={cn("pb-6 flex-1", isLast && "pb-2")}>
+                                 <p className="text-[14px] font-semibold text-zinc-800 leading-tight mb-1 group-hover:text-blue-600 transition-colors">
+                                    {event.message || event.type || "System Activity"}
+                                 </p>
+                                 <p className="text-[12px] font-medium text-zinc-500">
+                                    {event.createdAt ? formatDistanceToNow(new Date(event.createdAt), { addSuffix: true }) : "Unknown time"}
+                                 </p>
+                              </div>
+                           </div>
+                        );
+                     })}
+                  </div>
+               ) : (
+                  <div className="flex flex-col items-center justify-center h-full opacity-60">
+                     <Clock className="w-8 h-8 text-zinc-400 mb-3" />
+                     <p className="text-[14px] font-medium text-zinc-500">No recent activity</p>
+                  </div>
+               )}
+            </div>
+         </motion.div>
+
+         {/* 2. Jira Status */}
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="bg-white rounded-[32px] p-8 h-[320px] border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between"
+         >
+            <div className="flex justify-between items-start">
+               <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Jira Integration</h2>
+               <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                  <Briefcase className="w-5 h-5 text-zinc-400" />
+               </div>
+            </div>
+            
+            <div className="mt-4 flex-1 flex flex-col justify-end">
+               {jiraData.isConnected ? (
+                  <>
+                     <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                        <span className="text-[14px] font-semibold text-emerald-600">Connected & Synced</span>
+                     </div>
+                     <p className="text-[48px] font-medium text-zinc-900 leading-none">{jiraData.tickets.length}</p>
+                     <p className="text-[14px] font-medium text-zinc-500 mt-2">Open tickets imported</p>
+                  </>
+               ) : (
+                  <div className="flex flex-col items-start">
+                     <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-zinc-300"></div>
+                        <span className="text-[14px] font-semibold text-zinc-500">Not Connected</span>
+                     </div>
+                     <p className="text-[14px] text-zinc-600 mb-5 leading-relaxed">Sync your Jira board to automate follow-ups on stalled tickets seamlessly.</p>
+                     <button className="text-[14px] font-semibold bg-zinc-900 text-white px-6 py-3 rounded-xl hover:bg-zinc-800 transition-colors w-full">
+                        Connect Jira
+                     </button>
+                  </div>
+               )}
+            </div>
+         </motion.div>
+
+         {/* 3. Daily Todos */}
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="bg-white rounded-[32px] p-8 h-[320px] flex flex-col border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+         >
+            <div className="flex justify-between items-start mb-6">
+               <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Daily Todos</h2>
+               <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                  <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+               </div>
+            </div>
+
+            {/* Add Todo Input */}
+            <div className="mb-4 relative group/input">
+              <input 
+                type="text" 
+                placeholder="What needs to be done?" 
+                className="w-full text-[13px] pl-4 pr-10 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-blue-500/50 focus:bg-white transition-all font-medium text-zinc-900 placeholder:text-zinc-400"
+                value={newTodoInput}
+                onChange={(e) => setNewTodoInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleQuickAddTodo()}
+                disabled={isAddingTodo}
+              />
+              <button 
+                onClick={handleQuickAddTodo}
+                disabled={isAddingTodo || !newTodoInput.trim()}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-lg text-blue-500 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2">
+               {todos.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                     {todos.map(todo => (
+                        <div key={todo.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer group" onClick={() => handleToggleTodo(todo)}>
+                           <button 
+                              className={cn(
+                                 "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 shrink-0",
+                                 todo.status === 'DONE' 
+                                    ? "bg-blue-500 border-blue-500 text-white shadow-[0_2px_8px_rgba(59,130,246,0.4)]" 
+                                    : "border-zinc-300 group-hover:border-blue-400 text-transparent group-hover:text-blue-400"
+                              )}
+                           >
+                              <Check className={cn("w-3 h-3 stroke-[3]", todo.status !== 'DONE' && "opacity-0 group-hover:opacity-100")} />
+                           </button>
+                           
+                           <p className={cn(
+                              "text-[13px] font-semibold transition-all flex-1 truncate", 
+                              todo.status === 'DONE' ? "line-through text-zinc-400" : "text-zinc-700"
+                           )}>
+                              {todo.title}
+                           </p>
+                        </div>
+                     ))}
+                  </div>
+               ) : (
+                  <div className="flex flex-col items-center justify-center h-full opacity-60">
+                     <CheckCircle2 className="w-6 h-6 text-zinc-400 mb-2" />
+                     <p className="text-[13px] font-medium text-zinc-500">You're all caught up!</p>
+                  </div>
+               )}
+            </div>
+         </motion.div>
 
       </div>
     </div>
