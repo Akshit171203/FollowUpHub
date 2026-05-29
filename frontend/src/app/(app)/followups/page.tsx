@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { 
   Calendar, 
@@ -197,11 +198,21 @@ function FollowUpCard({ item, onViewDetails, onMarkDone, onSnooze }: {
 // --- Main Page Component ---
 
 export default function FollowUpsPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [allItems, setAllItems] = useState<FollowUp[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('ALL');
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, priorityFilter]);
 
   // Dialog State
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -221,12 +232,24 @@ export default function FollowUpsPage() {
 
   useEffect(() => {
     loadData();
+    
+    // Automatically open detail view if navigated with ?id=xxx
+    const params = new URLSearchParams(window.location.search);
+    const viewId = params.get('id');
+    if (viewId) {
+      setSelectedId(viewId);
+      setIsDialogOpen(true);
+      // Clean up URL after opening
+      window.history.replaceState({}, '', '/followups');
+    }
   }, []);
 
   const handleMarkDone = async (id: string) => {
     try {
       await markDone(id);
-      toast.success("Task completed");
+      toast.success("Task completed", {
+        action: { label: "View", onClick: () => router.push(`/followups?id=${id}`) }
+      });
       setAllItems(prev => prev.map(f => f.id === id ? { ...f, status: 'DONE', completedAt: new Date().toISOString() } : f));
     } catch (e) {
       toast.error("Failed to update");
@@ -236,7 +259,9 @@ export default function FollowUpsPage() {
   const handleSnooze = async (id: string) => {
     try {
       await snoozeFollowUp(id, 24 * 60);
-      toast.success("Snoozed for 1 day");
+      toast.success("Snoozed for 1 day", {
+        action: { label: "View", onClick: () => router.push(`/followups?id=${id}`) }
+      });
       setAllItems(prev => prev.map(f => f.id === id ? { ...f, status: 'SNOOZED' } : f));
     } catch (e) {
       toast.error("Failed to snooze");
@@ -287,6 +312,13 @@ export default function FollowUpsPage() {
     }
     return items;
   }, [filteredItems, priorityFilter]);
+
+  const totalPages = Math.ceil(finalizedItems.length / ITEMS_PER_PAGE);
+
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return finalizedItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [finalizedItems, currentPage]);
 
   // --- Counts ---
   const counts = useMemo(() => {
@@ -464,17 +496,42 @@ export default function FollowUpsPage() {
                <p className="text-[15px] font-medium mt-1">Try adjusting your filters or search query.</p>
             </div>
          ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-20">
-              {finalizedItems.map(item => (
-                <FollowUpCard 
-                  key={item.id} 
-                  item={item} 
-                  onMarkDone={handleMarkDone}
-                  onSnooze={handleSnooze}
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
-           </div>
+           <>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-8">
+                {paginatedItems.map(item => (
+                  <FollowUpCard 
+                    key={item.id} 
+                    item={item} 
+                    onMarkDone={handleMarkDone}
+                    onSnooze={handleSnooze}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+             </div>
+             
+             {/* Pagination Controls */}
+             {totalPages > 1 && (
+               <div className="flex items-center justify-center gap-4 pb-20">
+                 <button
+                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                   disabled={currentPage === 1}
+                   className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50 transition-colors text-[14px] font-medium shadow-sm bg-white"
+                 >
+                   Previous
+                 </button>
+                 <span className="text-[14px] font-semibold text-zinc-600">
+                   Page {currentPage} of {totalPages}
+                 </span>
+                 <button
+                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                   disabled={currentPage === totalPages}
+                   className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50 transition-colors text-[14px] font-medium shadow-sm bg-white"
+                 >
+                   Next
+                 </button>
+               </div>
+             )}
+           </>
          )}
       </div>
 

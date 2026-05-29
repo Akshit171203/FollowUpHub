@@ -221,16 +221,16 @@ export default function TemplatesPage() {
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-2 rounded-full text-[14px] font-medium transition-all select-none whitespace-nowrap",
+                    "flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-semibold transition-all select-none whitespace-nowrap border",
                     isActive 
-                      ? "bg-white text-zinc-900 shadow-sm border border-zinc-100 ring-1 ring-black/5" 
-                      : "bg-transparent text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+                      ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm" 
+                      : "bg-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 border-transparent"
                   )}
                 >
                   <span>{cat}</span>
                   <span className={cn(
-                    "text-[12px]",
-                    isActive ? "text-zinc-400 font-medium" : "text-zinc-400"
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold min-w-[20px] text-center transition-colors",
+                    isActive ? "bg-blue-200/50 text-blue-700" : "bg-zinc-100 text-zinc-500"
                   )}>
                     {count}
                   </span>

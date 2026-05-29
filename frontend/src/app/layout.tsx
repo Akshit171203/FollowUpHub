@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className={`min-h-screen bg-background text-foreground font-sans ${oswald.variable} ${lato.variable} ${inter.variable}`}>
         {children}
-        <Toaster richColors closeButton />
+        <Toaster closeButton />
       </body>
     </html>
   );

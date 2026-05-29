@@ -11,6 +11,7 @@ import {
   AlertTriangle, 
   Clock, 
   Info,
+  Sparkles,
   ShieldCheck,
   CreditCard,
   Briefcase
@@ -48,15 +49,33 @@ const getIconForType = (type: string = '') => {
   return { Icon: Check, bg: 'bg-[#2C2C2E]', color: 'text-[#A1A1AA]' }; // default to check like in screenshot
 };
 
+const PRO_TIPS = [
+  "Teams that consistently follow up within 24 hours close 30% more deals!",
+  "Snoozing a task until you have bandwidth is better than ignoring it completely.",
+  "Using templates for recurring follow-ups saves an average of 4 hours per week.",
+  "Prioritizing your follow-ups ensures high-impact items don't slip through the cracks.",
+  "Regular communication builds trust. A simple check-in can work wonders.",
+  "Escalation helps bring attention to unresolved issues before they become critical.",
+  "The best follow-ups are concise, clear, and include a direct call to action."
+];
+
 export function NotificationBell({ triggerMode = 'icon', isCollapsed = false }: { triggerMode?: 'icon' | 'sidebar', isCollapsed?: boolean } = {}) {
   const { groups, unreadCount, loading, markGroupRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [mounted, setMounted] = useState(false);
+  const [randomTip, setRandomTip] = useState(PRO_TIPS[0]);
 
   useEffect(() => {
     setMounted(true);
+    setRandomTip(PRO_TIPS[Math.floor(Math.random() * PRO_TIPS.length)]);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      setRandomTip(PRO_TIPS[Math.floor(Math.random() * PRO_TIPS.length)]);
+    }
+  }, [open]);
 
   const filteredGroups = activeTab === 'all' 
     ? groups 
@@ -108,10 +127,11 @@ export function NotificationBell({ triggerMode = 'icon', isCollapsed = false }: 
         </PopoverTrigger>
       
       <PopoverContent 
-        className="w-[420px] p-0 bg-white/95 backdrop-blur-3xl border border-zinc-200/60 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] z-[70] rounded-[24px] flex flex-col overflow-hidden" 
+        className="w-[480px] p-0 bg-white/95 backdrop-blur-3xl border border-zinc-200/60 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] z-[70] rounded-[24px] flex flex-col overflow-hidden" 
         side="right"
         align="end"
         sideOffset={16}
+        alignOffset={-60}
         collisionPadding={16}
       >
         {/* Header */}
@@ -167,7 +187,7 @@ export function NotificationBell({ triggerMode = 'icon', isCollapsed = false }: 
         </div>
 
         {/* Content List */}
-        <ScrollArea className="h-[440px]">
+        <ScrollArea className="h-[460px]">
            {loading && groups.length === 0 ? (
                <div className="p-8 text-center flex flex-col items-center gap-4 mt-12">
                    <div className="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-400 animate-pulse">
@@ -236,6 +256,17 @@ export function NotificationBell({ triggerMode = 'icon', isCollapsed = false }: 
                </div>
            )}
         </ScrollArea>
+
+        {/* Exciting Fact Strip */}
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-t border-emerald-100/50 px-6 py-5 flex items-start gap-4">
+           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 mt-0.5">
+             <Sparkles className="w-5 h-5 text-emerald-600" />
+           </div>
+           <p className="text-[14px] font-medium text-emerald-900 leading-relaxed">
+             <span className="font-bold block mb-0.5">Pro Tip</span>
+             {randomTip}
+           </p>
+        </div>
       </PopoverContent>
     </Popover>
     </>

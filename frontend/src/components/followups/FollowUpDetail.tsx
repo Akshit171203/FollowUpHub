@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, X, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import {
   getFollowUp,
   markDone,
-  cancelFollowUp,
   deleteFollowUp,
   snoozeFollowUp,
   updateFollowUp,
@@ -60,7 +60,9 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
   const [item, setItem] = useState<FollowUp | null>(null);
   
   // Edit State
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editForm, setEditForm] = useState({
       title: "",
       target: "",
@@ -77,8 +79,8 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
       }
       const res = await getFollowUp(id);
       setItem(res ?? null);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to load follow-up");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Failed to load follow-up");
       setItem(null);
     } finally {
       setLoading(false);
@@ -116,8 +118,8 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
           setIsEditing(false);
           load();
           onUpdate?.();
-      } catch (e: any) {
-          toast.error(e?.message ?? "Failed to update");
+      } catch (e: unknown) {
+          toast.error((e as Error)?.message ?? "Failed to update");
       }
   }
 
@@ -125,11 +127,13 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
     if (!id) return;
     try {
       await markDone(id);
-      toast.success("Marked as done");
+      toast.success("Marked as done", {
+        action: { label: "View", onClick: () => router.push(`/followups?id=${id}`) }
+      });
       load();
       onUpdate?.();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to mark done");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Failed to mark done");
     }
   }
 
@@ -137,37 +141,25 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
     if (!id) return;
     try {
       await snoozeFollowUp(id, 10);
-      toast.success("Snoozed for 10 minutes");
+      toast.success("Snoozed for 10 minutes", {
+        action: { label: "View", onClick: () => router.push(`/followups?id=${id}`) }
+      });
       load();
       onUpdate?.();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to snooze");
-    }
-  }
-
-  async function onCancel() {
-    if (!id) return;
-    if (!confirm("Are you sure you want to cancel this follow-up?")) return;
-    try {
-      await cancelFollowUp(id);
-      toast.success("Follow-up cancelled");
-      load();
-      onUpdate?.();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to cancel");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Failed to snooze");
     }
   }
 
   async function onDelete() {
     if (!id) return;
-    if (!confirm("Are you sure you want to delete this follow-up? This cannot be undone.")) return;
     try {
       await deleteFollowUp(id);
       toast.success("Follow-up deleted");
       onUpdate?.();
       onClose?.(); 
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to delete");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Failed to delete");
     }
   }
 
@@ -187,20 +179,21 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
   return (
     <div className="w-full flex flex-col font-sans">
       {/* Header */}
-      <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-zinc-100">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight leading-tight">
-            Follow-up Details
-          </h2>
-          <p className="text-sm font-medium text-zinc-500">View and manage this follow-up</p>
+      {!showDeleteConfirm && (
+        <div className="flex items-center justify-between px-6 pt-6 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              Follow-up Details
+            </h2>
+          </div>
+          {!isEditing && item.status !== "DONE" && item.status !== "CANCELLED" && (
+              <button onClick={startEditing} className="p-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors group" title="Edit details">
+                  <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              </button>
+          )}
         </div>
-        {!isEditing && item.status !== "DONE" && item.status !== "CANCELLED" && (
-            <Button variant="outline" size="sm" onClick={startEditing} className="h-8 rounded-lg shadow-sm border-zinc-200 hover:bg-zinc-50">
-                <Pencil className="w-3.5 h-3.5 mr-2" />
-                <span className="font-semibold text-[13px]">Edit</span>
-            </Button>
-        )}
-      </div>
+      )}
 
       {/* Content */}
       <div className="p-6">
@@ -251,75 +244,95 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
           </div>
         ) : (
           /* VIEW MODE */
-          <div className="flex flex-col gap-6">
-            <div>
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Title</h3>
-              <p className="text-[17px] font-bold text-zinc-900 leading-snug">{item.title ?? "—"}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 p-4 rounded-xl bg-zinc-50/80 border border-zinc-100">
-              <div className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  <Calendar className="w-3.5 h-3.5" /> Due Date
-                </span>
-                <span className="text-[14px] font-semibold text-zinc-900">{fmt(item.dueAt)}</span>
-              </div>
-              <div className="flex flex-col gap-1.5 items-start">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-0.5">Status</span>
-                <StatusBadge status={item.status} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  <Target className="w-3.5 h-3.5" /> Target
-                </span>
-                <span className="text-[14px] font-medium text-zinc-800 break-words leading-relaxed bg-zinc-50/50 p-2.5 rounded-lg border border-zinc-100/50 min-h-[44px]">
-                  {item.target || <span className="text-zinc-400 italic">No target specified</span>}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  <AlignLeft className="w-3.5 h-3.5" /> Notes
-                </span>
-                <span className="text-[14px] font-medium text-zinc-800 break-words leading-relaxed bg-zinc-50/50 p-2.5 rounded-lg border border-zinc-100/50 min-h-[44px]">
-                  {item.notes || <span className="text-zinc-400 italic">No additional notes</span>}
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-6 mt-2 border-t border-zinc-100">
-              <Button 
-                onClick={onDone}
-                disabled={item.status === "DONE" || item.status === "CANCELLED"}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 rounded-xl font-semibold gap-2 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Mark as Done
-              </Button>
-              
-              {item.status !== "DONE" && item.status !== "CANCELLED" && (
-                <>
-                  <Button variant="outline" onClick={onSnooze} className="rounded-xl shadow-sm border-zinc-200 hover:bg-zinc-50 font-semibold gap-2">
-                    <Clock className="w-4 h-4 text-zinc-500" />
-                    Snooze 10m
-                  </Button>
-                  <Button variant="outline" onClick={onCancel} className="rounded-xl shadow-sm border-zinc-200 hover:bg-red-50 text-red-600 hover:text-red-700 hover:border-red-200 font-semibold gap-2 transition-colors ml-auto">
-                    <X className="w-4 h-4" />
+          <>
+            {showDeleteConfirm ? (
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in zoom-in-95 fade-in duration-200">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-5 ring-8 ring-red-50/50">
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-zinc-900 mb-2 tracking-tight">Delete this follow-up?</h2>
+                <p className="text-[15px] text-zinc-500 max-w-sm mb-8 leading-relaxed">
+                  This action cannot be undone. This will permanently delete the follow-up and remove it from our servers.
+                </p>
+                <div className="flex items-center gap-3 w-full justify-center">
+                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-11 rounded-xl font-bold px-8 bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 transition-colors shadow-sm">
                     Cancel
                   </Button>
-                </>
-              )}
-              
-              <Button variant="ghost" onClick={onDelete} className="rounded-xl text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors gap-2 ml-auto p-2" title="Delete forever">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+                  <Button onClick={onDelete} className="h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-md shadow-red-600/20 font-bold px-8 transition-all">
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-8">
+                
+                {/* Title & Core Metadata */}
+                <div className="flex flex-col gap-4">
+                  <h1 className="text-[26px] font-extrabold text-zinc-900 tracking-tight leading-tight">
+                    {item.title ?? "Untitled Follow-up"}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-3">
+                     <StatusBadge status={item.status || "PENDING"} />
+                     {item.dueAt && (
+                       <span className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-600 bg-white shadow-sm px-3 py-1.5 rounded-full border border-zinc-200/80">
+                         <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                         {fmt(item.dueAt)}
+                       </span>
+                     )}
+                  </div>
+                </div>
+
+                {/* Target & Notes Box */}
+                <div className="flex flex-col gap-6 p-6 rounded-[20px] bg-gradient-to-b from-zinc-50/80 to-zinc-50/30 border border-zinc-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                  <div className="flex flex-col gap-2">
+                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                      <Target className="w-3.5 h-3.5" /> Target
+                    </span>
+                    <span className="text-[15px] font-medium text-zinc-800 leading-relaxed">
+                      {item.target || <span className="text-zinc-400 italic font-normal">No target specified</span>}
+                    </span>
+                  </div>
+                  
+                  <div className="h-px bg-zinc-200/50 w-full" />
+                  
+                  <div className="flex flex-col gap-2">
+                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                      <AlignLeft className="w-3.5 h-3.5" /> Notes
+                    </span>
+                    <span className="text-[15px] font-medium text-zinc-800 leading-relaxed whitespace-pre-wrap">
+                      {item.notes || <span className="text-zinc-400 italic font-normal">No additional notes</span>}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 pt-2 w-full">
+                  <Button 
+                    onClick={onDone}
+                    disabled={item.status === "DONE" || item.status === "CANCELLED"}
+                    className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-md shadow-zinc-900/10 font-bold px-5 gap-2 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Mark as Done
+                  </Button>
+                  
+                  {item.status !== "DONE" && item.status !== "CANCELLED" && (
+                      <Button variant="outline" onClick={onSnooze} className="rounded-xl shadow-sm border-zinc-200 hover:bg-zinc-50 font-bold gap-2 px-5 bg-white">
+                        <Clock className="w-4 h-4 text-zinc-500" />
+                        Snooze 10m
+                      </Button>
+                  )}
+                  
+                  <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="rounded-xl text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors p-3 bg-transparent shadow-none ml-auto border-transparent" title="Delete forever">
+                    <Trash2 className="w-[18px] h-[18px]" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+
     </div>
   );
 }

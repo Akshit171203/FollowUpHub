@@ -141,58 +141,75 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Cleanup throttle cache every 5 minutes
     const cleanupInterval = setInterval(cleanupThrottleCache, 5 * 60 * 1000);
 
-    const handleChanged = (data: { groupKey: string; title?: string; message?: string; severity?: string }) => {
+    const handleChanged = (data: { groupKey: string; title?: string; message?: string; severity?: string; type?: string }) => {
         if (data.title) {
-            // Play Sound
-            try {
-                // Using a softer, more pleasant UI pop sound (mixkit-2354) instead of the loud chime
-                const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
-                audio.volume = 0.5;
-                audio.play().catch(e => console.warn("Audio play failed", e));
-            } catch (e) {
-                console.warn("Audio setup failed", e);
-            }
+            // Determine if this is a minor status update that shouldn't trigger a toast/sound
+            const titleUpper = data.title.toUpperCase();
+            const isMinorUpdate = titleUpper.startsWith("SNOOZED:") || titleUpper.startsWith("COMPLETED:") || titleUpper.startsWith("CANCELLED:");
 
-            // Show in-app toast
-            toast(data.title, {
-                description: data.message,
-                action: {
-                    label: "View",
-                    onClick: () => {
-                        if (data.groupKey) {
-                          try {
-                            router.push(`/notifications/${data.groupKey}`);
-                          } catch (error) {
-                            console.error("Navigation failed:", error);
-                          }
-                        }
+            if (!isMinorUpdate) {
+                // Play Sound
+                try {
+                    // Using a softer, more pleasant UI pop sound (mixkit-2354) instead of the loud chime
+                    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+                    audio.volume = 0.5;
+                    audio.play().catch(e => console.warn("Audio play failed", e));
+                } catch (e) {
+                    console.warn("Audio setup failed", e);
+                }
+
+                // Determine proper route
+                let targetRoute = `/followups?id=${data.groupKey}`;
+                if (data.type) {
+                    const t = data.type.toUpperCase();
+                    if (t.includes('TODO')) {
+                        targetRoute = '/todos';
+                    } else if (t.includes('JIRA') || t.includes('TICKET')) {
+                        targetRoute = '/jira';
                     }
                 }
-            });
 
-            // Desktop Notification Logic
-            const desktopEnabled = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsEnabled") === "true";
-            const permissionGranted = getPermissionStatus() === "granted";
-            const alwaysShow = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsAlwaysShow") === "true";
-            const tabHidden = !isTabVisible();
-
-            // Show if: enabled AND permission granted AND (tab hidden OR always show)
-            if (desktopEnabled && permissionGranted && (tabHidden || alwaysShow)) {
-                showDesktopNotification(
-                    data.title,
-                    data.message || "",
-                    data.groupKey,
-                    () => {
-                        try {
-                            window.focus();
+                // Show in-app toast
+                toast(data.title, {
+                    description: data.message,
+                    action: {
+                        label: "View",
+                        onClick: () => {
                             if (data.groupKey) {
-                                router.push(`/notifications/${data.groupKey}`);
+                              try {
+                                router.push(targetRoute);
+                              } catch (error) {
+                                console.error("Navigation failed:", error);
+                              }
                             }
-                        } catch (error) {
-                            console.error("Desktop notification click failed:", error);
                         }
                     }
-                );
+                });
+
+                // Desktop Notification Logic
+                const desktopEnabled = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsEnabled") === "true";
+                const permissionGranted = getPermissionStatus() === "granted";
+                const alwaysShow = typeof window !== "undefined" && localStorage.getItem("desktopNotificationsAlwaysShow") === "true";
+                const tabHidden = !isTabVisible();
+
+                // Show if: enabled AND permission granted AND (tab hidden OR always show)
+                if (desktopEnabled && permissionGranted && (tabHidden || alwaysShow)) {
+                    showDesktopNotification(
+                        data.title,
+                        data.message || "",
+                        data.groupKey,
+                        () => {
+                            try {
+                                window.focus();
+                                if (data.groupKey) {
+                                    router.push(targetRoute);
+                                }
+                            } catch (error) {
+                                console.error("Desktop notification click failed:", error);
+                            }
+                        }
+                    );
+                }
             }
         }
         

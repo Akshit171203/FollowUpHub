@@ -141,9 +141,7 @@ export default function JiraPage() {
            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
               <div className="flex flex-col gap-3 max-w-xl">
                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 shadow-sm backdrop-blur-sm border border-white/30 shrink-0">
-                       <Kanban className="w-5 h-5 text-white" />
-                    </div>
+                    
                     <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
                        JIRA INTEGRATION
                     </h1>

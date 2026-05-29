@@ -369,23 +369,6 @@ function TodoItem({
   onUpdate: (id: string, updates: UpdateTodoInput) => void;
 }) {
   const isDone = todo.status === "DONE";
-  const [isEditingTime, setIsEditingTime] = useState(false);
-  
-  const initialTime = todo.remindAt ? format(new Date(todo.remindAt), "HH:mm") : "";
-  const [editTime, setEditTime] = useState(initialTime);
-
-  const handleTimeSave = () => {
-      let remindAt = null;
-      if (editTime) {
-          const [hours, minutes] = editTime.split(':').map(Number);
-          const [y, m, day] = todo.forDate.split('-').map(Number);
-          const dateObj = new Date(y, m - 1, day);
-          dateObj.setHours(hours, minutes, 0, 0);
-          remindAt = dateObj.toISOString();
-      }
-      onUpdate(todo.id, { remindAt });
-      setIsEditingTime(false);
-  }
 
   return (
     <div className={cn(
@@ -431,34 +414,14 @@ function TodoItem({
         )}
         
         {/* Reminder Pill */}
-        <div className="mt-2.5 flex items-center gap-2">
-           {isEditingTime ? (
-               <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg p-1 animate-in fade-in slide-in-from-left-2">
-                   <input 
-                      type="time" 
-                      value={editTime} 
-                      onChange={(e) => setEditTime(e.target.value)}
-                      className="h-7 bg-white text-[13px] font-medium text-zinc-900 px-2 rounded outline-none w-28 border border-zinc-200"
-                   />
-                   <button onClick={handleTimeSave} className="w-7 h-7 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-700 flex items-center justify-center transition-colors">
-                       <CheckCircle2 className="w-4 h-4" />
-                   </button>
-                   <button onClick={() => setIsEditingTime(false)} className="w-7 h-7 rounded-md hover:bg-zinc-200 text-zinc-600 flex items-center justify-center transition-colors">
-                       <Trash2 className="w-4 h-4" />
-                   </button>
-               </div>
-           ) : (
-              <button 
-                onClick={() => setIsEditingTime(true)}
-                className="group/time flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200/60 text-zinc-600 hover:bg-white hover:border-zinc-300 hover:text-zinc-900 hover:shadow-sm transition-all"
-              >
-                  <Clock className="w-3.5 h-3.5 text-zinc-400 group-hover/time:text-zinc-900 transition-colors" />
-                  <span>
-                      {todo.remindAt ? format(new Date(todo.remindAt), "h:mm a") : "Set reminder"}
-                  </span>
-              </button>
-           )}
-        </div>
+        {todo.remindAt && (
+           <div className="mt-2.5 flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 w-fit rounded-md bg-zinc-100 border border-zinc-200/60 text-zinc-600">
+               <Clock className="w-3.5 h-3.5 text-zinc-400" />
+               <span>
+                   {format(new Date(todo.remindAt), "h:mm a")}
+               </span>
+           </div>
+        )}
       </div>
 
       {/* Hover Actions (Desktop) */}

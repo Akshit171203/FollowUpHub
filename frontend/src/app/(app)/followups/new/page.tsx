@@ -90,11 +90,11 @@ export default function CreateFollowUpPage() {
         <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-fuchsia-100/30 blur-3xl" />
       </div>
 
-      <div className="max-w-[1000px] w-full flex flex-col md:flex-row bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-200/60 overflow-hidden relative z-10">
+      <div className="max-w-[1200px] w-full flex flex-col md:flex-row bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-200/60 overflow-hidden relative z-10">
         
         {/* Left Side: Context / Branding */}
         <div
-          className="md:w-[40%] p-10 flex flex-col justify-between relative overflow-hidden"
+          className="md:w-[35%] p-10 flex flex-col justify-between relative overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #A5B4FC 0%, #C4B5FD 35%, #E9D5FF 70%, #F5D0FE 100%)",
           }}
@@ -185,7 +185,7 @@ export default function CreateFollowUpPage() {
         </div>
 
         {/* Right Side: Form */}
-        <div className="md:w-[60%] p-10 md:p-12">
+        <div className="md:w-[65%] p-10 md:p-12">
           <form onSubmit={onSubmit} className="flex flex-col h-full">
             <div className="space-y-6 flex-1">
               
@@ -253,7 +253,7 @@ export default function CreateFollowUpPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-10 flex items-center gap-4">
+            <div className="mt-10 flex items-center justify-end gap-4">
               <button 
                 type="button"
                 onClick={() => router.back()}
@@ -264,7 +264,7 @@ export default function CreateFollowUpPage() {
               <button 
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-all shadow-md flex items-center justify-center gap-2"
+                className="bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white rounded-xl px-8 py-3.5 text-[15px] font-semibold transition-all shadow-md flex items-center justify-center gap-2"
               >
                 {submitting ? (
                    <>

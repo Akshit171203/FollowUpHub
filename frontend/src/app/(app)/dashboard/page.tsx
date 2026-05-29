@@ -216,9 +216,7 @@ export default function DashboardPage() {
                  <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
                     OVERVIEW
                  </h1>
-                 <div className="w-8 h-8 rounded-full bg-white/10 shadow-sm border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
-                    <LinkIcon className="w-4 h-4 text-white/80" />
-                 </div>
+                 
               </div>
               <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-2">
                  Your command center. Get a high-level summary of your active follow-ups, priorities, and upcoming tasks.
