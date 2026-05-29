@@ -161,15 +161,59 @@ export default function TodosPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans pb-24">
-      <div className="max-w-[1100px] mx-auto px-4 md:px-8 pt-10 md:pt-16">
+      <div className="max-w-[1300px] mx-auto px-4 md:px-8 pt-6">
         
-        {/* Header with Date Navigation */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Daily Todos</h1>
-            <p className="text-[15px] font-medium text-zinc-500 mt-1">Focus on what matters today.</p>
-          </div>
-          
+
+        {/* Hero Banner */}
+        <div className="relative rounded-[2rem] overflow-hidden mb-8 bg-gradient-to-br from-orange-400 via-rose-400 to-purple-400 shadow-sm border border-black/5">
+           <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
+              <div className="flex flex-col gap-3 max-w-xl">
+                 <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+                    DAILY TODOS
+                 </h1>
+                 <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px]">
+                    Conquer your day — focus on what matters today, set timely reminders, and seamlessly promote important items to full follow-ups.
+                 </p>
+              </div>
+              
+              {/* Decorative UI Element: Task Cards */}
+              <div className="shrink-0 hidden md:flex relative">
+                 <div className="relative w-64 h-48">
+                    {/* Back blurred card */}
+                    <div className="absolute top-0 right-0 w-52 h-40 bg-white/20 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 z-10 p-6">
+                       <div className="flex items-center gap-4 mb-5">
+                          <div className="w-8 h-8 rounded-full bg-white/40" />
+                          <div className="w-24 h-3 bg-white/30 rounded-full" />
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full bg-white/40" />
+                          <div className="w-16 h-3 bg-white/30 rounded-full" />
+                       </div>
+                    </div>
+                    {/* Front solid card */}
+                    <div className="absolute top-6 right-8 w-56 h-44 bg-white rounded-2xl shadow-2xl border border-zinc-100 z-20 p-6 flex flex-col gap-5">
+                       <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                             <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                          </div>
+                          <div className="w-24 h-3 bg-zinc-200 rounded-full" />
+                       </div>
+                       <div className="flex items-center gap-4 opacity-60">
+                          <div className="w-8 h-8 rounded-full border-[3px] border-zinc-200 shrink-0" />
+                          <div className="w-20 h-3 bg-zinc-100 rounded-full" />
+                       </div>
+                       <div className="flex items-center gap-4 opacity-60">
+                          <div className="w-8 h-8 rounded-full border-[3px] border-zinc-200 shrink-0" />
+                          <div className="w-16 h-3 bg-zinc-100 rounded-full" />
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        {/* Date Navigation */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end mb-6 gap-6">
           <div className="flex items-center gap-2">
             {/* Nav Pill */}
             <div className="flex items-center bg-white border border-zinc-200 shadow-sm rounded-full p-1">
@@ -202,50 +246,6 @@ export default function TodosPage() {
               </button>
             )}
           </div>
-        </div>
-
-        {/* Hero Banner */}
-        <div className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-r from-orange-400 via-rose-400 to-purple-400 p-8 md:p-10 mb-10 shadow-lg">
-           <div className="relative z-10 max-w-xl">
-              <h2 className="text-3xl md:text-[32px] font-bold text-white mb-3 tracking-tight">Conquer your day</h2>
-              <p className="text-white/90 text-[15px] leading-relaxed max-w-lg">
-                Stay on top of your daily tasks, set timely reminders, and seamlessly promote important items to full follow-ups.
-              </p>
-           </div>
-           
-           {/* Decorative UI Element: Task Cards */}
-           <div className="hidden md:block absolute top-1/2 -translate-y-1/2 right-12">
-              <div className="relative w-40 h-32">
-                 {/* Back blurred card */}
-                 <div className="absolute top-2 right-0 w-32 h-24 bg-white/20 backdrop-blur-md rounded-xl shadow-xl border border-white/30 z-10 p-3 transform rotate-6">
-                    <div className="flex items-center gap-2 mb-3">
-                       <div className="w-4 h-4 rounded-full bg-white/40" />
-                       <div className="w-16 h-2 bg-white/30 rounded-full" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="w-4 h-4 rounded-full bg-white/40" />
-                       <div className="w-12 h-2 bg-white/30 rounded-full" />
-                    </div>
-                 </div>
-                 {/* Front solid card */}
-                 <div className="absolute top-4 right-8 w-32 h-28 bg-white rounded-xl shadow-2xl border border-white/50 z-20 p-3 flex flex-col gap-3 transform -rotate-3">
-                    <div className="flex items-center gap-2">
-                       <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                       </div>
-                       <div className="w-16 h-2 bg-zinc-200 rounded-full" />
-                    </div>
-                    <div className="flex items-center gap-2 opacity-60">
-                       <div className="w-4 h-4 rounded-full border-2 border-zinc-200" />
-                       <div className="w-12 h-2 bg-zinc-100 rounded-full" />
-                    </div>
-                    <div className="flex items-center gap-2 opacity-60">
-                       <div className="w-4 h-4 rounded-full border-2 border-zinc-200" />
-                       <div className="w-10 h-2 bg-zinc-100 rounded-full" />
-                    </div>
-                 </div>
-              </div>
-           </div>
         </div>
 
         {/* Floating Add Todo Input */}

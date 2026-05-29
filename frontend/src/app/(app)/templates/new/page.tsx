@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTemplate, Priority, ReminderPolicy } from "@/lib/templates";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ArrowLeft, FileText } from "lucide-react";
 
 export default function NewTemplatePage() {
   const router = useRouter();
@@ -48,113 +45,225 @@ export default function NewTemplatePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">Create Follow-up Template</h1>
+    <div className="min-h-[calc(100vh-80px)] bg-[#FAFAFA] flex items-start justify-center p-4 md:p-8 pt-8 md:pt-16 font-sans relative overflow-hidden">
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Template Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Follow Up with HR"
-                required
-              />
+      {/* Decorative background blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-violet-100/30 blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-fuchsia-100/30 blur-3xl" />
+      </div>
+
+      <div className="max-w-[1000px] w-full flex flex-col md:flex-row bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-200/60 overflow-hidden relative z-10">
+
+        {/* Left Side: Branding */}
+        <div
+          className="md:w-[40%] p-10 flex flex-col justify-between relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #A5B4FC 0%, #C4B5FD 35%, #E9D5FF 70%, #F5D0FE 100%)",
+          }}
+        >
+          <div className="relative z-10">
+            <button
+              onClick={() => router.push("/templates")}
+              className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-white/70 transition-colors mb-12" style={{ color: "rgba(0,0,0,0.6)" }}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-3xl font-extrabold text-white tracking-tight leading-snug mb-4">
+              Create Follow-up Template
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
+              Build a reusable template to quickly spin up follow-ups with pre-filled details. Save time on recurring tasks.
+            </p>
+          </div>
+
+          {/* Illustration */}
+          <div className="relative z-10 mt-10 mb-4 flex items-center justify-center">
+            <div className="w-52 h-36 relative">
+              {/* Main card */}
+              <div className="absolute inset-0 bg-white/30 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl flex items-center justify-center p-4">
+                <div className="w-full h-full bg-white rounded-xl shadow-sm border border-white/60 flex flex-col overflow-hidden">
+                  <div className="h-4 border-b border-zinc-100 flex items-center px-2 gap-1 bg-zinc-50/50">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
+                  </div>
+                  <div className="p-3 flex-1 flex flex-col gap-2">
+                    <div className="h-2.5 w-1/2 bg-violet-100 rounded-full"></div>
+                    <div className="h-2.5 w-3/4 bg-violet-100 rounded-full"></div>
+                    <div className="h-2.5 w-2/3 bg-violet-100 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+              {/* Overlapping badge card */}
+              <div className="absolute -top-4 -right-4 w-24 h-28 bg-white rounded-xl shadow-2xl border border-zinc-100 z-20 flex flex-col p-2.5 gap-1.5">
+                <div className="flex justify-end mb-0.5">
+                  <div className="w-7 h-7 rounded-md bg-violet-500 flex items-center justify-center shadow-sm">
+                    <FileText className="w-3.5 h-3.5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5 mt-0.5">
+                  <div className="h-1.5 w-full bg-zinc-100 rounded-full"></div>
+                  <div className="h-1.5 w-full bg-zinc-100 rounded-full"></div>
+                  <div className="h-1.5 w-3/4 bg-zinc-100 rounded-full"></div>
+                  <div className="h-1.5 w-5/6 bg-zinc-100 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom tip */}
+          <div className="relative z-10">
+            <div className="bg-white/35 border border-white/50 rounded-2xl p-5">
+              <p className="text-[13px] leading-relaxed" style={{ color: "rgba(0,0,0,0.5)" }}>
+                Templates can be applied when creating a new follow-up to automatically pre-fill all fields.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Form */}
+        <div className="md:w-[60%] p-10 md:p-12">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            <div className="space-y-6 flex-1">
+
+              {/* Name */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Follow Up with HR"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                />
+              </div>
+
+              {/* Title */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Salary Raise Discussion"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                />
+              </div>
+
+              {/* Target */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                  Target
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. HR Manager"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                />
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                  Notes
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Additional notes..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Default Priority */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                    Default Priority
+                  </label>
+                  <select
+                    value={defaultPriority}
+                    onChange={(e) => setDefaultPriority(e.target.value as Priority)}
+                    className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 transition-all outline-none appearance-none"
+                  >
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+
+                {/* Default Due Offset */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                    Due Offset (Minutes)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="1440"
+                    value={defaultDueOffsetMinutes}
+                    onChange={(e) => setDefaultDueOffsetMinutes(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Default Reminder Policy */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900 px-1">
+                  Default Reminder Policy
+                </label>
+                <select
+                  value={defaultReminderPolicy}
+                  onChange={(e) => setDefaultReminderPolicy(e.target.value as ReminderPolicy)}
+                  className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-xl px-4 py-3 text-[15px] text-zinc-900 transition-all outline-none appearance-none"
+                >
+                  <option value="NORMAL">NORMAL</option>
+                  <option value="AGGRESSIVE">AGGRESSIVE</option>
+                  <option value="PASSIVE">PASSIVE</option>
+                  <option value="NONE">NONE</option>
+                </select>
+              </div>
+
             </div>
 
-            <div>
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Salary Raise Discussion"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="target">Target</Label>
-              <Input
-                id="target"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="e.g., HR Manager"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <textarea
-                id="notes"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Additional notes..."
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="priority">Default Priority</Label>
-              <select
-                id="priority"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={defaultPriority}
-                onChange={(e) => setDefaultPriority(e.target.value as Priority)}
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="defaultDueOffset">Default Due Offset (Minutes)</Label>
-              <Input
-                id="defaultDueOffset"
-                type="number"
-                value={defaultDueOffsetMinutes}
-                onChange={(e) => setDefaultDueOffsetMinutes(e.target.value)}
-                placeholder="1440"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="reminderPolicy">Default Reminder Policy</Label>
-              <select
-                id="reminderPolicy"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={defaultReminderPolicy}
-                onChange={(e) => setDefaultReminderPolicy(e.target.value as ReminderPolicy)}
-              >
-                <option value="NORMAL">NORMAL</option>
-                <option value="AGGRESSIVE">AGGRESSIVE</option>
-                <option value="PASSIVE">PASSIVE</option>
-                <option value="NONE">NONE</option>
-              </select>
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating..." : "Create"}
-              </Button>
-              <Button
+            {/* Action Buttons */}
+            <div className="mt-10 flex items-center gap-4">
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => router.push("/templates")}
+                className="px-6 py-3.5 rounded-xl text-[14px] font-semibold text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
               >
                 Cancel
-              </Button>
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  "Create Template"
+                )}
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

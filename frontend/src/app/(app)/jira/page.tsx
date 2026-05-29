@@ -134,42 +134,76 @@ export default function JiraPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans pb-24">
-      <div className="max-w-[1100px] mx-auto px-4 md:px-8 pt-10 md:pt-16">
+      <div className="max-w-[1300px] mx-auto px-4 md:px-8 pt-6">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#0052CC] shadow-sm">
-                <Kanban className="w-5 h-5 text-white" />
+        {/* Hero Banner */}
+        <div className="relative rounded-[2rem] overflow-hidden mb-10 bg-gradient-to-br from-[#0052CC] via-blue-500 to-cyan-400 shadow-sm border border-black/5">
+           <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
+              <div className="flex flex-col gap-3 max-w-xl">
+                 <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 shadow-sm backdrop-blur-sm border border-white/30 shrink-0">
+                       <Kanban className="w-5 h-5 text-white" />
+                    </div>
+                    <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+                       JIRA INTEGRATION
+                    </h1>
+                 </div>
+                 <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px]">
+                    Auto-sync your assigned tickets, track them effortlessly, and escalate automatically when SLAs are breached.
+                 </p>
+                 {isConnected && (
+                    <div className="mt-2 flex items-center gap-3">
+                       <button 
+                         onClick={handleDisconnect} 
+                         disabled={disconnecting}
+                         className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[14px] font-semibold rounded-xl transition-all shadow-sm disabled:opacity-50"
+                       >
+                         {disconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                         Disconnect
+                       </button>
+                       <button 
+                         onClick={handleSync} 
+                         disabled={syncing}
+                         className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#0052CC] hover:bg-zinc-50 text-[14px] font-bold rounded-xl transition-all shadow-md disabled:opacity-50"
+                       >
+                         {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                         Sync Now
+                       </button>
+                    </div>
+                 )}
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Jira Integration</h1>
-            </div>
-            <p className="text-[15px] font-medium text-zinc-500 max-w-xl">
-              Auto-sync your assigned tickets, track them effortlessly, and escalate automatically when SLAs are breached.
-            </p>
-          </div>
-          
-          {isConnected && (
-            <div className="flex items-center gap-3">
-               <button 
-                 onClick={handleDisconnect} 
-                 disabled={disconnecting}
-                 className="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-[14px] font-semibold rounded-xl transition-colors shadow-sm disabled:opacity-50"
-               >
-                 {disconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                 Disconnect
-               </button>
-               <button 
-                 onClick={handleSync} 
-                 disabled={syncing}
-                 className="flex items-center gap-2 px-5 py-2.5 bg-[#0052CC] hover:bg-[#0047b3] text-white text-[14px] font-semibold rounded-xl transition-all shadow-sm disabled:opacity-50"
-               >
-                 {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                 Sync Now
-               </button>
-            </div>
-          )}
+              
+              {/* Decorative UI Element: Kanban Board */}
+              <div className="shrink-0 hidden md:flex relative">
+                 <div className="relative w-64 h-48">
+                    {/* Back blurred card */}
+                    <div className="absolute top-0 right-0 w-52 h-40 bg-white/20 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 z-10 p-6 flex flex-col gap-4">
+                       <div className="w-20 h-3 bg-white/40 rounded-full" />
+                       <div className="w-full h-10 bg-white/30 rounded-xl" />
+                       <div className="w-full h-10 bg-white/30 rounded-xl" />
+                    </div>
+                    {/* Front solid card */}
+                    <div className="absolute top-6 right-8 w-56 h-44 bg-white rounded-2xl shadow-2xl border border-zinc-100 z-20 p-5 flex gap-3">
+                       {/* Kanban Column 1 */}
+                       <div className="flex-1 bg-zinc-50 rounded-xl p-2.5 flex flex-col gap-2.5 border border-zinc-100">
+                          <div className="w-10 h-2.5 bg-zinc-200 rounded-full mb-1"></div>
+                          <div className="w-full h-12 bg-white rounded-lg border border-zinc-200 shadow-sm flex flex-col gap-1.5 p-2">
+                             <div className="w-12 h-1.5 bg-zinc-200 rounded-full" />
+                             <div className="w-16 h-1.5 bg-zinc-100 rounded-full" />
+                          </div>
+                       </div>
+                       {/* Kanban Column 2 */}
+                       <div className="flex-1 bg-zinc-50 rounded-xl p-2.5 flex flex-col gap-2.5 border border-zinc-100">
+                          <div className="w-10 h-2.5 bg-zinc-200 rounded-full mb-1"></div>
+                          <div className="w-full h-12 bg-[#0052CC] rounded-lg border border-[#0052CC] shadow-sm flex flex-col gap-1.5 p-2">
+                             <div className="w-12 h-1.5 bg-white/60 rounded-full" />
+                             <div className="w-16 h-1.5 bg-white/30 rounded-full" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
         </div>
 
         {!isConnected ? (
@@ -177,7 +211,7 @@ export default function JiraPage() {
             
             {/* Connection Form Card */}
             <div className="lg:col-span-3">
-               <div className="bg-white border-t-[3px] border-t-[#0052CC] border-x border-b border-zinc-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden">
+               <div className="bg-white border border-zinc-200/60 shadow-xl shadow-zinc-200/40 rounded-3xl overflow-hidden">
                  <div className="p-8 pb-6 border-b border-zinc-100">
                     <h2 className="text-xl font-bold text-zinc-900 mb-2">Connect your workspace</h2>
                     <p className="text-[14px] text-zinc-500 leading-relaxed">
@@ -195,7 +229,7 @@ export default function JiraPage() {
                          required 
                          value={jiraDomain} 
                          onChange={e => setJiraDomain(e.target.value)} 
-                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                         className="w-full bg-zinc-50/50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-4 focus:ring-[#0052CC]/10 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
                        />
                      </div>
                      
@@ -207,7 +241,7 @@ export default function JiraPage() {
                          required 
                          value={jiraEmail} 
                          onChange={e => setJiraEmail(e.target.value)} 
-                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                         className="w-full bg-zinc-50/50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-4 focus:ring-[#0052CC]/10 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
                        />
                      </div>
                      
@@ -225,7 +259,7 @@ export default function JiraPage() {
                          required 
                          value={jiraApiToken} 
                          onChange={e => setJiraApiToken(e.target.value)} 
-                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 font-mono text-[14px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                         className="w-full bg-zinc-50/50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-4 focus:ring-[#0052CC]/10 rounded-xl px-4 py-3 font-mono text-[14px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
                        />
                      </div>
                      
@@ -239,7 +273,7 @@ export default function JiraPage() {
                          placeholder="manager@company.com" 
                          value={managerEmail} 
                          onChange={e => setManagerEmail(e.target.value)} 
-                         className="w-full bg-zinc-50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
+                         className="w-full bg-zinc-50/50 border border-zinc-200/80 focus:bg-white focus:border-[#0052CC] focus:ring-4 focus:ring-[#0052CC]/10 rounded-xl px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 transition-all outline-none"
                        />
                        <p className="text-[12.5px] font-medium text-zinc-500 mt-1.5 px-1">
                          Triggers an automated escalation email if you ignore a ticket past Level 2.
@@ -250,7 +284,7 @@ export default function JiraPage() {
                        <button 
                          type="submit" 
                          disabled={connecting}
-                         className="w-full flex items-center justify-center gap-2 bg-[#0052CC] hover:bg-[#0047b3] disabled:opacity-70 disabled:cursor-not-allowed text-white text-[15px] font-semibold py-3.5 rounded-xl shadow-md transition-all"
+                         className="w-full flex items-center justify-center gap-2 bg-[#0052CC] hover:bg-[#0047B3] disabled:opacity-70 disabled:cursor-not-allowed text-white text-[15px] font-bold py-3.5 rounded-xl shadow-lg shadow-[#0052CC]/20 transition-all active:scale-[0.98]"
                        >
                          {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                          Authenticate & Activate Sync
@@ -264,7 +298,7 @@ export default function JiraPage() {
             {/* Feature Blocks */}
             <div className="lg:col-span-2 space-y-4">
                {/* Feature 1 */}
-               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+               <div className="bg-white border border-zinc-200/60 rounded-3xl p-6 shadow-lg shadow-zinc-200/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4">
                      <ShieldCheck className="w-5 h-5 text-emerald-600" />
                   </div>
@@ -275,7 +309,7 @@ export default function JiraPage() {
                </div>
                
                {/* Feature 2 */}
-               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+               <div className="bg-white border border-zinc-200/60 rounded-3xl p-6 shadow-lg shadow-zinc-200/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
                      <Zap className="w-5 h-5 text-blue-600" />
                   </div>
@@ -286,7 +320,7 @@ export default function JiraPage() {
                </div>
 
                {/* Feature 3 */}
-               <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+               <div className="bg-white border border-zinc-200/60 rounded-3xl p-6 shadow-lg shadow-zinc-200/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
                      <Mail className="w-5 h-5 text-rose-600" />
                   </div>

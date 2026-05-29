@@ -48,7 +48,7 @@ const getIconForType = (type: string = '') => {
   return { Icon: Check, bg: 'bg-[#2C2C2E]', color: 'text-[#A1A1AA]' }; // default to check like in screenshot
 };
 
-export function NotificationBell() {
+export function NotificationBell({ triggerMode = 'icon', isCollapsed = false }: { triggerMode?: 'icon' | 'sidebar', isCollapsed?: boolean } = {}) {
   const { groups, unreadCount, loading, markGroupRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
@@ -81,19 +81,37 @@ export function NotificationBell() {
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors relative cursor-pointer outline-none z-50">
-            <Bell className="w-[18px] h-[18px]" />
-            {unreadCount > 0 && (
-              <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
-            )}
-          </button>
+          {triggerMode === 'sidebar' ? (
+            <div 
+              className={cn(
+                "flex items-center rounded-xl transition-all text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/70 cursor-pointer outline-none w-full",
+                isCollapsed ? "justify-center p-3" : "px-4 py-3 gap-3"
+              )}
+              title={isCollapsed ? "Notifications" : undefined}
+            >
+              <div className="relative flex items-center justify-center shrink-0">
+                <Bell className={cn("transition-colors", isCollapsed ? "w-5 h-5" : "w-[18px] h-[18px]")} />
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>
+                )}
+              </div>
+              {!isCollapsed && <span className="text-[14px] font-semibold whitespace-nowrap">Notifications</span>}
+            </div>
+          ) : (
+            <button className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors relative cursor-pointer outline-none z-50">
+              <Bell className="w-[18px] h-[18px]" />
+              {unreadCount > 0 && (
+                <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>
+              )}
+            </button>
+          )}
         </PopoverTrigger>
       
       <PopoverContent 
         className="w-[420px] p-0 bg-white/95 backdrop-blur-3xl border border-zinc-200/60 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] z-[70] rounded-[24px] flex flex-col overflow-hidden" 
+        side="right"
         align="end"
         sideOffset={16}
-        alignOffset={-60}
         collisionPadding={16}
       >
         {/* Header */}

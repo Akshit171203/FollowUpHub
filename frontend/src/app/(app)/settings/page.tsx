@@ -3,7 +3,7 @@
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { DesktopNotificationToggle } from "@/components/notifications/DesktopNotificationToggle";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, User as UserIcon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -21,71 +21,74 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 md:px-8 max-w-4xl py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account and notification preferences
-        </p>
+    <div className="flex flex-col font-sans w-full max-w-[1000px] mx-auto px-4 md:px-8 pt-8 pb-20 gap-8 relative z-10">
+      
+      {/* Sleek Page Header */}
+      <div className="flex flex-col gap-1 border-b border-zinc-200/60 pb-6">
+         <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Settings</h1>
+         <p className="text-[15px] text-zinc-500">
+            Manage your account session and customize your application preferences.
+         </p>
       </div>
 
-      {/* Account Settings */}
-      <Card className="shadow-sm border-zinc-200">
-        <CardHeader className="pb-3 border-b border-zinc-100 bg-zinc-50/50">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <UserIcon className="h-5 w-5 text-indigo-600" />
-            Account
-          </CardTitle>
-          <CardDescription>
-            Manage your account session
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <p className="text-base font-medium text-zinc-900">
+      <div className="flex flex-col gap-10">
+        {/* Account Section */}
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[14px] font-bold text-zinc-900 uppercase tracking-wider">Account</h2>
+          
+          <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm overflow-hidden">
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 border border-zinc-200/50">
+                  <UserIcon className="w-5 h-5 text-zinc-600" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[15px] font-semibold text-zinc-900 tracking-tight">Active Session</span>
+                  <span className="text-[13px] text-zinc-500 mt-0.5">
+                    Log out of your current session on this device.
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-red-600 hover:text-red-700 font-semibold rounded-xl transition-all shadow-sm active:scale-95 text-[14px]"
+              >
+                <LogOut className="w-4 h-4" />
                 Sign Out
-              </p>
-              <p className="text-sm text-zinc-500">
-                Log out of your current session on this device
-              </p>
+              </button>
             </div>
-            <Button onClick={handleLogout} className="gap-2 bg-red-600 hover:bg-red-700 text-white border-transparent">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Desktop Notifications (Client-Side) */}
-      <Card className="shadow-sm border-zinc-200">
-        <CardHeader className="pb-3 border-b border-zinc-100 bg-zinc-50/50">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Bell className="h-5 w-5 text-indigo-600" />
-            Desktop Notifications
-          </CardTitle>
-          <CardDescription>
-            Browser notifications when the app is not focused (client-side preference)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <p className="text-base font-medium text-zinc-900">
-                Enable desktop notifications
-              </p>
-              <p className="text-sm text-zinc-500">
-                Show native browser alerts even when tab is closed
-              </p>
+        {/* Notifications Section Header */}
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[14px] font-bold text-zinc-900 uppercase tracking-wider">Notifications</h2>
+          
+          <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm overflow-hidden flex flex-col">
+            
+            {/* Desktop Notifications (Client-Side) */}
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100/50">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[15px] font-semibold text-zinc-900 tracking-tight">Desktop Alerts</span>
+                  <span className="text-[13px] text-zinc-500 mt-0.5">
+                    Show native browser notifications when the tab is closed.
+                  </span>
+                </div>
+              </div>
+              <div className="shrink-0">
+                <DesktopNotificationToggle />
+              </div>
             </div>
-            <DesktopNotificationToggle />
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Server-Backed Preferences */}
-      <NotificationSettings />
+            {/* Server-Backed Preferences */}
+            <NotificationSettings />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

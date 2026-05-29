@@ -32,7 +32,7 @@ import { useUser } from "@/components/ProtectedRoute";
 
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-transparent p-6 flex flex-col gap-6 animate-pulse w-full max-w-[1400px] mx-auto">
+    <div className="min-h-screen bg-white p-6 flex flex-col gap-6 animate-pulse w-full max-w-[1300px] mx-auto">
        <div className="h-12 w-64 bg-white rounded-xl shadow-sm"></div>
        <div className="grid grid-cols-12 gap-6 flex-1">
          <div className="col-span-12 xl:col-span-8 bg-white rounded-[32px] min-h-[450px] shadow-sm"></div>
@@ -196,32 +196,85 @@ export default function DashboardPage() {
   const weekPct = Math.round((dueThisWeek.length / urgencyTotal) * 100);
 
   return (
-    <div className="flex flex-col font-sans w-full max-w-[1400px] mx-auto px-4 md:px-8 pb-12 gap-6 relative z-10">
+    <div className="min-h-screen bg-white">
+    <div className="flex flex-col font-sans w-full max-w-[1300px] mx-auto px-4 md:px-8 pt-6 pb-12 gap-8 relative z-10">
         
-      {/* Header Row */}
+      {/* Hero Banner */}
       <motion.div 
-         initial={{ opacity: 0, y: -10 }}
-         animate={{ opacity: 1, y: 0 }}
-         transition={{ duration: 0.6, ease: "easeOut" }}
-         className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950 shadow-sm border border-black/5 mb-2"
       >
-         <div className="flex items-center gap-3">
-            <h1 className="text-[40px] font-medium text-zinc-900 tracking-tight">
-               Overview
-            </h1>
-            <div className="w-8 h-8 rounded-full bg-white shadow-sm border border-zinc-200 flex items-center justify-center cursor-pointer hover:bg-zinc-50 transition-colors">
-               <LinkIcon className="w-4 h-4 text-zinc-500" />
-            </div>
-         </div>
-
-         <div className="flex flex-wrap items-center gap-2">
-            <Link href="/followups/new">
-               <div className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl shadow-[0_4px_14px_0_rgb(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:-translate-y-0.5 hover:bg-black transition-all duration-200 cursor-pointer">
-                  <Plus className="w-4 h-4 text-white" />
-                  <span className="text-[14px] font-semibold">New Follow-up</span>
-               </div>
-            </Link>
-         </div>
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-[300px] h-[300px] bg-violet-500/8 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
+           <div className="flex flex-col gap-3 max-w-xl">
+              <div className="flex items-center gap-3">
+                 <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+                    OVERVIEW
+                 </h1>
+                 <div className="w-8 h-8 rounded-full bg-white/10 shadow-sm border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
+                    <LinkIcon className="w-4 h-4 text-white/80" />
+                 </div>
+              </div>
+              <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-2">
+                 Your command center. Get a high-level summary of your active follow-ups, priorities, and upcoming tasks.
+              </p>
+              <div>
+                 <Link href="/followups/new">
+                    <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-zinc-900 hover:bg-zinc-100 text-[14px] font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                       <Plus className="w-[18px] h-[18px]" /> New Follow-up
+                    </button>
+                 </Link>
+              </div>
+           </div>
+           
+           {/* Decorative UI Element: Stacked Dashboard Cards */}
+           <div className="shrink-0 hidden md:flex relative">
+              <div className="relative w-64 h-48">
+                 {/* Back blurred card */}
+                 <div className="absolute top-0 right-0 w-52 h-40 bg-white/20 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 z-10 p-6">
+                    <div className="flex items-center gap-4 mb-5">
+                       <div className="w-8 h-8 rounded-full bg-white/40 shrink-0" />
+                       <div className="w-24 h-3 bg-white/30 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                       <div className="w-6 h-6 rounded-md bg-white/40 shrink-0" />
+                       <div className="w-16 h-3 bg-white/30 rounded-full" />
+                    </div>
+                 </div>
+                 
+                 {/* Front solid card */}
+                 <div className="absolute top-6 right-8 w-56 h-44 bg-white rounded-2xl shadow-2xl border border-zinc-100 z-20 p-6 flex flex-col gap-5">
+                    {/* Mini Pie Chart Ring */}
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-full border-[5px] border-indigo-500 border-r-indigo-100 shrink-0 transform -rotate-45" />
+                       <div className="flex flex-col gap-2 w-full">
+                          <div className="w-16 h-3 bg-zinc-200 rounded-full" />
+                          <div className="w-12 h-2.5 bg-zinc-100 rounded-full" />
+                       </div>
+                    </div>
+                    
+                    {/* Data Rows */}
+                    <div className="flex items-center gap-4 opacity-80 mt-2">
+                       <div className="w-6 h-6 rounded-md bg-emerald-400/20 flex items-center justify-center shrink-0">
+                          <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                       </div>
+                       <div className="w-20 h-2.5 bg-zinc-100 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-4 opacity-80">
+                       <div className="w-6 h-6 rounded-md bg-blue-400/20 flex items-center justify-center shrink-0">
+                          <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
+                       </div>
+                       <div className="w-14 h-2.5 bg-zinc-100 rounded-full" />
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
       </motion.div>
 
       {/* Main Content Area (Chart + Sides) */}
@@ -234,11 +287,8 @@ export default function DashboardPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="col-span-12 xl:col-span-8 bg-white rounded-[32px] p-8 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[480px]"
          >
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex items-start mb-8">
                <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Follow-ups Performance</h2>
-               <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
-                  <MoreHorizontal className="w-5 h-5 text-zinc-400" />
-               </div>
             </div>
 
             {/* Stat Row - Real Data */}
@@ -308,11 +358,8 @@ export default function DashboardPage() {
          >
             {/* Top Card: Active Pipeline */}
             <div className="bg-white rounded-[32px] p-6 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-1 flex flex-col justify-between">
-               <div className="flex justify-between items-start mb-4">
+               <div className="flex items-start mb-4">
                   <h2 className="text-[18px] font-semibold text-zinc-900 tracking-tight">Active Pipeline</h2>
-                  <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
-                     <MoreHorizontal className="w-4 h-4 text-zinc-400" />
-                  </div>
                </div>
                
                <div className="flex items-center gap-4 mb-4">
@@ -365,7 +412,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-[32px] p-6 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-1 flex flex-col justify-between">
                <div className="flex justify-between items-start mb-4">
                   <h2 className="text-[18px] font-semibold text-zinc-900 tracking-tight">Urgency Overview</h2>
-                  <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center">
                      <Clock className="w-4 h-4 text-zinc-400" />
                   </div>
                </div>
@@ -428,11 +475,8 @@ export default function DashboardPage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="bg-white rounded-[32px] p-8 border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-[320px] flex flex-col"
          >
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex items-start mb-6">
                <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Recent Activity</h2>
-               <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
-                  <MoreHorizontal className="w-5 h-5 text-zinc-400" />
-               </div>
             </div>
             
             <div className="flex-1 w-full relative overflow-y-auto custom-scrollbar pr-2">
@@ -490,33 +534,38 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white rounded-[32px] p-8 h-[320px] border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between"
+            className="bg-white rounded-[32px] p-8 h-[320px] border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col relative overflow-hidden group"
          >
-            <div className="flex justify-between items-start">
+            {/* Subtle background watermark */}
+            <div className="absolute -right-4 -bottom-4 opacity-[0.02] pointer-events-none group-hover:opacity-[0.04] group-hover:scale-105 transition-all duration-700">
+               <Briefcase className="w-64 h-64" />
+            </div>
+
+            <div className="flex justify-between items-start relative z-10 mb-6">
                <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Jira Integration</h2>
                <div className="w-9 h-9 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
                   <Briefcase className="w-5 h-5 text-zinc-400" />
                </div>
             </div>
             
-            <div className="mt-4 flex-1 flex flex-col justify-end">
+            <div className="flex-1 flex flex-col justify-center relative z-10">
                {jiraData.isConnected ? (
-                  <>
-                     <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                        <span className="text-[14px] font-semibold text-emerald-600">Connected & Synced</span>
+                  <div className="bg-zinc-50/60 border border-zinc-100/80 rounded-3xl p-6 flex flex-col items-center text-center shadow-sm backdrop-blur-sm">
+                     <div className="flex items-center gap-2 mb-4 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full border border-emerald-100/50">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                        <span className="text-[12px] font-bold uppercase tracking-wider">Connected</span>
                      </div>
-                     <p className="text-[48px] font-medium text-zinc-900 leading-none">{jiraData.tickets.length}</p>
-                     <p className="text-[14px] font-medium text-zinc-500 mt-2">Open tickets imported</p>
-                  </>
+                     <p className="text-[52px] font-black text-zinc-900 leading-none tracking-tight mb-1">{jiraData.tickets.length}</p>
+                     <p className="text-[13px] font-semibold text-zinc-500">Open Tickets Imported</p>
+                  </div>
                ) : (
-                  <div className="flex flex-col items-start">
-                     <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-zinc-300"></div>
-                        <span className="text-[14px] font-semibold text-zinc-500">Not Connected</span>
+                  <div className="flex flex-col items-start bg-zinc-50/60 border border-zinc-100/80 rounded-3xl p-6 shadow-sm backdrop-blur-sm">
+                     <div className="flex items-center gap-2 mb-3 bg-zinc-100 text-zinc-600 px-3 py-1 rounded-full border border-zinc-200/50">
+                        <div className="w-2 h-2 rounded-full bg-zinc-400"></div>
+                        <span className="text-[12px] font-bold uppercase tracking-wider">Not Connected</span>
                      </div>
-                     <p className="text-[14px] text-zinc-600 mb-5 leading-relaxed">Sync your Jira board to automate follow-ups on stalled tickets seamlessly.</p>
-                     <button className="text-[14px] font-semibold bg-zinc-900 text-white px-6 py-3 rounded-xl hover:bg-zinc-800 transition-colors w-full">
+                     <p className="text-[13px] text-zinc-600 mb-5 leading-relaxed font-medium">Sync your Jira board to automate follow-ups on stalled tickets.</p>
+                     <button className="text-[13px] font-bold bg-zinc-900 text-white px-6 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors w-full shadow-sm active:scale-95">
                         Connect Jira
                      </button>
                   </div>
@@ -531,11 +580,8 @@ export default function DashboardPage() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="bg-white rounded-[32px] p-8 h-[320px] flex flex-col border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
          >
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex items-start mb-6">
                <h2 className="text-[20px] font-semibold text-zinc-900 tracking-tight">Daily Todos</h2>
-               <div className="w-8 h-8 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center cursor-pointer hover:bg-zinc-100 transition-colors">
-                  <MoreHorizontal className="w-4 h-4 text-zinc-400" />
-               </div>
             </div>
 
             {/* Add Todo Input */}
@@ -593,6 +639,7 @@ export default function DashboardPage() {
          </motion.div>
 
       </div>
+    </div>
     </div>
   );
 }

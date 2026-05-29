@@ -145,7 +145,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (data.title) {
             // Play Sound
             try {
-                const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+                // Using a softer, more pleasant UI pop sound (mixkit-2354) instead of the loud chime
+                const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
                 audio.volume = 0.5;
                 audio.play().catch(e => console.warn("Audio play failed", e));
             } catch (e) {

@@ -156,58 +156,44 @@ export default function TemplatesPage() {
     <div className="md:h-screen min-h-[100dvh] flex flex-col bg-[#FAFAFA] relative overflow-hidden">
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent relative z-10">
-        <div className="max-w-[1100px] mx-auto px-4 md:px-8 py-10">
+        <div className="max-w-[1300px] mx-auto px-4 md:px-8 py-6">
 
-          {/* Top Bar: Title */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-              Templates
-            </h1>
-          </div>
 
           {/* Hero Banner (Vibrant Light Theme) */}
           <div className="relative rounded-[2rem] overflow-hidden mb-4 bg-gradient-to-br from-pink-400 via-blue-400 to-emerald-300 shadow-sm border border-black/5">
-            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-10 py-12 md:py-16">
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
               <div className="flex flex-col gap-3 max-w-xl">
-                <h2 className="text-3xl md:text-4xl font-semibold text-white tracking-tight drop-shadow-sm">
-                  Explore ready-to-use templates
-                </h2>
-                <p className="text-[16px] text-white/95 leading-relaxed font-medium drop-shadow-sm">
-                  Browse a curated selection of templates designed to help teams model, report, and present ideas more effectively.
+                <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+                  TEMPLATES
+                </h1>
+                <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px]">
+                  Explore ready-to-use templates. Browse a curated selection designed to help teams model, report, and present ideas more effectively.
                 </p>
               </div>
+              {/* Decorative UI Element: Template Cards */}
               <div className="shrink-0 hidden md:flex relative">
-                {/* Abstract UI element resembling the reference */}
-                <div className="w-56 h-36 bg-white/20 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl flex items-center justify-center p-4 relative z-10">
-                   <div className="w-full h-full bg-white rounded-xl shadow-sm border border-zinc-100 flex flex-col overflow-hidden">
-                      <div className="h-4 border-b border-zinc-100 flex items-center px-2 gap-1 bg-zinc-50/50">
-                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
-                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
-                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
-                      </div>
-                      <div className="p-3 flex-1 flex flex-col gap-2">
-                         <div className="h-3 w-1/2 bg-zinc-100 rounded-full"></div>
-                         <div className="h-3 w-3/4 bg-zinc-100 rounded-full"></div>
-                         <div className="h-3 w-2/3 bg-zinc-100 rounded-full"></div>
-                      </div>
-                   </div>
-                </div>
-                {/* Decorative overlapping element (Spreadsheet Document) */}
-                <div className="absolute -top-4 -right-4 w-28 h-36 bg-white rounded-xl shadow-2xl border border-zinc-100 z-20 flex flex-col p-3 gap-2">
-                   {/* Top Icon / Header area */}
-                   <div className="flex justify-end mb-1">
-                      <div className="w-8 h-8 rounded-md bg-emerald-500 flex items-center justify-center shadow-sm">
-                         <span className="text-white font-bold text-[14px]">X</span>
-                      </div>
-                   </div>
-                   {/* Fake lines for document content */}
-                   <div className="flex-1 flex flex-col gap-2 mt-1">
-                      <div className="h-2 w-full bg-zinc-100 rounded-full"></div>
-                      <div className="h-2 w-full bg-zinc-100 rounded-full"></div>
-                      <div className="h-2 w-3/4 bg-zinc-100 rounded-full"></div>
-                      <div className="h-2 w-5/6 bg-zinc-100 rounded-full"></div>
-                   </div>
-                </div>
+                 <div className="relative w-64 h-48">
+                    {/* Back blurred card */}
+                    <div className="absolute top-0 right-0 w-52 h-40 bg-white/20 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 z-10 p-6 flex flex-col gap-4">
+                       <div className="w-20 h-3 bg-white/40 rounded-full mb-2" />
+                       <div className="w-full h-2 bg-white/30 rounded-full" />
+                       <div className="w-5/6 h-2 bg-white/30 rounded-full" />
+                       <div className="w-3/4 h-2 bg-white/30 rounded-full" />
+                    </div>
+                    {/* Front solid card */}
+                    <div className="absolute top-6 right-8 w-56 h-44 bg-white rounded-2xl shadow-2xl border border-zinc-100 z-20 p-6 flex flex-col gap-3">
+                       <div className="flex justify-end mb-1">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-sm">
+                             <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
+                          </div>
+                       </div>
+                       <div className="w-1/2 h-3 bg-zinc-200 rounded-full mb-2" />
+                       <div className="w-full h-2 bg-zinc-100 rounded-full" />
+                       <div className="w-full h-2 bg-zinc-100 rounded-full" />
+                       <div className="w-3/4 h-2 bg-zinc-100 rounded-full" />
+                       <div className="w-5/6 h-2 bg-zinc-100 rounded-full" />
+                    </div>
+                 </div>
               </div>
             </div>
           </div>
@@ -219,7 +205,7 @@ export default function TemplatesPage() {
               <span>This list is not exhaustive, more templates can be proposed on demand.</span>
             </div>
             <Link href="/templates/new" className="shrink-0">
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-[14px] font-semibold transition-all active:scale-95 shadow-md">
+              <button className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-[14px] font-semibold transition-all active:scale-95 shadow-md">
                 <Plus className="w-4 h-4" /> Create template
               </button>
             </Link>
