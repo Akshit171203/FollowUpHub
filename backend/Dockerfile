@@ -31,6 +31,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy application source code from builder
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/docs ./docs
 
 # Ensure non-root user runs the application for security
 RUN chown -R node:node /app
