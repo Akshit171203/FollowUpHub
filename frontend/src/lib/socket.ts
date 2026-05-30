@@ -10,23 +10,19 @@ export const getSocket = (): Socket => {
     socket = io(url, {
       withCredentials: true,
       autoConnect: false, 
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
+      transports: ["websocket"], // Force WS to avoid polling noise and CORS complexities
     });
 
     socket.on("connect", () => {
-      console.log("[Socket] Connected, ID:", socket?.id);
+      console.log("✅ [Socket] Connected! ID:", socket?.id);
     });
 
     socket.on("connect_error", (err) => {
-      console.error("[Socket] Connection Error:", err.message);
+      console.error("❌ [Socket] Connection Error:", err.message);
     });
     
     socket.on("disconnect", (reason) => {
-        console.log("[Socket] Disconnected:", reason);
+        console.log("⚠️ [Socket] Disconnected:", reason);
     });
   }
   return socket;

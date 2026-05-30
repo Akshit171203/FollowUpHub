@@ -140,8 +140,27 @@ async function sendJiraManagerEscalation(followup, user, escalationLevel) {
 // MAIN REMINDER ENGINE
 export async function runReminderEngine() {
   const now = new Date();
+  //Fetch all overdue followups
+  const overdue = await db
+    .select({
+       followup: followups,
+       user: followups.userId // We'll manually join or fetch users to get managerEmail below
+    })
+    .from(followups)
+    .where(
+      and(
+        lt(followups.dueAt, now),
+        ne(followups.status, "DONE"),
+        eq(followups.isActive, true)
+      )
+    );
 
-  // Fetch all overdue followups with their user data in a single joined query
+  if (overdue.length === 0) {
+    console.log("Reminder Engine: No overdue followups");
+    return;
+  }
+  
+  // Actually, we must fetch the user details to have user mapping
   const { usersTable } = await import("../db/schema.js");
   const overdueWithUsers = await db
     .select({
@@ -159,7 +178,7 @@ export async function runReminderEngine() {
     );
 
   if (overdueWithUsers.length === 0) {
-    console.log("Todo Reminder Engine: No todos due for reminder");
+    console.log("Reminder Engine: No overdue followups with valid users");
     return;
   }
   // Apply cooldown logic in JS per followup policy

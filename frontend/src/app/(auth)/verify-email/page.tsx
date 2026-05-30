@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { verifyEmail } from "@/lib/auth";
@@ -9,14 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function VerifyEmailPage() {
-  return (
-    <Suspense fallback={<div className="w-full max-w-lg mx-auto animate-pulse h-96" />}>
-      <VerifyEmailContent />
-    </Suspense>
-  );
-}
-
-function VerifyEmailContent() {
   const sp = useSearchParams();
   const token = useMemo(() => sp.get("token") || "", [sp]);
 

@@ -64,13 +64,14 @@ router.post(
       );
 
       // Send verification email
+      const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/api/users/verify-email?token=${verifyToken}`;
       await sendEmail({
         to: email,
         subject: "Verify your email",
         html: `
           <h2>Email Verification</h2>
           <p>Click below to verify your email:</p>
-          <a href="http://localhost:5001/api/users/verify-email?token=${verifyToken}">
+          <a href="${verifyUrl}">
             Verify Email
           </a>
           <p>This link expires in 1 hour.</p>
@@ -119,14 +120,13 @@ router.post(
 
     const payload = { userId: found.id, email: found.email };
     const token = jwt.sign(payload, process.env.LOGIN_SECRET_KEY, {
-      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+      expiresIn: "1h",
     });
 
-    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      secure: false,
+      sameSite: "lax",
     });
 
     return res.json({ message: "Login successful" });
@@ -148,11 +148,10 @@ router.get("/profile", authenticateUser, (req, res) => {
 
 // LOGOUT
 router.post("/logout", (req, res) => {
-  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("token", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: false,
+    sameSite: "lax",
   });
 
   res.json({ message: "Logout successful" });
@@ -219,7 +218,7 @@ router.post(
       { expiresIn: "15m" }
     );
 
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
 
     await sendEmail({
       to: email,
@@ -307,6 +306,8 @@ router.post(
       process.env.EMAIL_TOKEN_SECRET,
       { expiresIn: "1h" }
     );
+    
+    const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/api/users/verify-email?token=${verifyToken}`;
 
     await sendEmail({
       to: email,
@@ -314,7 +315,7 @@ router.post(
       html: `
         <h2>Email Verification</h2>
         <p>Click below to verify your email:</p>
-        <a href="http://localhost:3000/api/users/verify-email?token=${verifyToken}">
+        <a href="${verifyUrl}">
           Verify Email
         </a>
         <p>This link expires in 1 hour.</p>

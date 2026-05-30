@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, Suspense } from "react";
+import { useMemo, useState } from "react";
 import { resetPassword } from "@/lib/auth";
 import Image from "next/image";
 
@@ -14,14 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<div className="w-full max-w-lg mx-auto animate-pulse h-96" />}>
-      <ResetPasswordContent />
-    </Suspense>
-  );
-}
-
-function ResetPasswordContent() {
   const router = useRouter();
   const params = useSearchParams();
 

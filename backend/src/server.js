@@ -1,9 +1,13 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config();
+
+import dns from "dns";
+// Force Node to prefer IPv4 over IPv6 to fix SMTP connection issues on Render
+dns.setDefaultResultOrder("ipv4first");
 
 import app from "./app.js";
 import { createServer } from "http";
-import { connectRedis, pubClient, subClient } from "./config/redis.js";
-import { createAdapter } from "@socket.io/redis-adapter";
+import { connectRedis, redisClient } from "./config/redis.js";
 import { pool } from "./config/db.js";
 import { startReminderJob } from "./jobs/reminder.job.js";
 import { startJiraSyncJob } from "./jobs/jira-sync.job.js";
@@ -11,7 +15,6 @@ import { initSocket } from "./socket.js";
 
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
-httpServer.timeout = 30000; // 30 second request timeout
 
 // Track cron jobs for cleanup
 let reminderJob = null;

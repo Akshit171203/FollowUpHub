@@ -23,9 +23,13 @@ export async function initSocket(httpServer) {
     transports: ["websocket", "polling"],
   });
 
-  // Setup Redis Adapter using centralized clients
+  // Setup Redis Adapter
   try {
-    const { pubClient, subClient } = await import("./config/redis.js");
+    const pubClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+    const subClient = pubClient.duplicate();
+
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+
     io.adapter(createAdapter(pubClient, subClient));
     console.log("Socket.IO Redis Adapter connected");
   } catch (err) {
