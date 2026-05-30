@@ -1,32 +1,24 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      connectionTimeout: 5000, // 5 second timeout so it doesn't hang forever
-      greetingTimeout: 5000,
-      socketTimeout: 5000,
-    });
-
-    await transporter.sendMail({
-      from: `"FollowUpHub" <${process.env.SMTP_USER}>`,
-      to,
+    const { data, error } = await resend.emails.send({
+      from: "FollowUpHub <onboarding@resend.dev>",
+      to: [to],
       subject,
       html,
     });
 
-    console.log("✅ Email sent to:", to);
+    if (error) {
+      console.error("❌ Resend email error:", error);
+      throw new Error(error.message);
+    }
+
+    console.log("✅ Email sent to:", to, "ID:", data?.id);
   } catch (error) {
-    console.error("❌ Email send failed (Render blocks SMTP on free tier):", error.message);
-    console.log("Mocking email instead. Here is the HTML content:");
-    console.log(html);
-    // We swallow the error so the app doesn't crash or hang forever
+    console.error("❌ Email send failed:", error.message);
+    // Don't crash the server if email fails, but log it
   }
 };
