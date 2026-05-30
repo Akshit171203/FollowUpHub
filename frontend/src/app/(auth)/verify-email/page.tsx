@@ -22,13 +22,13 @@ function VerifyEmailContent() {
   const sp = useSearchParams();
   const token = useMemo(() => sp.get("token") || "", [sp]);
 
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "info">("idle");
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
     if (!token) {
-      setStatus("error");
-      setMessage("Missing token. Please open the verification link from your email.");
+      setStatus("info");
+      setMessage("Account created! Please check your email inbox (and spam folder) for the verification link.");
       return;
     }
 
@@ -70,6 +70,11 @@ function VerifyEmailContent() {
          {status === "error" && (
             <div className="bg-red-50 rounded-2xl p-4 border border-red-200">
                <p className="text-red-600 font-bold text-lg text-center leading-tight">{message}</p>
+            </div>
+         )}
+         {status === "info" && (
+            <div className="bg-blue-50 rounded-2xl p-4 border border-blue-200">
+               <p className="text-blue-800 font-bold text-lg text-center leading-tight">{message}</p>
             </div>
          )}
       </div>
