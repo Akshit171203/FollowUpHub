@@ -1,7 +1,12 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import compression from "compression";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import { rateLimit } from "./middlewares/rateLimiter.js";
+import { pool } from "./config/db.js";
+import { redisClient } from "./config/redis.js";
 
 import userRoutes from "./modules/auth/routes/user.routes.js";
 import oauthRoutes from "./modules/auth/routes/oauth.routes.js";
@@ -14,11 +19,22 @@ import emailTemplateRoutes from "./modules/templates/email-template.routes.js";
 import todoRoutes from "./modules/todos/todo.routes.js";
 import jiraRoutes from "./modules/jira/jira.routes.js";
 
+import swaggerUi from "swagger-ui-express";
+import yamljs from "yamljs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const swaggerDocument = yamljs.load(path.join(__dirname, "../docs/openapi.yaml"));
 
 const app = express();
 
+// --- Security Middleware ---
+app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(compression());
 
 app.use(
   cors({
@@ -28,6 +44,12 @@ app.use(
 );
 
 app.use(cookieParser());
+
+// Global rate limiter — 200 requests per minute per IP for all routes
+app.use(rateLimit({ keyPrefix: "global", limit: 200, windowSec: 60 }));
+
+// API Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
 app.use("/api/users", userRoutes);
@@ -41,8 +63,30 @@ app.use("/api/events", eventRoutes);
 app.use("/api/todos", todoRoutes);
 app.use("/api/jira", jiraRoutes);
 
-app.get("/health", (req, res) => {
-  res.json({ ok: true, message: "FollowUpHub backend running" });
+// Health check — verifies DB and Redis connectivity
+app.get("/health", async (req, res) => {
+  const checks = { server: true, database: false, redis: false };
+  try {
+    await pool.query("SELECT 1");
+    checks.database = true;
+  } catch (err) {
+    checks.database = false;
+  }
+  try {
+    if (redisClient.isOpen) {
+      await redisClient.ping();
+      checks.redis = true;
+    }
+  } catch (err) {
+    checks.redis = false;
+  }
+
+  const allHealthy = checks.database && checks.redis;
+  res.status(allHealthy ? 200 : 503).json({
+    ok: allHealthy,
+    message: allHealthy ? "FollowUpHub backend running" : "Some dependencies are unhealthy",
+    checks,
+  });
 });
 
 // 404 handler — must be after all routes

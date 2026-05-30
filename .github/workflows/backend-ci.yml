@@ -1,0 +1,75 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: './backend/package-lock.json'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Run Linting
+      # Requires you to add a "lint" script to backend/package.json
+      # run: npm run lint
+      run: echo "Skipping linting for now"
+
+    # In a real environment, you would run tests here
+    # - name: Run Tests
+    #   run: npm run test
+    
+  migrate:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: ./backend
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: './backend/package-lock.json'
+        
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Drizzle Migrations
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: npx drizzle-kit push
+
+  deploy-render:
+    needs: migrate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger Render Deployment
+        # You need to set RENDER_DEPLOY_HOOK_URL in GitHub Repository Secrets
+        run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

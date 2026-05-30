@@ -119,13 +119,14 @@ router.post(
 
     const payload = { userId: found.id, email: found.email };
     const token = jwt.sign(payload, process.env.LOGIN_SECRET_KEY, {
-      expiresIn: "1h",
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     });
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     return res.json({ message: "Login successful" });
@@ -147,10 +148,11 @@ router.get("/profile", authenticateUser, (req, res) => {
 
 // LOGOUT
 router.post("/logout", (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   res.json({ message: "Logout successful" });

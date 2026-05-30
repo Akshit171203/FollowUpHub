@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Disallow authenticated areas from search engines
+Disallow: /dashboard
+Disallow: /followups
+Disallow: /todos
+Disallow: /jira
+Disallow: /templates
+Disallow: /timeline
+Disallow: /settings
+
+Sitemap: https://followuphub.com/sitemap.xml
