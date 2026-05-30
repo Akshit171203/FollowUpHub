@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -9,6 +11,14 @@ import { createFollowUp } from "@/lib/followups";
 import { getTemplate } from "@/lib/templates";
 
 export default function CreateFollowUpPage() {
+  return (
+    <Suspense fallback={<div className="flex w-full h-full items-center justify-center p-8">Loading...</div>}>
+      <CreateFollowUpContent />
+    </Suspense>
+  );
+}
+
+function CreateFollowUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("templateId");

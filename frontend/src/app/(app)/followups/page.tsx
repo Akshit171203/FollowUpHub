@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -198,6 +200,14 @@ function FollowUpCard({ item, onViewDetails, onMarkDone, onSnooze }: {
 // --- Main Page Component ---
 
 export default function FollowUpsPage() {
+  return (
+    <Suspense fallback={<div className="flex w-full h-full items-center justify-center p-8">Loading...</div>}>
+      <FollowUpsContent />
+    </Suspense>
+  );
+}
+
+function FollowUpsContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [allItems, setAllItems] = useState<FollowUp[]>([]);
