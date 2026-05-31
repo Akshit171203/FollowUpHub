@@ -1,22 +1,25 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: false, // true for 465, false for 587 (STARTTLS)
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: "FollowUpHub <onboarding@resend.dev>",
-      to: [to],
+    const info = await transporter.sendMail({
+      from: `"FollowUpHub" <${process.env.SMTP_USER}>`,
+      to,
       subject,
       html,
     });
 
-    if (error) {
-      console.error("❌ Resend email error:", error);
-      throw new Error(error.message);
-    }
-
-    console.log("✅ Email sent to:", to, "ID:", data?.id);
+    console.log("✅ Email sent to:", to, "MessageID:", info.messageId);
   } catch (error) {
     console.error("❌ Email send failed:", error.message);
     // Don't crash the server if email fails, but log it

@@ -69,7 +69,7 @@ router.post(
       );
 
       // Send verification email
-      const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/api/users/verify-email?token=${verifyToken}`;
+      const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}`;
       await sendEmail({
         to: email,
         subject: "Verify your email",
@@ -312,7 +312,7 @@ router.post(
       { expiresIn: "1h" }
     );
     
-    const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/api/users/verify-email?token=${verifyToken}`;
+    const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}`;
 
     await sendEmail({
       to: email,
