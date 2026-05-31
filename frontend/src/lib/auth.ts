@@ -15,16 +15,26 @@ export async function signup(payload: { name: string; email: string; password: s
 }
 
 export async function login(payload: { email: string; password: string }) {
-  return apiFetch<{ message: string }>("/api/users/login", {
+  const result = await apiFetch<{ message: string; token: string }>("/api/users/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  // Save token to localStorage for Safari/mobile cross-domain support
+  if (result.token && typeof window !== "undefined") {
+    localStorage.setItem("token", result.token);
+  }
+  return result;
 }
 
 export async function logout() {
-  return apiFetch<{ message: string }>("/api/users/logout", {
+  const result = await apiFetch<{ message: string }>("/api/users/logout", {
     method: "POST",
   });
+  // Clear token from localStorage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("token");
+  }
+  return result;
 }
 
 // ✅ matches your backend GET /profile

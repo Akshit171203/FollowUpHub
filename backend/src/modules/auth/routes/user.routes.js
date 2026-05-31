@@ -129,7 +129,7 @@ router.post(
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
-    return res.json({ message: "Login successful" });
+    return res.json({ message: "Login successful", token });
   }
 );
 

@@ -76,15 +76,15 @@ router.get("/google/callback", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // Set cookie
+    // Set cookie (works on desktop Chrome)
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
-    // Redirect to frontend dashboard
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    // Redirect to frontend with token in URL (works on Safari/mobile)
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
   } catch (err) {
     console.error("Google OAuth error:", err);
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
@@ -176,7 +176,8 @@ router.get("/github/callback", async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    // Redirect to frontend with token in URL (works on Safari/mobile)
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
 
   } catch (err) {
     console.error(err);

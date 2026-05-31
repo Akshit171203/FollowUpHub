@@ -5,7 +5,15 @@ import jwt from "jsonwebtoken";
 
 export async function authenticateUser(req, res, next) {
   try {
-    const token = req.cookies?.token;
+    // Check Authorization header first (for Safari/mobile), fall back to cookie
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+    if (!token) {
+      token = req.cookies?.token;
+    }
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
