@@ -56,6 +56,11 @@ router.post(
 
       const newUser = insertedUser[0];
 
+      // Seed default templates for the new user
+      import("../../../utils/templateSeeder.js").then(({ seedUserTemplates }) => {
+        seedUserTemplates(newUser.id);
+      }).catch(err => console.error("Failed to dynamically import templateSeeder", err));
+
       // Create email verification token
       const verifyToken = jwt.sign(
         { userId: newUser.id, type: "emailVerification" },

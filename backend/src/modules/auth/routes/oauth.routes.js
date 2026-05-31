@@ -65,6 +65,12 @@ router.get("/google/callback", async (req, res) => {
         .returning();
 
       user = created[0];
+      
+      // Seed default templates for the new user
+      import("../../../utils/templateSeeder.js").then(({ seedUserTemplates }) => {
+        seedUserTemplates(user.id);
+      }).catch(err => console.error("Failed to dynamically import templateSeeder", err));
+
     } else {
       user = existing[0];
     }
@@ -159,6 +165,11 @@ router.get("/github/callback", async (req, res) => {
         .returning();
 
       user = created[0];
+
+      // Seed default templates for the new user
+      import("../../../utils/templateSeeder.js").then(({ seedUserTemplates }) => {
+        seedUserTemplates(user.id);
+      }).catch(err => console.error("Failed to dynamically import templateSeeder", err));
     } else {
       user = existing[0];
     }
