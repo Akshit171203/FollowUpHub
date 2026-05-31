@@ -1,24 +1,52 @@
-import { Resend } from "resend";
+import { google } from "googleapis";
+import MailComposer from "nodemailer/lib/mail-composer/index.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const OAuth2 = google.auth.OAuth2;
+
+const oauth2Client = new OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+});
+
+const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: "FollowUpHub <onboarding@resend.dev>",
-      to: [to],
+    // 1. Build the raw email message using Nodemailer's MailComposer
+    const mailOptions = {
+      from: `"FollowUpHub" <${process.env.SMTP_USER}>`,
+      to,
       subject,
       html,
+      textEncoding: "base64",
+    };
+
+    const mail = new MailComposer(mailOptions);
+    const messageBuffer = await mail.compile().build();
+
+    // 2. Encode the message to base64url format required by Gmail API
+    const encodedMessage = Buffer.from(messageBuffer)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    // 3. Send the email using the official Gmail HTTP API
+    const res = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw: encodedMessage,
+      },
     });
 
-    if (error) {
-      console.error("❌ Resend email error:", error);
-      throw new Error(error.message);
-    }
-
-    console.log("✅ Email sent to:", to, "ID:", data?.id);
+    console.log("✅ Email sent via Gmail API to:", to, "MessageID:", res.data.id);
   } catch (error) {
-    console.error("❌ Email send failed:", error.message);
+    console.error("❌ Gmail API email send failed:", error.message);
     // Don't crash the server if email fails, but log it
   }
 };
