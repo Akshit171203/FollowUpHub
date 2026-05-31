@@ -212,18 +212,18 @@ export default function DashboardPage() {
         
         <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
            <div className="flex flex-col gap-3 max-w-xl">
-              <div className="flex items-center gap-3">
-                 <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+               <div className="flex items-center gap-3 justify-center md:justify-start">
+                 <h1 className="text-3xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
                     OVERVIEW
                  </h1>
                  
               </div>
-              <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-2">
+              <p className="text-[14px] md:text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-2 text-center md:text-left">
                  Your command center. Get a high-level summary of your active follow-ups, priorities, and upcoming tasks.
               </p>
-              <div>
+              <div className="flex justify-center md:justify-start">
                  <Link href="/followups/new">
-                    <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-zinc-900 hover:bg-zinc-100 text-[14px] font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                    <button className="flex items-center gap-2 px-6 py-2.5 bg-white text-zinc-900 hover:bg-zinc-100 text-[14px] font-bold rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer">
                        <Plus className="w-[18px] h-[18px]" /> New Follow-up
                     </button>
                  </Link>
@@ -290,22 +290,22 @@ export default function DashboardPage() {
             </div>
 
             {/* Stat Row - Real Data */}
-            <div className="grid grid-cols-4 gap-4 mb-10">
-               <div className="border-r border-zinc-100 pr-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+               <div className="border-r border-zinc-100 pr-2 md:pr-4">
                   <p className="text-[12px] font-medium text-zinc-400 mb-2">Total Created</p>
-                  <p className="text-[28px] font-semibold text-zinc-800">{followUps.length}</p>
+                  <p className="text-[24px] md:text-[28px] font-semibold text-zinc-800">{followUps.length}</p>
                </div>
-               <div className="border-r border-zinc-100 px-4">
+               <div className="md:border-r border-zinc-100 px-2 md:px-4">
                   <p className="text-[12px] font-medium text-zinc-400 mb-2">Active Pending</p>
-                  <p className="text-[28px] font-semibold text-zinc-800">{activePending.length}</p>
+                  <p className="text-[24px] md:text-[28px] font-semibold text-zinc-800">{activePending.length}</p>
                </div>
-               <div className="border-r border-zinc-100 px-4">
-                  <p className="text-[12px] font-medium text-zinc-900 mb-2 font-semibold">Successfully Completed</p>
-                  <p className="text-[28px] font-semibold text-zinc-900">{completedFollowUps.length}</p>
+               <div className="border-r border-zinc-100 md:px-4 pr-2 mt-4 md:mt-0">
+                  <p className="text-[12px] font-medium text-zinc-900 mb-2 font-semibold">Completed</p>
+                  <p className="text-[24px] md:text-[28px] font-semibold text-zinc-900">{completedFollowUps.length}</p>
                </div>
-               <div className="pl-4">
+               <div className="md:pl-4 pl-2 mt-4 md:mt-0">
                   <p className="text-[12px] font-medium text-zinc-400 mb-2">Overdue Tasks</p>
-                  <p className="text-[28px] font-semibold text-zinc-400">{overdueItems.length}</p>
+                  <p className="text-[24px] md:text-[28px] font-semibold text-zinc-400">{overdueItems.length}</p>
                </div>
             </div>
 
@@ -563,7 +563,7 @@ export default function DashboardPage() {
                         <span className="text-[12px] font-bold uppercase tracking-wider">Not Connected</span>
                      </div>
                      <p className="text-[13px] text-zinc-600 mb-5 leading-relaxed font-medium">Sync your Jira board to automate follow-ups on stalled tickets.</p>
-                     <button className="text-[13px] font-bold bg-zinc-900 text-white px-6 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors w-full shadow-sm active:scale-95">
+                     <button className="text-[13px] font-bold bg-zinc-900 text-white px-6 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors w-full shadow-sm active:scale-95 cursor-pointer">
                         Connect Jira
                      </button>
                   </div>
@@ -596,7 +596,7 @@ export default function DashboardPage() {
               <button 
                 onClick={handleQuickAddTodo}
                 disabled={isAddingTodo || !newTodoInput.trim()}
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-lg text-blue-500 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-lg text-blue-500 hover:bg-blue-50 disabled:opacity-50 transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
               </button>

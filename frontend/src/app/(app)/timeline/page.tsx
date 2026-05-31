@@ -208,18 +208,18 @@ export default function TimelinePage() {
         {/* Hero Banner */}
         <div className="relative rounded-[2rem] overflow-hidden mb-10 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 shadow-sm border border-black/5">
            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
-              <div className="flex flex-col gap-3 max-w-xl">
-                 <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm mb-1 uppercase">
+               <div className="flex flex-col gap-3 max-w-xl text-center md:text-left">
+                 <h1 className="text-3xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm mb-1 uppercase">
                     EVENT TIMELINE
                  </h1>
-                 <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px]">
+                 <p className="text-[14px] md:text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px]">
                     A complete audit log of all automated actions, sync events, and email escalations across your workspaces.
                  </p>
-                 <div className="mt-2">
+                 <div className="mt-2 flex justify-center md:justify-start">
                     <button 
                       onClick={() => load(currentPage)} 
                       disabled={loading}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-white text-violet-600 hover:bg-zinc-50 text-[14px] font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-white text-violet-600 hover:bg-zinc-50 text-[14px] font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 cursor-pointer"
                     >
                       {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       Refresh Log

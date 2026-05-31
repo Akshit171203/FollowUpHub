@@ -73,7 +73,7 @@ function FilterTab({
     <button 
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[13px] font-semibold select-none border",
+        "flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[13px] font-semibold select-none border cursor-pointer snap-start",
         isActive 
           ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm" 
           : "bg-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 border-transparent"
@@ -130,7 +130,7 @@ function FollowUpCard({ item, onViewDetails, onMarkDone, onSnooze }: {
          <div className="flex items-center shrink-0 -mt-1 -mr-1" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-1.5 rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-all">
+                <button className="p-1.5 rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-all cursor-pointer">
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
@@ -346,18 +346,18 @@ function FollowUpsContent() {
     <div className="min-h-screen bg-white">
       <div className="flex flex-col font-sans w-full max-w-[1300px] mx-auto px-4 md:px-8 pt-6 pb-12 gap-8 relative z-10">
             {/* Hero Banner */}
-            <div className="relative rounded-[2rem] overflow-hidden mb-2 bg-gradient-to-br from-indigo-500 via-blue-500 to-emerald-400 shadow-sm border border-black/5">
-               <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10 md:px-10 md:py-12">
-                  <div className="flex flex-col gap-3 max-w-xl">
-                     <h1 className="text-4xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
+            <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden mb-2 bg-gradient-to-br from-indigo-500 via-blue-500 to-emerald-400 shadow-sm border border-black/5">
+               <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 px-6 py-8 md:px-10 md:py-12">
+                  <div className="flex flex-col gap-3 max-w-xl text-center md:text-left">
+                     <h1 className="text-3xl md:text-[44px] font-black text-white tracking-tight drop-shadow-sm uppercase mb-1">
                         FOLLOW UPS
                      </h1>
-                     <p className="text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-4">
+                     <p className="text-[14px] md:text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-4">
                         Master your communications — track active discussions, set smart snooze reminders, and never let an important conversation slip through the cracks.
                      </p>
-                     <div>
+                     <div className="flex justify-center md:justify-start">
                         <Link href="/followups/new">
-                           <button className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-zinc-50 text-zinc-900 rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-sm">
+                           <button className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-zinc-50 text-zinc-900 rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-sm cursor-pointer">
                               <Plus className="w-[18px] h-[18px]" /> Create follow-up
                            </button>
                         </Link>
@@ -412,7 +412,7 @@ function FollowUpsContent() {
             {/* Controls Bar: Tabs & Search */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                {/* Segmented Tabs */}
-               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full lg:w-auto bg-white p-1.5 rounded-full border border-zinc-200 shadow-sm">
+               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full lg:w-auto bg-white p-1.5 rounded-full border border-zinc-200 shadow-sm snap-x">
                   <FilterTab 
                     label="All" 
                     count={counts.ALL} 
@@ -465,7 +465,7 @@ function FollowUpsContent() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className={cn(
-                        "flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm",
+                        "flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm cursor-pointer shrink-0",
                         priorityFilter 
                           ? "bg-blue-50 text-blue-600 border border-blue-200" 
                           : "bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-zinc-900"
