@@ -19,13 +19,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function fetchUser() {
-    // 🛑 LOCAL BYPASS: If we are running locally, fake the user so we can see the UI!
-    if (process.env.NODE_ENV === "development") {
-      setUser({ id: 1, name: "Local Tester", email: "local@example.com", role: "admin" });
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       const data = await profile();
