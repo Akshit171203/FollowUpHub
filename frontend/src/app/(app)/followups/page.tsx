@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/dialog";
 import { FollowUpDetail } from "@/components/followups/FollowUpDetail";
 
+import { Skeleton } from "boneyard-js/react";
+
 // --- Types ---
 type TabType = 'ALL' | 'OVERDUE' | 'PENDING' | 'SNOOZED' | 'COMPLETED';
 
@@ -343,6 +345,7 @@ function FollowUpsContent() {
   }, [allItems]);
 
   return (
+    <Skeleton name="followups-page" loading={loading}>
     <div className="min-h-screen bg-white">
       <div className="flex flex-col font-sans w-full max-w-[1300px] mx-auto px-4 md:px-8 pt-6 pb-12 gap-8 relative z-10">
             {/* Hero Banner */}
@@ -561,5 +564,6 @@ function FollowUpsContent() {
          </DialogContent>
       </Dialog>
     </div>
+    </Skeleton>
   );
 }

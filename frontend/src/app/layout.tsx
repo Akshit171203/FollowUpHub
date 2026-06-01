@@ -1,4 +1,5 @@
-import "./globals.css";
+import "@/app/globals.css";
+import "../bones/registry";
 import { Toaster } from "@/components/ui/sonner";
 import { Oswald, Lato, Inter } from "next/font/google";
 

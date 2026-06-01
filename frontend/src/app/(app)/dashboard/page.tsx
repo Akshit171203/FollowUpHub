@@ -30,17 +30,7 @@ import { useUser } from "@/components/ProtectedRoute";
 
 // --- Components ---
 
-function LoadingSkeleton() {
-  return (
-    <div className="min-h-screen bg-white p-6 flex flex-col gap-6 animate-pulse w-full max-w-[1300px] mx-auto">
-       <div className="h-12 w-64 bg-white rounded-xl shadow-sm"></div>
-       <div className="grid grid-cols-12 gap-6 flex-1">
-         <div className="col-span-12 xl:col-span-8 bg-white rounded-[32px] min-h-[450px] shadow-sm"></div>
-         <div className="col-span-12 xl:col-span-4 bg-white rounded-[32px] min-h-[450px] shadow-sm"></div>
-       </div>
-    </div>
-  );
-}
+import { Skeleton } from "boneyard-js/react";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -156,7 +146,7 @@ export default function DashboardPage() {
     }
   };
   
-  if (loading) return <LoadingSkeleton />;
+  // We no longer return early for loading, we wrap the main return instead.
 
   // --- Metrics Calculation ---
   const now = new Date();
@@ -196,6 +186,7 @@ export default function DashboardPage() {
   const weekPct = Math.round((dueThisWeek.length / urgencyTotal) * 100);
 
   return (
+    <Skeleton name="dashboard-page" loading={loading}>
     <div className="min-h-screen bg-white">
     <div className="flex flex-col font-sans w-full max-w-[1300px] mx-auto px-4 md:px-8 pt-6 pb-12 gap-8 relative z-10">
         
@@ -639,5 +630,6 @@ export default function DashboardPage() {
       </div>
     </div>
     </div>
+    </Skeleton>
   );
 }

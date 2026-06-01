@@ -250,15 +250,6 @@ export function NotificationSettings() {
 
       {/* Actions */}
       <div className="p-5 sm:p-6 flex items-center justify-end gap-3 bg-zinc-50/50 rounded-b-2xl">
-        <Button
-          variant="outline"
-          onClick={sendTestNotification}
-          disabled={testingNotification}
-          className="gap-2 h-10 px-5 rounded-lg font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-[13px]"
-        >
-          <TestTube className="h-4 w-4" />
-          {testingNotification ? "Sending..." : "Test Notification"}
-        </Button>
         <Button 
           onClick={savePreferences} 
           disabled={saving} 

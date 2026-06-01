@@ -22,6 +22,8 @@ import * as todoApi from "@/lib/todos";
 import type { Todo, UpdateTodoInput } from "@/lib/todos";
 import { cn } from "@/lib/utils";
 
+import { Skeleton } from "boneyard-js/react";
+
 export default function TodosPage() {
   const router = useRouter();
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -160,6 +162,7 @@ export default function TodosPage() {
   const doneTodos = todos.filter(t => t.status === "DONE");
 
   return (
+    <Skeleton name="todos-page" loading={loading}>
     <div className="min-h-screen bg-[#FAFAFA] font-sans pb-24">
       <div className="max-w-[1300px] mx-auto px-4 md:px-8 pt-6">
         
@@ -350,6 +353,7 @@ export default function TodosPage() {
         )}
       </div>
     </div>
+    </Skeleton>
   );
 }
 

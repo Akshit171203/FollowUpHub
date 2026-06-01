@@ -22,17 +22,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:!bg-white group-[.toaster]:!border-zinc-200 group-[.toaster]:!shadow-[0_24px_48px_-12px_rgba(0,0,0,0.18)] !rounded-[24px] !p-6 sm:!p-7 relative overflow-hidden min-h-[140px] w-full sm:w-[420px] !flex !flex-col !justify-start !items-start",
+            "group toast group-[.toaster]:!bg-white group-[.toaster]:!border-zinc-200 group-[.toaster]:!shadow-[0_8px_30px_rgb(0,0,0,0.12)] !rounded-xl !p-4 sm:!p-5 relative overflow-hidden w-full sm:w-[350px] !flex !flex-col !justify-start !items-start",
           content: "!block !w-full !text-left",
-          title: "group-[.toast]:!text-zinc-950 font-bold text-[18px] tracking-tight mb-2 relative z-10",
-          description: "group-[.toast]:!text-zinc-500 text-[15px] leading-relaxed max-w-[85%] relative z-10",
+          title: "group-[.toast]:!text-zinc-950 font-bold text-[15px] tracking-tight mb-1 relative z-10",
+          description: "group-[.toast]:!text-zinc-500 text-[13px] leading-relaxed max-w-[90%] relative z-10",
           actionButton:
-            "group-[.toast]:!bg-zinc-900 group-[.toast]:!text-white group-[.toast]:hover:!bg-zinc-800 group-[.toast]:!rounded-[10px] group-[.toast]:!px-5 group-[.toast]:!py-2 font-medium !mt-5 text-[14px] transition-all relative z-10 shadow-sm !inline-flex !items-center !justify-center !h-auto !min-h-0 !leading-normal !w-fit !self-start !ml-0",
+            "group-[.toast]:!bg-zinc-900 group-[.toast]:!text-white group-[.toast]:hover:!bg-zinc-800 group-[.toast]:!rounded-lg group-[.toast]:!px-4 group-[.toast]:!py-1.5 font-medium !mt-3 text-[13px] transition-all relative z-10 shadow-sm !inline-flex !items-center !justify-center !h-auto !min-h-0 !leading-normal !w-fit !self-start !ml-0",
           cancelButton:
             "group-[.toast]:!bg-zinc-100 group-[.toast]:!text-zinc-500 relative z-10",
           closeButton: 
-            "group-[.toast]:!bg-transparent group-[.toast]:!border-none group-[.toast]:!text-zinc-700 group-[.toast]:hover:!text-zinc-900 !top-6 !right-6 !left-auto absolute !opacity-100 transition-colors z-20 !scale-125",
-          icon: "!absolute -bottom-8 -right-8 !m-0 !p-0 !w-auto !h-auto pointer-events-none z-0",
+            "group-[.toast]:!bg-transparent group-[.toast]:!border-none group-[.toast]:!text-zinc-400 group-[.toast]:hover:!text-zinc-900 !top-4 !right-4 !left-auto absolute !opacity-100 transition-colors z-20 !scale-100",
+          icon: "!absolute -bottom-4 -right-4 !m-0 !p-0 !w-auto !h-auto pointer-events-none z-0 opacity-50",
         },
       }}
       icons={{
