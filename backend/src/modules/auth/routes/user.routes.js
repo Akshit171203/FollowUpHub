@@ -69,8 +69,8 @@ router.post(
       );
 
       // Send verification email
-      const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}`;
-      await sendEmail({
+      // Send verification email (fire-and-forget to prevent blocking)
+      sendEmail({
         to: email,
         subject: "Verify your email",
         html: `
@@ -81,7 +81,7 @@ router.post(
           </a>
           <p>This link expires in 1 hour.</p>
         `,
-      });
+      }).catch(err => console.error("Failed to send background email:", err));
 
       return res.status(201).json({
         message: "Signup successful. Verification email sent.",
@@ -225,7 +225,8 @@ router.post(
 
     const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
 
-    await sendEmail({
+    // Send email in background
+    sendEmail({
       to: email,
       subject: "Reset Your Password",
       html: `
@@ -234,7 +235,7 @@ router.post(
         <a href="${resetLink}" target="_blank">Reset Password</a>
         <p>This link expires in 15 minutes.</p>
       `,
-    });
+    }).catch(err => console.error("Failed to send background email:", err));
 
     return res.json({ message: "Password reset link sent if account exists." });
   }
@@ -314,7 +315,8 @@ router.post(
     
     const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}`;
 
-    await sendEmail({
+    // Send verification email in background
+    sendEmail({
       to: email,
       subject: "Verify your email",
       html: `
@@ -325,7 +327,7 @@ router.post(
         </a>
         <p>This link expires in 1 hour.</p>
       `,
-    });
+    }).catch(err => console.error("Failed to send background email:", err));
 
     return res.json({ message: "Verification email sent" });
   }
