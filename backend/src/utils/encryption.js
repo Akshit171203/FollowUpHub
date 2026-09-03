@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * ENCRYPTION UTILITY
+ * ============================================================================
+ * Purpose: Provides AES-256-GCM encryption and decryption.
+ * Used primarily to securely store third-party API tokens (like Jira) 
+ * in the database instead of storing them as plain text.
+ */
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';

@@ -1,0 +1,68 @@
+========================================================================
+FULL-STACK INTERVIEW WALKTHROUGH SCRIPT
+Project: FollowUpHub
+Architecture: Domain-Driven Modular Monolith (Backend) + Next.js App Router (Frontend)
+========================================================================
+
+------------------------------------------------------------------------
+PART 1: THE BACKEND ARCHITECTURE (Node.js, Express, Drizzle ORM, Postgres)
+------------------------------------------------------------------------
+
+1. THE FOLDER STRUCTURE (Domain-Driven Design)
+"I built this backend using a Feature-Based Modular Architecture. Instead of dumping all controllers into one folder and all models into another, I grouped things by domain (e.g., /modules/followups, /modules/auth). This keeps the codebase highly scalable. My global logic lives in three main places:
+- /config: Database pools, SMTP setup, and Environment variable validation (Zod).
+- /middlewares: My 'bouncers' - JWT Auth checkers, Rate Limiters to prevent DDoS, and Request Validators.
+- /services & /jobs: My background workers and external API integrations."
+
+2. THE OAUTH 2.0 IMPLEMENTATION (Without Passport.js)
+"I deliberately chose NOT to use a library like Passport.js for OAuth. I wanted full control over the Authorization Code flow. 
+- The user clicks 'Login with Google/GitHub', which redirects them to the provider.
+- They authenticate and are redirected back to my backend with an auth `code`.
+- I exchange that code for an `access_token` manually via an Axios POST request.
+- I fetch their profile. For GitHub specifically, I had to handle an edge case where a user's email is set to 'private', which required making a second, separate API call to GitHub's `/user/emails` endpoint. 
+- Finally, I issue a JWT, sign it, and embed it in an `httpOnly` cookie. This prevents Cross-Site Scripting (XSS) attacks because JavaScript cannot read the token."
+
+3. THE DATABASE DESIGN (Drizzle ORM & Postgres)
+"I designed a relational Postgres schema using Drizzle ORM. The core tables are Users, Followups, Notifications, and Audit Logs. 
+- For scaling, I added targeted B-Tree indexes on heavily queried columns like `userId` and `dueAt` in the Followups table. 
+- I also implemented an 'Append-Only Audit Trail' pattern. I never hard-delete logs; instead, I write event snapshots every time a task is snoozed, escalated, or completed. This gives me a complete historical ledger."
+
+4. THE REMINDER ENGINE & DATA SYNC (Cron Jobs & State Reconciliation)
+"My application is powered by background jobs running on Node-Cron. 
+- I separated the 'Timers' (jobs folder) from the 'Engines' (services folder) for testability.
+- Every minute, the Reminder Engine queries the DB for overdue followups. It applies a dynamic 'Cooldown' algorithm based on user preferences.
+- If a user ignores a reminder 3 or 5 times, a state machine increments their `ignoreCount` and automatically escalates the priority to URGENT.
+- I also built a Jira Sync Pipeline. It fetches Atlassian tickets via their API, parses the Atlassian Document Format (ADF), and uses a State Reconciliation algorithm (diffing) to upsert new tickets into Postgres and automatically close tickets that were completed in Jira."
+
+5. REAL-TIME NOTIFICATIONS & SLACK ESCALATION
+"When a task reaches maximum escalation, the backend does two things:
+1. It uses a lightweight, native Node.js `fetch` implementation to push a `mrkdwn` formatted payload to a Slack Webhook, alerting the team.
+2. It pushes a real-time WebSocket event to the frontend using Socket.IO.
+- My Notification Service acts as a smart gateway. It checks user preferences for 'Quiet Hours' (handling complex cross-midnight time math) and filters alerts before emitting them. It also logs all metrics into an in-memory Ring Buffer for observability and debugging."
+
+------------------------------------------------------------------------
+PART 2: THE FRONTEND ARCHITECTURE (Next.js 16, React 19, Tailwind)
+------------------------------------------------------------------------
+
+1. THE TECH STACK
+"For the frontend, I used the bleeding-edge Next.js 16 App Router with React 19. 
+- I used Tailwind CSS combined with Radix UI primitives (shadcn/ui style) for accessible, unstyled components.
+- For animations, I integrated Framer Motion and Lottie to make the UI feel premium and reactive.
+- I also implemented Drag-and-Drop functionality using `@dnd-kit/core` for task management, and Recharts/MUI-X for data visualization dashboards."
+
+2. REAL-TIME SOCKET INTEGRATION (Socket.IO Client)
+"To make the application feel alive, I integrated `socket.io-client`. When the backend cron job determines a task is overdue, it fires an event. The Next.js frontend listens for `notification:changed` and instantly updates the UI (like turning the notification bell red or popping up a 'Sonner' toast alert) without the user ever needing to refresh the page."
+
+3. COMPONENT ARCHITECTURE & STATE
+"I followed a highly modular component architecture. By leveraging Next.js Server Components for heavy data fetching, I reduced the JavaScript bundle size shipped to the client. I only used Client Components (`"use client"`) where interactivity was strictly required—like the Drag-and-Drop kanban boards, the animated charts, or the WebSocket listeners."
+
+4. UI/UX FOCUS (Micro-interactions)
+"I spent a lot of time on the UX. I didn't want this to feel like a boring enterprise app. By using `framer-motion` for page transitions and layout animations, and `sonner` for non-intrusive toast notifications, the app feels incredibly snappy and responsive. The integration of `@radix-ui` ensures that everything is fully accessible (a11y) for screen readers and keyboard navigation, which is a critical requirement for modern production apps."
+
+========================================================================
+HOW TO USE THIS SCRIPT:
+1. Print this out or put it on a second monitor during your interview.
+2. When asked "Walk me through your project", start with Part 1 (Backend).
+3. Let the interviewer interrupt you. If they ask about database scaling, jump to section 3. If they ask about background tasks, jump to section 4.
+4. If they ask about the UI, pivot to Part 2. Focus on the fact that you used Next.js Server Components for performance, and WebSockets for real-time interactivity.
+========================================================================

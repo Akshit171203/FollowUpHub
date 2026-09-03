@@ -137,6 +137,7 @@ async function sendJiraManagerEscalation(followup, user, escalationLevel) {
     return false;
   }
 }
+
 // MAIN REMINDER ENGINE
 export async function runReminderEngine() {
   const now = new Date();
@@ -304,7 +305,6 @@ export async function runReminderEngine() {
     }
   }
 }
-
 
 /**
  * TODO REMINDER ENGINE  

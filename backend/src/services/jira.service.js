@@ -6,6 +6,7 @@ import { logEvent } from "./event.service.js";
 
 /**
  * Fetch assigned, incomplete tickets for a user from Jira
+ * It uses Atlassian as an upstream data source to automatically sync a user's Jira tickets into my database.
  */
 async function fetchUserTickets(domain, email, apiToken) {
   const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0];
@@ -32,6 +33,7 @@ async function fetchUserTickets(domain, email, apiToken) {
 
 /**
  * Extract text from Jira ADF (Atlassian Document Format) description
+ * custom parser to strip out the ADF blocks and extract plain text
  */
 function extractJiraDescription(descriptionField) {
   if (!descriptionField || !descriptionField.content) return '';
@@ -84,6 +86,7 @@ function mapJiraToFollowup(issue, domain) {
 
 /**
  * Sync tickets for a specific user
+ * user completes a ticket in Jira, Jira just stops returning it in the API. To handle this, I keep track of all the tickets Jira returned today
  */
 export async function syncUserJiraTickets(user) {
   try {
@@ -198,6 +201,7 @@ export async function syncUserJiraTickets(user) {
 }
 
 /**
+ * Batch Processor- helps when i don't want to crash my server when i have 1000's of users. 
  * Orchestrator: fetches active Jira users in batches and syncs
  */
 export async function syncAllJiraUsers() {

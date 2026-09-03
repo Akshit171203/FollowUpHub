@@ -19,7 +19,7 @@ const metrics = {
   byUser: new Map(), // userId -> { sent, skipped, errors }
 };
 
-// Ring buffer for debug events (max 500, FIFO)
+// Ring buffer(a rolling log of the last 500 notification events) for debug events (max 500, FIFO)
 const MAX_EVENTS = 500;
 const debugEvents = [];
 

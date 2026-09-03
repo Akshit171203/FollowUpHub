@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import dns from "dns";
-// Force Node to prefer IPv4 over IPv6 to fix SMTP connection issues on Render
 dns.setDefaultResultOrder("ipv4first");
 
 import app from "./app.js";
@@ -20,11 +19,13 @@ const httpServer = createServer(app);
 let reminderJob = null;
 let jiraSyncJob = null;
 
+//Redis Connection
 connectRedis()
   .then(async () => {
     // Initialize Socket.IO
+    //Pass in the httpServer so Socket.IO can bind to the same port as my Express app.
     await initSocket(httpServer);
-    
+    //Open the server to incoming HTTP requests from users.
     httpServer.listen(PORT, () => {
       console.log(`Server running on ${PORT} [${process.env.NODE_ENV || "development"}]`);
       reminderJob = startReminderJob();
@@ -36,10 +37,7 @@ connectRedis()
     process.exit(1);
   });
 
-// ===========================================================================
 // GRACEFUL SHUTDOWN
-// ===========================================================================
-
 let isShuttingDown = false;
 
 async function gracefulShutdown(signal) {

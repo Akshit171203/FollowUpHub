@@ -12,7 +12,7 @@ export class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.details = details;
-    this.isOperational = true; // Distinguishes from programming bugs
+    this.isOperational = true;
   }
 }
 

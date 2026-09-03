@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * TEMPLATE SEEDER UTILITY
+ * ============================================================================
+ * Purpose: Dynamically imported when a brand-new user creates an account.
+ * Automatically injects default "Follow-up Templates" into their account 
+ * so they don't start with a completely empty dashboard.
+ */
 import { db } from "../config/db.js";
 import { followupTemplates } from "../db/schema.js";
 

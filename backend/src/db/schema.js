@@ -56,7 +56,7 @@ export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
 
 // Users table
 export const usersTable = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(), // Primary Key
 
   name: varchar("name", { length: 120 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -81,9 +81,9 @@ export const usersTable = pgTable("users", {
 export const followups = pgTable(
   "followups",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
 
-    userId: uuid("user_id").notNull(), // references users.id later
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
 
     title: varchar("title", { length: 255 }).notNull(),
     target: varchar("target", { length: 255 }),
@@ -118,6 +118,10 @@ export const followups = pgTable(
     lastManagerNotifiedAt: timestamp("last_manager_notified_at", { withTimezone: true }),
 
   },
+  // Performance Optimization (Indexes):
+  // 1. userId: Indexed because almost all API queries are filtered by the logged-in user.
+  // 2. dueAt & status: Indexed because the background Cron Job scans these fields every 60 seconds.
+  // 3. externalId & externalSource: A composite index to instantly find tickets synced from Jira.
   (table) => ({
     userIdIdx: index("followups_user_id_idx").on(table.userId),
     dueAtIdx: index("followups_due_at_idx").on(table.dueAt),
@@ -130,10 +134,10 @@ export const followups = pgTable(
 export const followupEvents = pgTable(
   "followup_events",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
 
-    followupId: uuid("followup_id").notNull(), // references followups.id later
-    userId: uuid("user_id").notNull(),
+    followupId: uuid("followup_id").notNull(), // Foreign Key -> followups.id
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
 
     eventType: eventTypeEnum("event_type").notNull(),
     message: text("message"),
@@ -160,10 +164,10 @@ export const notificationSeverityEnum = pgEnum("notification_severity", [
 export const notifications = pgTable(
   "notifications",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
 
-    userId: uuid("user_id").notNull(),
-    followupId: uuid("followup_id"), // optional
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
+    followupId: uuid("followup_id"), // Foreign Key -> followups.id (Optional)
 
     groupKey: varchar("group_key", { length: 255 }).default('legacy').notNull(), // Strict NOT NULL
     
@@ -193,7 +197,7 @@ export const notifications = pgTable(
 
 // User Notification Preferences
 export const notificationPreferences = pgTable("notification_preferences", {
-  userId: uuid("user_id").primaryKey().references(() => usersTable.id, { onDelete: 'cascade' }),
+  userId: uuid("user_id").primaryKey().references(() => usersTable.id, { onDelete: 'cascade' }), // Primary Key & Foreign Key -> users.id
   
   emailEnabled: boolean("email_enabled").default(true).notNull(),
   inAppEnabled: boolean("in_app_enabled").default(true).notNull(),
@@ -213,9 +217,9 @@ export const notificationPreferences = pgTable("notification_preferences", {
 export const followupTemplates = pgTable(
   "followup_templates",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
 
-    userId: uuid("user_id").notNull(),
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
 
     name: varchar("name", { length: 120 }).notNull(), // e.g. "HR Followup"
     title: varchar("title", { length: 255 }).notNull(),
@@ -258,8 +262,8 @@ export const emailTemplateTypeEnum = pgEnum("email_template_type", [
 export const emailTemplates = pgTable(
   "email_templates",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
     
     name: varchar("name", { length: 120 }).notNull(),
     type: emailTemplateTypeEnum("type").notNull(),
@@ -287,9 +291,9 @@ export const todoStatusEnum = pgEnum("todo_status", ["PENDING", "DONE"]);
 export const todos = pgTable(
   "todos",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
     
-    userId: uuid("user_id").notNull(),
+    userId: uuid("user_id").notNull(), // Foreign Key -> users.id
     
     title: varchar("title", { length: 255 }).notNull(),
     notes: text("notes"),
@@ -320,8 +324,8 @@ export const jiraSyncStatusEnum = pgEnum("jira_sync_status", ["SUCCESS", "FAILED
 export const jiraSyncLogs = pgTable(
   "jira_sync_logs",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: 'cascade' }),
+    id: uuid("id").defaultRandom().primaryKey(), // Primary Key
+    userId: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: 'cascade' }), // Foreign Key -> users.id
     
     status: jiraSyncStatusEnum("status").notNull(),
     ticketsSynced: integer("tickets_synced").default(0).notNull(),

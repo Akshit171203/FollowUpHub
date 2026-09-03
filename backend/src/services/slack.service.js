@@ -1,4 +1,5 @@
-// Removed node-fetch import, using native Node.js fetch
+// When a Jira ticket gets completely ignored by a user and reaches Escalation Level 2, 
+// the reminder engine calls this sendSlackNotification() function as a "nuclear option" to alert the whole team in a public Slack channel.
 export async function sendSlackNotification({ title, assignee, delay, link }) {
   try {
     await fetch(process.env.SLACK_WEBHOOK_URL, {

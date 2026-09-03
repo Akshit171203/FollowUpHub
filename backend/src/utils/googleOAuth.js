@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * GOOGLE OAUTH UTILITY
+ * ============================================================================
+ * Purpose: Handles the messy HTTP logic of exchanging the OAuth authorization 
+ * code for Google access tokens, and fetching the user's profile data.
+ * Extracted here to keep the oauth.routes.js file clean.
+ */
 import axios from "axios";
 
 export async function getGoogleTokens({ code, clientId, clientSecret, redirectUri }) {
