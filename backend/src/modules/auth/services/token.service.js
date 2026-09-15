@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { redisClient } from "../../../config/redis.js";
 
-const ACCESS_TOKEN_TTL = "15m";
+const ACCESS_TOKEN_TTL = "5m";
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 function refreshKey(tokenId) {
