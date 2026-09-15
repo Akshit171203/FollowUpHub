@@ -3,7 +3,7 @@ import { followups } from "../db/schema.js";
 import { and, eq, lt, ne } from "drizzle-orm";
 
 import { notificationService } from "./notification.service.js";
-import { logEvent } from "./event.service.js";
+import { logEvent } from "../modules/events/event.service.js";
 import { sendSlackNotification } from "./slack.service.js";
 
 // Cooldown mapping

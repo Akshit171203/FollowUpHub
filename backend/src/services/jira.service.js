@@ -2,7 +2,7 @@ import { db } from "../config/db.js";
 import { followups, usersTable, jiraSyncLogs } from "../db/schema.js";
 import { eq, and, inArray, isNotNull } from "drizzle-orm";
 import { decrypt } from "../utils/encryption.js";
-import { logEvent } from "./event.service.js";
+import { logEvent } from "../modules/events/event.service.js";
 
 /**
  * Fetch assigned, incomplete tickets for a user from Jira
