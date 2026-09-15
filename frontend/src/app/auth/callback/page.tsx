@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { storeTokens } from "@/lib/auth";
 
 function CallbackContent() {
   const router = useRouter();
@@ -10,9 +11,10 @@ function CallbackContent() {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (token) {
-      // Save the OAuth token to localStorage
-      localStorage.setItem("token", token);
+    const refreshToken = searchParams.get("refreshToken");
+    if (token && refreshToken) {
+      // Save the OAuth tokens to localStorage
+      storeTokens(token, refreshToken);
       // Redirect to dashboard
       router.replace("/dashboard");
     } else {

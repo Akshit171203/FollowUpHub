@@ -15,26 +15,41 @@ export async function signup(payload: { name: string; email: string; password: s
 }
 
 export async function login(payload: { email: string; password: string }) {
-  const result = await apiFetch<{ message: string; token: string }>("/api/users/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  // Save token to localStorage for Safari/mobile cross-domain support
-  if (result.token && typeof window !== "undefined") {
-    localStorage.setItem("token", result.token);
-  }
+  const result = await apiFetch<{ message: string; token: string; refreshToken: string }>(
+    "/api/users/login",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+  storeTokens(result.token, result.refreshToken);
   return result;
 }
 
 export async function logout() {
+  const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+
   const result = await apiFetch<{ message: string }>("/api/users/logout", {
     method: "POST",
+    body: JSON.stringify({ refreshToken }),
   });
-  // Clear token from localStorage
+  clearTokens();
+  return result;
+}
+
+// Save both tokens to localStorage for Safari/mobile cross-domain support
+export function storeTokens(token: string, refreshToken: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("token", token);
+    localStorage.setItem("refreshToken", refreshToken);
+  }
+}
+
+export function clearTokens() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
   }
-  return result;
 }
 
 // ✅ matches your backend GET /profile
