@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import axios from "axios";
 import { db } from "../../../config/db.js";
 import { usersTable } from "../../../db/schema.js";
@@ -54,14 +53,6 @@ async function findOrCreateOAuthUser({ name, email, provider }) {
   return user;
 }
 
-export function createOAuthSessionToken(user) {
-  return jwt.sign(
-    { userId: user.id, email: user.email },
-    process.env.LOGIN_SECRET_KEY,
-    { expiresIn: "7d" }
-  );
-}
-
 export async function handleGoogleCallback(code) {
   const { access_token, id_token } = await getGoogleTokens({
     code,
@@ -73,9 +64,7 @@ export async function handleGoogleCallback(code) {
   const googleUser = await getGoogleUser(id_token, access_token);
   const { email, name } = googleUser;
 
-  const user = await findOrCreateOAuthUser({ name, email, provider: "GOOGLE_OAUTH" });
-
-  return createOAuthSessionToken(user);
+  return findOrCreateOAuthUser({ name, email, provider: "GOOGLE_OAUTH" });
 }
 
 export async function handleGithubCallback(code) {
@@ -105,7 +94,5 @@ export async function handleGithubCallback(code) {
   const name = githubUser.name || githubUser.login;
   const email = emailObj.email;
 
-  const user = await findOrCreateOAuthUser({ name, email, provider: "GITHUB_OAUTH" });
-
-  return createOAuthSessionToken(user);
+  return findOrCreateOAuthUser({ name, email, provider: "GITHUB_OAUTH" });
 }

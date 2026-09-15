@@ -8,6 +8,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   resendVerificationSchema,
+  refreshTokenSchema,
 } from "../../../middlewares/schemas.js";
 import { authController } from "../controllers/auth.controller.js";
 
@@ -28,6 +29,13 @@ router.post(
 );
 
 router.get("/profile", authenticateUser, authController.getProfile);
+
+router.post(
+  "/refresh",
+  rateLimit({ keyPrefix: "refresh", limit: 30, windowSec: 300 }),
+  validate(refreshTokenSchema),
+  authController.refresh
+);
 
 router.post("/logout", authController.logout);
 

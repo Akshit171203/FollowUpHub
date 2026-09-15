@@ -43,14 +43,6 @@ export async function verifyPassword(plainPassword, hashedPassword) {
   return bcrypt.compare(plainPassword, hashedPassword);
 }
 
-export function createSessionToken(user) {
-  return jwt.sign(
-    { userId: user.id, email: user.email },
-    process.env.LOGIN_SECRET_KEY,
-    { expiresIn: "1h" }
-  );
-}
-
 export function createEmailVerificationToken(userId) {
   return jwt.sign(
     { userId, type: "emailVerification" },

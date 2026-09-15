@@ -1,10 +1,18 @@
 import * as oauthService from "../services/oauth.service.js";
+import * as tokenService from "../services/token.service.js";
 
 function cookieOptions() {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  };
+}
+
+function refreshCookieOptions() {
+  return {
+    ...cookieOptions(),
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days, matches token.service.js's REFRESH_TOKEN_TTL_SECONDS
   };
 }
 
@@ -19,12 +27,16 @@ export const oauthController = {
 
   async googleCallback(req, res) {
     try {
-      const token = await oauthService.handleGoogleCallback(req.query.code);
+      const user = await oauthService.handleGoogleCallback(req.query.code);
+      const { accessToken, refreshToken } = await tokenService.issueTokenPair(user);
 
-      res.cookie("token", token, cookieOptions());
+      res.cookie("token", accessToken, cookieOptions());
+      res.cookie("refreshToken", refreshToken, refreshCookieOptions());
 
-      // Redirect to frontend with token in URL (works on Safari/mobile)
-      res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+      // Redirect to frontend with tokens in URL (works on Safari/mobile)
+      res.redirect(
+        `${process.env.CLIENT_URL}/auth/callback?token=${accessToken}&refreshToken=${refreshToken}`
+      );
     } catch (err) {
       console.error("Google OAuth error:", err);
       res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
@@ -41,12 +53,16 @@ export const oauthController = {
 
   async githubCallback(req, res) {
     try {
-      const token = await oauthService.handleGithubCallback(req.query.code);
+      const user = await oauthService.handleGithubCallback(req.query.code);
+      const { accessToken, refreshToken } = await tokenService.issueTokenPair(user);
 
-      res.cookie("token", token, cookieOptions());
+      res.cookie("token", accessToken, cookieOptions());
+      res.cookie("refreshToken", refreshToken, refreshCookieOptions());
 
-      // Redirect to frontend with token in URL (works on Safari/mobile)
-      res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+      // Redirect to frontend with tokens in URL (works on Safari/mobile)
+      res.redirect(
+        `${process.env.CLIENT_URL}/auth/callback?token=${accessToken}&refreshToken=${refreshToken}`
+      );
     } catch (err) {
       console.error(err);
       res.redirect(`${process.env.CLIENT_URL}/login?error=github_failed`);

@@ -57,6 +57,13 @@ export const resendVerificationSchema = {
   }),
 };
 
+export const refreshTokenSchema = {
+  // Optional in the body since the cookie is an accepted fallback source.
+  body: z.object({
+    refreshToken: z.string().min(1).optional(),
+  }),
+};
+
 // ============================================================================
 // FOLLOWUPS
 // ============================================================================
