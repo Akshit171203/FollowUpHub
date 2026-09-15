@@ -8,7 +8,7 @@ import oauthRoutes from "./modules/auth/routes/oauth.routes.js";
 import adminRoutes from "./modules/auth/routes/admin.routes.js";
 import followupRoutes from "./modules/followups/followup.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
-import templateRoutes from "./modules/templates/template.routes.js";
+import templateRoutes from "./modules/templates/followup-template.routes.js";
 import eventRoutes from "./modules/events/event.routes.js";
 import emailTemplateRoutes from "./modules/templates/email-template.routes.js";
 import todoRoutes from "./modules/todos/todo.routes.js";
