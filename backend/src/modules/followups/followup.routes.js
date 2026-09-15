@@ -17,7 +17,7 @@ import {
   notifications,
 } from "../../db/schema.js";
 import { logEvent } from "../events/event.service.js";
-import { notificationService } from "../../services/notification.service.js";
+import { notificationService } from "../notifications/notification.service.js";
 const router = express.Router();
 
 /**

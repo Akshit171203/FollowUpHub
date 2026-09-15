@@ -2,7 +2,7 @@ import { db } from "../config/db.js";
 import { followups } from "../db/schema.js";
 import { and, eq, lt, ne } from "drizzle-orm";
 
-import { notificationService } from "./notification.service.js";
+import { notificationService } from "../modules/notifications/notification.service.js";
 import { logEvent } from "../modules/events/event.service.js";
 import { sendSlackNotification } from "./slack.service.js";
 
