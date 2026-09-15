@@ -1,8 +1,8 @@
-import { db } from "../config/db.js";
-import { followups, usersTable, jiraSyncLogs } from "../db/schema.js";
-import { eq, and, inArray, isNotNull } from "drizzle-orm";
-import { decrypt } from "../utils/encryption.js";
-import { logEvent } from "../modules/events/event.service.js";
+import { db } from "../../config/db.js";
+import { followups, usersTable, jiraSyncLogs } from "../../db/schema.js";
+import { eq, and, inArray, isNotNull, desc } from "drizzle-orm";
+import { encrypt, decrypt } from "../../utils/encryption.js";
+import { logEvent } from "../events/event.service.js";
 
 /**
  * Fetch assigned, incomplete tickets for a user from Jira
@@ -12,7 +12,7 @@ async function fetchUserTickets(domain, email, apiToken) {
   const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0];
   const jql = encodeURIComponent('assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC');
   const url = `https://${cleanDomain}/rest/api/3/search/jql?jql=${jql}&maxResults=50&fields=summary,priority,duedate,description`;
-  
+
   const authHeader = `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`;
 
   const response = await fetch(url, {
@@ -54,14 +54,14 @@ function extractJiraDescription(descriptionField) {
  */
 function mapJiraToFollowup(issue, domain) {
   const fields = issue.fields || {};
-  
+
   // priority mapping -> Jira: Highest, High, Medium, Low, Lowest
   let mappedPriority = "MEDIUM";
   const jPrio = fields.priority?.name?.toLowerCase() || '';
   if (jPrio.includes('highest')) mappedPriority = "URGENT";
   else if (jPrio.includes('high')) mappedPriority = "HIGH";
   else if (jPrio.includes('low')) mappedPriority = "LOW";
-  
+
   // due date
   let due = fields.duedate;
   if (!due) {
@@ -72,7 +72,7 @@ function mapJiraToFollowup(issue, domain) {
   } else {
     due = new Date(due);
   }
-  
+
   return {
     externalId: issue.id,
     issueKey: issue.key,
@@ -98,7 +98,7 @@ export async function syncUserJiraTickets(user) {
     if (!decryptedToken) throw new Error("Could not decrypt token");
 
     const issues = await fetchUserTickets(user.jiraDomain, user.jiraEmail, decryptedToken);
-    
+
     // Existing active JIRA followups for the user
     const existingDbTickets = await db
       .select()
@@ -112,7 +112,7 @@ export async function syncUserJiraTickets(user) {
       );
 
     const existingMap = new Map(existingDbTickets.map(t => [t.externalId, t]));
-    
+
     let syncedCount = 0;
     const fetchedIssueIds = new Set();
 
@@ -172,7 +172,7 @@ export async function syncUserJiraTickets(user) {
           completedAt: new Date()
         })
         .where(inArray(followups.id, activeIdsToClose));
-        
+
       for(const closedId of activeIdsToClose) {
          await logEvent({ followupId: closedId, userId: user.id, eventType: "DONE", message: "Closed or removed in Jira" });
       }
@@ -189,7 +189,7 @@ export async function syncUserJiraTickets(user) {
 
   } catch (error) {
     console.error(`Jira Sync Error for User ${user.id}:`, error.message);
-    
+
     await db.insert(jiraSyncLogs).values({
       userId: user.id,
       status: "FAILED",
@@ -201,7 +201,7 @@ export async function syncUserJiraTickets(user) {
 }
 
 /**
- * Batch Processor- helps when i don't want to crash my server when i have 1000's of users. 
+ * Batch Processor- helps when i don't want to crash my server when i have 1000's of users.
  * Orchestrator: fetches active Jira users in batches and syncs
  */
 export async function syncAllJiraUsers() {
@@ -220,7 +220,88 @@ export async function syncAllJiraUsers() {
     for (const user of usersBatch) {
       await syncUserJiraTickets(user);
     }
-    
+
     offset += BATCH_SIZE;
   }
+}
+
+/**
+ * Connect (or update) a user's Jira credentials
+ */
+export async function connectJiraAccount(userId, currentManagerEmail, { jiraEmail, jiraDomain, jiraApiToken, managerEmail }) {
+  const encryptedToken = encrypt(jiraApiToken);
+
+  await db.update(usersTable).set({
+    jiraEmail,
+    jiraDomain,
+    jiraApiToken: encryptedToken,
+    managerEmail: managerEmail || currentManagerEmail,
+    updatedAt: new Date()
+  }).where(eq(usersTable.id, userId));
+}
+
+/**
+ * Manually trigger a sync for a single user
+ */
+export async function syncUserById(userId) {
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+
+  if (!user.jiraApiToken) {
+    return { notConnected: true };
+  }
+
+  return syncUserJiraTickets(user);
+}
+
+/**
+ * List a user's synced Jira tickets + their connection settings, paginated
+ */
+export async function listJiraTickets(userId, { page = 1, limit = 20 } = {}) {
+  const offset = (page - 1) * limit;
+
+  const query = and(
+    eq(followups.userId, userId),
+    eq(followups.externalSource, "JIRA")
+  );
+
+  const countResult = await db.select().from(followups).where(query);
+  const total = countResult.length;
+
+  const rows = await db
+    .select()
+    .from(followups)
+    .where(query)
+    .orderBy(desc(followups.updatedAt))
+    .limit(limit)
+    .offset(offset);
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+
+  return {
+    settings: {
+      isConnected: !!user.jiraApiToken,
+      jiraEmail: user.jiraEmail,
+      jiraDomain: user.jiraDomain,
+      managerEmail: user.managerEmail,
+    },
+    tickets: rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Clear a user's Jira credentials
+ */
+export async function disconnectJiraAccount(userId) {
+  await db.update(usersTable).set({
+    jiraEmail: null,
+    jiraDomain: null,
+    jiraApiToken: null,
+    updatedAt: new Date()
+  }).where(eq(usersTable.id, userId));
 }

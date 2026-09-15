@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { syncAllJiraUsers } from "../services/jira.service.js";
+import { syncAllJiraUsers } from "../modules/jira/jira.service.js";
 
 export function startJiraSyncJob() {
   console.log("[Cron] Jira Sync Job started (every 5 minutes) at", new Date().toISOString());
