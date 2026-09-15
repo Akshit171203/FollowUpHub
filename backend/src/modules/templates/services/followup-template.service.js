@@ -1,7 +1,7 @@
-import { db } from "../../config/db.js";
-import { followupTemplates, followups } from "../../db/schema.js";
+import { db } from "../../../config/db.js";
+import { followupTemplates, followups } from "../../../db/schema.js";
 import { and, eq, desc } from "drizzle-orm";
-import { logEvent } from "../events/event.service.js";
+import { logEvent } from "../../events/event.service.js";
 
 export async function createTemplate(userId, data) {
   const {

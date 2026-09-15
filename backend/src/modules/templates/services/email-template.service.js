@@ -1,5 +1,5 @@
-import { db } from "../../config/db.js";
-import { emailTemplates } from "../../db/schema.js";
+import { db } from "../../../config/db.js";
+import { emailTemplates } from "../../../db/schema.js";
 import { and, eq, desc } from "drizzle-orm";
 
 export async function listEmailTemplates(userId, { page = 1, limit = 10 } = {}) {

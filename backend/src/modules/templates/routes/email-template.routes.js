@@ -1,13 +1,13 @@
 import express from "express";
-import { authenticateUser } from "../../middlewares/auth.middleware.js";
-import { validate } from "../../middlewares/validate.js";
+import { authenticateUser } from "../../../middlewares/auth.middleware.js";
+import { validate } from "../../../middlewares/validate.js";
 import {
   createEmailTemplateSchema,
   updateEmailTemplateSchema,
   followupIdParam,
   listFollowupsQuery,
-} from "../../middlewares/schemas.js";
-import { emailTemplateController } from "./email-template.controller.js";
+} from "../../../middlewares/schemas.js";
+import { emailTemplateController } from "../controllers/email-template.controller.js";
 
 const router = express.Router();
 

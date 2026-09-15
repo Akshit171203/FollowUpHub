@@ -1,4 +1,4 @@
-import * as templateService from "./followup-template.service.js";
+import * as templateService from "../services/followup-template.service.js";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 

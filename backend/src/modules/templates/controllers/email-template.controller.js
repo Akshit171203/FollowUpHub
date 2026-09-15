@@ -1,4 +1,4 @@
-import * as emailTemplateService from "./email-template.service.js";
+import * as emailTemplateService from "../services/email-template.service.js";
 
 export const emailTemplateController = {
   async list(req, res) {
