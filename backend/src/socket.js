@@ -1,6 +1,4 @@
 import { Server } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
@@ -9,10 +7,16 @@ dotenv.config();
 let io;
 
 /**
- * Initialize Socket.IO with Redis Adapter
+ * Initialize Socket.IO.
+ *
+ * Runs as a single instance (no load balancer / multiple processes), so
+ * Socket.io's default in-memory adapter already handles io.to().emit()
+ * correctly. A Redis adapter is only needed once there's more than one
+ * process — add @socket.io/redis-adapter back then, not preemptively.
+ *
  * @param {import("http").Server} httpServer
  */
-export async function initSocket(httpServer) {
+export function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -20,19 +24,6 @@ export async function initSocket(httpServer) {
     },
     transports: ["websocket", "polling"],
   });
-
-  // Setup Redis Adapter
-  try {
-    const pubClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
-    const subClient = pubClient.duplicate();
-
-    await Promise.all([pubClient.connect(), subClient.connect()]);
-
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log("Socket.IO Redis Adapter connected");
-  } catch (err) {
-    console.warn("Redis Adapter failed to connect (Sockets will be local only):", err.message);
-  }
 
   // Auth Middleware — token is passed via the socket.io-client `auth` option, not a cookie
   io.use((socket, next) => {

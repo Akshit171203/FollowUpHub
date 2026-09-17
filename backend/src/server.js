@@ -24,7 +24,7 @@ connectRedis()
   .then(async () => {
     // Initialize Socket.IO
     //Pass in the httpServer so Socket.IO can bind to the same port as my Express app.
-    await initSocket(httpServer);
+    initSocket(httpServer);
     //Open the server to incoming HTTP requests from users.
     httpServer.listen(PORT, () => {
       console.log(`Server running on ${PORT} [${process.env.NODE_ENV || "development"}]`);
