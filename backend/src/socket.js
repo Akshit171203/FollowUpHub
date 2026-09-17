@@ -2,7 +2,6 @@ import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
 import jwt from "jsonwebtoken";
-import cookie from "cookie"; // You might need to install 'cookie' package or just parse manually if simple
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -17,7 +16,6 @@ export async function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL || "http://localhost:3000",
-      credentials: true,
       methods: ["GET", "POST"],
     },
     transports: ["websocket", "polling"],
@@ -36,15 +34,10 @@ export async function initSocket(httpServer) {
     console.warn("Redis Adapter failed to connect (Sockets will be local only):", err.message);
   }
 
-  // Auth Middleware
+  // Auth Middleware — token is passed via the socket.io-client `auth` option, not a cookie
   io.use((socket, next) => {
     try {
-      if (!socket.request.headers.cookie) {
-        return next(new Error("Authentication error: No cookies"));
-      }
-      
-      const parsedCookies = cookie.parse(socket.request.headers.cookie);
-      const token = parsedCookies.token;
+      const token = socket.handshake.auth?.token;
 
       if (!token) {
         return next(new Error("Authentication error: No token"));

@@ -8,8 +8,10 @@ export const getSocket = (): Socket => {
     const url = rawUrl.replace(/\/api\/?$/, "");
   
     socket = io(url, {
-      withCredentials: true,
-      autoConnect: false, 
+      // Called fresh on every (re)connection attempt so a token refreshed
+      // by apiFetch in between is picked up, not a stale one captured here.
+      auth: (cb) => cb({ token: localStorage.getItem("token") }),
+      autoConnect: false,
       transports: ["websocket"], // Force WS to avoid polling noise and CORS complexities
     });
 

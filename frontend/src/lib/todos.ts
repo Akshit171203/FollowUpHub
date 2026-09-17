@@ -39,9 +39,7 @@ export async function listTodos(date?: string): Promise<Todo[]> {
   }
   
   const url = `/api/todos${params.toString() ? `?${params.toString()}` : ""}`;
-  const res = await apiFetch<{ todos: Todo[] }>(url, {
-    credentials: "include",
-  });
+  const res = await apiFetch<{ todos: Todo[] }>(url);
   
   return res.todos;
 }
@@ -52,7 +50,6 @@ export async function listTodos(date?: string): Promise<Todo[]> {
 export async function createTodo(input: CreateTodoInput): Promise<Todo> {
   const res = await apiFetch<{ todo: Todo }>("/api/todos", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
@@ -66,7 +63,6 @@ export async function createTodo(input: CreateTodoInput): Promise<Todo> {
 export async function updateTodo(id: string, input: UpdateTodoInput): Promise<Todo> {
   const res = await apiFetch<{ todo: Todo }>(`/api/todos/${id}`, {
     method: "PATCH",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
@@ -80,7 +76,6 @@ export async function updateTodo(id: string, input: UpdateTodoInput): Promise<To
 export async function deleteTodo (id: string): Promise<void> {
   await apiFetch(`/api/todos/${id}`, {
     method: "DELETE",
-    credentials: "include",
   });
 }
 
@@ -90,7 +85,6 @@ export async function deleteTodo (id: string): Promise<void> {
 export async function promoteTodo(id: string): Promise<any> {
   const res = await apiFetch<{ followup: any }>(`/api/todos/${id}/promote`, {
     method: "POST",
-    credentials: "include",
   });
   
   return res.followup;

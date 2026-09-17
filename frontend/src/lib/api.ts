@@ -25,7 +25,6 @@ async function refreshAccessToken(): Promise<string | null> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken }),
-        credentials: "include",
       });
 
       if (!res.ok) return null;
@@ -58,7 +57,9 @@ export async function apiFetch<T>(
     ...(options.headers as Record<string, string> || {}),
   };
 
-  // Attach token from localStorage for Safari/mobile (cookie doesn't work cross-domain)
+  // Auth is entirely Bearer-token based (no cookies) since the frontend and
+  // backend live on different domains and cross-site cookies aren't reliable
+  // (notably blocked by Safari/iOS).
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
     if (token) {
@@ -69,7 +70,6 @@ export async function apiFetch<T>(
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
-    credentials: "include", // Still send cookies as fallback for desktop Chrome
   });
 
   // A 401 here is an actual auth failure for these two, not a signal to

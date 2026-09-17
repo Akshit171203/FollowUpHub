@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
 import userRoutes from "./modules/auth/routes/user.routes.js";
@@ -23,11 +22,8 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
-    credentials: true,
   })
 );
-
-app.use(cookieParser());
 
 // Routes
 app.use("/api/users", userRoutes);

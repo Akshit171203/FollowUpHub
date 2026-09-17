@@ -1,21 +1,6 @@
 import * as oauthService from "../services/oauth.service.js";
 import * as tokenService from "../services/token.service.js";
 
-function cookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  };
-}
-
-function refreshCookieOptions() {
-  return {
-    ...cookieOptions(),
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days, matches token.service.js's REFRESH_TOKEN_TTL_SECONDS
-  };
-}
-
 export const oauthController = {
   googleStart(req, res) {
     console.log("--- GOOGLE OAUTH START ---");
@@ -30,10 +15,7 @@ export const oauthController = {
       const user = await oauthService.handleGoogleCallback(req.query.code);
       const { accessToken, refreshToken } = await tokenService.issueTokenPair(user);
 
-      res.cookie("token", accessToken, cookieOptions());
-      res.cookie("refreshToken", refreshToken, refreshCookieOptions());
-
-      // Redirect to frontend with tokens in URL (works on Safari/mobile)
+      // Redirect to frontend with tokens in the URL for it to store
       res.redirect(
         `${process.env.CLIENT_URL}/auth/callback?token=${accessToken}&refreshToken=${refreshToken}`
       );
@@ -56,10 +38,7 @@ export const oauthController = {
       const user = await oauthService.handleGithubCallback(req.query.code);
       const { accessToken, refreshToken } = await tokenService.issueTokenPair(user);
 
-      res.cookie("token", accessToken, cookieOptions());
-      res.cookie("refreshToken", refreshToken, refreshCookieOptions());
-
-      // Redirect to frontend with tokens in URL (works on Safari/mobile)
+      // Redirect to frontend with tokens in the URL for it to store
       res.redirect(
         `${process.env.CLIENT_URL}/auth/callback?token=${accessToken}&refreshToken=${refreshToken}`
       );

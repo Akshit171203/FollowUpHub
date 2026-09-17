@@ -1,21 +1,6 @@
 import * as authService from "../services/auth.service.js";
 import * as tokenService from "../services/token.service.js";
 
-function cookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  };
-}
-
-function refreshCookieOptions() {
-  return {
-    ...cookieOptions(),
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days, matches token.service.js's REFRESH_TOKEN_TTL_SECONDS
-  };
-}
-
 export const authController = {
   async signup(req, res) {
     const { email, password, name } = req.body;
@@ -69,14 +54,11 @@ export const authController = {
 
     const { accessToken, refreshToken } = await tokenService.issueTokenPair(found);
 
-    res.cookie("token", accessToken, cookieOptions());
-    res.cookie("refreshToken", refreshToken, refreshCookieOptions());
-
     return res.json({ message: "Login successful", token: accessToken, refreshToken });
   },
 
   async refresh(req, res) {
-    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+    const refreshToken = req.body?.refreshToken;
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token missing" });
@@ -85,13 +67,8 @@ export const authController = {
     const result = await tokenService.rotateRefreshToken(refreshToken);
 
     if (result.error) {
-      res.clearCookie("token", cookieOptions());
-      res.clearCookie("refreshToken", refreshCookieOptions());
       return res.status(401).json({ message: "Session expired, please log in again" });
     }
-
-    res.cookie("token", result.accessToken, cookieOptions());
-    res.cookie("refreshToken", result.refreshToken, refreshCookieOptions());
 
     return res.json({ token: result.accessToken, refreshToken: result.refreshToken });
   },
@@ -109,14 +86,12 @@ export const authController = {
   },
 
   async logout(req, res) {
-    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+    const refreshToken = req.body?.refreshToken;
 
     if (refreshToken) {
       await tokenService.revokeRefreshToken(refreshToken);
     }
 
-    res.clearCookie("token", cookieOptions());
-    res.clearCookie("refreshToken", refreshCookieOptions());
     res.json({ message: "Logout successful" });
   },
 

@@ -5,14 +5,10 @@ import jwt from "jsonwebtoken";
 
 export async function authenticateUser(req, res, next) {
   try {
-    // Check Authorization header first (for Safari/mobile), fall back to cookie
     let token = null;
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
-    }
-    if (!token) {
-      token = req.cookies?.token;
     }
 
     if (!token) {
