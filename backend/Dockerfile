@@ -32,6 +32,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy application source code from builder
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/docs ./docs
+COPY --from=builder /app/drizzle.config.js ./drizzle.config.js
 
 # Ensure non-root user runs the application for security
 RUN chown -R node:node /app
@@ -40,5 +41,7 @@ USER node
 # Expose the application port
 EXPOSE 5000
 
-# Start the server
-CMD ["node", "src/server.js"]
+# Apply any pending migrations, then start the server. Runs every startup —
+# a no-op when nothing's pending — so a deploy can never go live with the
+# app's code ahead of the actual database schema.
+CMD ["sh", "-c", "npm run db:migrate && node src/server.js"]

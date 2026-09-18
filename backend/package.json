@@ -21,6 +21,7 @@
     "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
     "express": "^4.22.2",
     "googleapis": "^173.0.0",
@@ -37,7 +38,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.8",
     "nodemon": "^3.1.14"
   }
 }
