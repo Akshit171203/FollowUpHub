@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, Trash2 } from "lucide-react";
+import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, Trash2, Sparkles, Copy } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -12,10 +12,12 @@ import {
   deleteFollowUp,
   snoozeFollowUp,
   updateFollowUp,
+  generateDraft,
   type FollowUp,
 } from "@/lib/followups";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -67,8 +69,12 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
       title: "",
       target: "",
       notes: "",
-      dueAt: "", 
+      dueAt: "",
   });
+
+  // AI Draft State
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftText, setDraftText] = useState("");
 
   async function load() {
     try {
@@ -79,6 +85,7 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
       }
       const res = await getFollowUp(id);
       setItem(res ?? null);
+      setDraftText(res?.aiDraft || "");
     } catch (e: unknown) {
       toast.error((e as Error)?.message ?? "Failed to load follow-up");
       setItem(null);
@@ -148,6 +155,30 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
       onUpdate?.();
     } catch (e: unknown) {
       toast.error((e as Error)?.message ?? "Failed to snooze");
+    }
+  }
+
+  async function onGenerateDraft() {
+    if (!id) return;
+    try {
+      setDraftLoading(true);
+      const updated = await generateDraft(id);
+      setItem(updated);
+      setDraftText(updated.aiDraft || "");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Failed to generate draft");
+    } finally {
+      setDraftLoading(false);
+    }
+  }
+
+  async function onCopyDraft() {
+    if (!draftText) return;
+    try {
+      await navigator.clipboard.writeText(draftText);
+      toast.success("Draft copied to clipboard");
+    } catch {
+      toast.error("Failed to copy draft");
     }
   }
 
@@ -305,9 +336,58 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
                   </div>
                 </div>
 
+                {/* AI Draft */}
+                <div className="flex flex-col gap-3 p-6 rounded-[20px] bg-gradient-to-b from-violet-50/60 to-violet-50/20 border border-violet-200/60">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-violet-500 uppercase tracking-widest">
+                      <Sparkles className="w-3.5 h-3.5" /> AI Follow-up Draft
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onGenerateDraft}
+                      disabled={draftLoading}
+                      className="rounded-lg border-violet-200 bg-white hover:bg-violet-50 text-violet-700 font-bold gap-1.5 text-xs h-8 px-3"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {draftLoading ? "Drafting..." : draftText ? "Regenerate" : "Auto-Draft Message"}
+                    </Button>
+                  </div>
+
+                  {draftLoading ? (
+                    <div className="space-y-2 py-1 animate-pulse">
+                      <div className="h-3 rounded bg-violet-200/50 w-full" />
+                      <div className="h-3 rounded bg-violet-200/50 w-5/6" />
+                      <div className="h-3 rounded bg-violet-200/50 w-2/3" />
+                    </div>
+                  ) : draftText ? (
+                    <div className="flex flex-col gap-2">
+                      <Textarea
+                        value={draftText}
+                        onChange={(e) => setDraftText(e.target.value)}
+                        rows={4}
+                        className="bg-white border-violet-200/80 text-[14px] leading-relaxed"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={onCopyDraft}
+                        className="self-start rounded-lg text-violet-600 hover:bg-violet-100 font-semibold gap-1.5 text-xs h-8 px-2"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        Copy
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-zinc-400 italic">
+                      Generate a ready-to-send follow-up message based on this item&apos;s details.
+                    </p>
+                  )}
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3 pt-2 w-full">
-                  <Button 
+                  <Button
                     onClick={onDone}
                     disabled={item.status === "DONE" || item.status === "CANCELLED"}
                     className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-md shadow-zinc-900/10 font-bold px-5 gap-2 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none transition-all"

@@ -22,6 +22,8 @@ export type FollowUp = {
   updatedAt?: string | null;
   completedAt?: string | null;
   lastReminderSentAt?: string | null;
+  aiDraft?: string | null;
+  isAiGenerated?: boolean | null;
 };
 
 export type CreateFollowUpInput = {
@@ -125,6 +127,19 @@ export async function snoozeFollowUp(id: string, snoozeMinutes: number) {
     method: "PATCH",
     body: JSON.stringify({ snoozeMinutes }),
   });
+}
+
+export async function generateDraft(id: string): Promise<FollowUp> {
+  if (!isValidId(id)) {
+    throw new Error("Invalid follow-up ID");
+  }
+
+  const res = await apiFetch<DetailResp | FollowUp>(`/api/followups/${id}/generate-draft`, {
+    method: "POST",
+  });
+
+  if ((res as any)?.followup) return (res as any).followup as FollowUp;
+  return res as FollowUp;
 }
 
 export async function cancelFollowUp(id: string) {

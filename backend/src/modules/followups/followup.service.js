@@ -3,6 +3,7 @@ import { followups, followupEvents, notifications } from "../../db/schema.js";
 import { eq, desc, and, or, sql } from "drizzle-orm";
 import { logEvent } from "../events/event.service.js";
 import { notificationService } from "../notifications/notification.service.js";
+import { generateFollowUpDraft } from "../../services/ai.service.js";
 
 async function emitToUser(userId, event, payload = {}) {
   try {
@@ -266,6 +267,34 @@ export async function cancelFollowup(userId, id) {
   await emitFollowupChanged(userId, id);
 
   return updated[0];
+}
+
+export async function generateDraftForFollowup(userId, id) {
+  const existing = await db
+    .select()
+    .from(followups)
+    .where(and(eq(followups.id, id), eq(followups.userId, userId)));
+
+  if (existing.length === 0) {
+    return { notFound: true };
+  }
+
+  const followup = existing[0];
+
+  const draft = await generateFollowUpDraft({
+    target: followup.target,
+    title: followup.title,
+    notes: followup.notes,
+    priority: followup.priority,
+  });
+
+  const updated = await db
+    .update(followups)
+    .set({ aiDraft: draft, isAiGenerated: true, updatedAt: new Date() })
+    .where(eq(followups.id, id))
+    .returning();
+
+  return { followup: updated[0] };
 }
 
 export async function deleteFollowup(userId, id) {

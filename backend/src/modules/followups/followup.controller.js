@@ -155,6 +155,26 @@ export const followupController = {
   },
 
   /**
+   * POST /api/followups/:id/generate-draft
+   */
+  async generateDraft(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await followupService.generateDraftForFollowup(req.user.id, id);
+
+      if (result.notFound) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+
+      return res.json({ message: "Draft generated", followup: result.followup });
+    } catch (error) {
+      console.error("Generate draft error:", error);
+      return res.status(500).json({ message: "Failed to generate draft" });
+    }
+  },
+
+  /**
    * DELETE /api/followups/:id
    */
   async remove(req, res) {

@@ -117,6 +117,10 @@ export const followups = pgTable(
     externalUrl: text("external_url"),
     lastManagerNotifiedAt: timestamp("last_manager_notified_at", { withTimezone: true }),
 
+    // AI-drafted follow-up message (Gemini), editable by the user before sending
+    aiDraft: text("ai_draft"),
+    isAiGenerated: boolean("is_ai_generated").default(false).notNull(),
+
   },
   // Performance Optimization (Indexes):
   // 1. userId: Indexed because almost all API queries are filtered by the logged-in user.

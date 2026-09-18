@@ -19,6 +19,7 @@ router.patch("/:id/done", authenticateUser, validate(followupIdParam), followupC
 router.patch("/:id", authenticateUser, validate(updateFollowupSchema), followupController.update);
 router.patch("/:id/snooze", authenticateUser, validate(snoozeFollowupSchema), followupController.snooze);
 router.get("/:id/events", authenticateUser, followupController.getEvents);
+router.post("/:id/generate-draft", authenticateUser, validate(followupIdParam), followupController.generateDraft);
 router.patch("/:id/cancel", authenticateUser, validate(followupIdParam), followupController.cancel);
 router.delete("/:id", authenticateUser, validate(followupIdParam), followupController.remove);
 
