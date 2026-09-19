@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function fmt(dateIso?: string | null) {
   if (!dateIso) return "—";
@@ -190,7 +191,37 @@ export default function FollowUpDetailPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-sm text-muted-foreground">Loading…</div>
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="h-4 w-12 mb-2" />
+                  <Skeleton className="h-5 w-56" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Skeleton className="h-4 w-10 mb-2" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-14 mb-2" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Skeleton className="h-4 w-14 mb-2" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-12 mb-2" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-20" />
+                </div>
+              </div>
             ) : !item ? (
               <div className="text-sm text-muted-foreground">Not found</div>
             ) : isEditing ? (

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function EditEmailTemplatePage({ params }: { params: { id: string } }) {
@@ -80,7 +81,30 @@ export default function EditEmailTemplatePage({ params }: { params: { id: string
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-10">
-        <p>Loading...</p>
+        <Skeleton className="h-8 w-64 mb-6" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
