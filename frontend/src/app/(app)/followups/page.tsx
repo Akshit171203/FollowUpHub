@@ -25,7 +25,8 @@ import {
   Hourglass,
   Flame,
   BellOff,
-  Send
+  Send,
+  Sparkles
 } from "lucide-react";
 
 import {
@@ -50,6 +51,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FollowUpDetail } from "@/components/followups/FollowUpDetail";
+import { AiQuickCreateDialog } from "@/components/followups/AiQuickCreateDialog";
 
 import { Skeleton } from "boneyard-js/react";
 
@@ -229,6 +231,7 @@ function FollowUpsContent() {
   // Dialog State
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -358,12 +361,18 @@ function FollowUpsContent() {
                      <p className="text-[14px] md:text-[15px] text-white/95 leading-relaxed font-medium drop-shadow-sm max-w-[600px] mb-4">
                         Master your communications — track active discussions, set smart snooze reminders, and never let an important conversation slip through the cracks.
                      </p>
-                     <div className="flex justify-center md:justify-start">
+                     <div className="flex flex-wrap justify-center md:justify-start gap-3">
                         <Link href="/followups/new">
                            <button className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-zinc-50 text-zinc-900 rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-sm cursor-pointer">
                               <Plus className="w-[18px] h-[18px]" /> Create follow-up
                            </button>
                         </Link>
+                        <button
+                           onClick={() => setIsQuickCreateOpen(true)}
+                           className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-sm cursor-pointer"
+                        >
+                           <Sparkles className="w-[18px] h-[18px]" /> AI Quick Add
+                        </button>
                      </div>
                   </div>
                   
@@ -550,7 +559,7 @@ function FollowUpsContent() {
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-         <DialogContent className="max-w-2xl bg-white dark:bg-zinc-950">
+         <DialogContent className="max-w-2xl p-0 overflow-hidden border-zinc-200/80 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[24px] bg-white sm:rounded-[24px]">
              <DialogTitle className="sr-only">Follow-up Details</DialogTitle>
              {selectedId && (
                  <FollowUpDetail 
@@ -563,6 +572,12 @@ function FollowUpsContent() {
              )}
          </DialogContent>
       </Dialog>
+
+      <AiQuickCreateDialog
+         open={isQuickCreateOpen}
+         onOpenChange={setIsQuickCreateOpen}
+         onCreated={loadData}
+      />
     </div>
     </Skeleton>
   );

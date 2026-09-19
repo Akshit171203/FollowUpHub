@@ -129,6 +129,24 @@ export async function snoozeFollowUp(id: string, snoozeMinutes: number) {
   });
 }
 
+export type ExtractedFollowUp = {
+  title: string;
+  target: string | null;
+  notes: string | null;
+  dueAt: string | null;
+  priority: string;
+};
+
+export async function extractFollowUpFromText(text: string): Promise<ExtractedFollowUp> {
+  const res = await apiFetch<{ followup: ExtractedFollowUp } | ExtractedFollowUp>(`/api/followups/extract`, {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+
+  if ((res as any)?.followup) return (res as any).followup as ExtractedFollowUp;
+  return res as ExtractedFollowUp;
+}
+
 export async function generateDraft(id: string): Promise<FollowUp> {
   if (!isValidId(id)) {
     throw new Error("Invalid follow-up ID");

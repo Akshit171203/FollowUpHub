@@ -10,6 +10,7 @@ import { connectRedis, redisClient } from "./config/redis.js";
 import { pool } from "./config/db.js";
 import { startReminderJob } from "./jobs/reminder.job.js";
 import { startJiraSyncJob } from "./jobs/jira-sync.job.js";
+import { startAiDigestJob } from "./jobs/ai-digest.job.js";
 import { initSocket } from "./socket.js";
 
 const PORT = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ const httpServer = createServer(app);
 // Track cron jobs for cleanup
 let reminderJob = null;
 let jiraSyncJob = null;
+let aiDigestJob = null;
 
 //Redis Connection
 connectRedis()
@@ -30,6 +32,7 @@ connectRedis()
       console.log(`Server running on ${PORT} [${process.env.NODE_ENV || "development"}]`);
       reminderJob = startReminderJob();
       jiraSyncJob = startJiraSyncJob();
+      aiDigestJob = startAiDigestJob();
     });
   })
   .catch((err) => {
@@ -66,6 +69,10 @@ async function gracefulShutdown(signal) {
     if (jiraSyncJob && typeof jiraSyncJob.stop === "function") {
       jiraSyncJob.stop();
       console.log("[Shutdown] Jira sync cron stopped");
+    }
+    if (aiDigestJob && typeof aiDigestJob.stop === "function") {
+      aiDigestJob.stop();
+      console.log("[Shutdown] AI digest cron stopped");
     }
 
     // 3. Close Redis

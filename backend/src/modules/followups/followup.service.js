@@ -3,7 +3,9 @@ import { followups, followupEvents, notifications } from "../../db/schema.js";
 import { eq, desc, and, or, sql } from "drizzle-orm";
 import { logEvent } from "../events/event.service.js";
 import { notificationService } from "../notifications/notification.service.js";
-import { generateFollowUpDraft } from "../../services/ai.service.js";
+import { streamFollowUpDraft, extractFollowupFromText as aiExtractFollowupFromText } from "../../services/ai.service.js";
+
+const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
 async function emitToUser(userId, event, payload = {}) {
   try {
@@ -281,11 +283,12 @@ export async function generateDraftForFollowup(userId, id) {
 
   const followup = existing[0];
 
-  const draft = await generateFollowUpDraft({
+  const draft = await streamFollowUpDraft({
     target: followup.target,
     title: followup.title,
     notes: followup.notes,
     priority: followup.priority,
+    onChunk: (chunk) => emitToUser(userId, "ai:draft:chunk", { followupId: id, chunk }),
   });
 
   const updated = await db
@@ -294,7 +297,27 @@ export async function generateDraftForFollowup(userId, id) {
     .where(eq(followups.id, id))
     .returning();
 
+  await emitToUser(userId, "ai:draft:done", { followupId: id, draft });
+
   return { followup: updated[0] };
+}
+
+// Extracts structured follow-up fields from freeform text via AI. Read-only —
+// does not touch the database; the caller reviews and calls createFollowup.
+export async function extractFollowupFromText(text) {
+  const extracted = await aiExtractFollowupFromText(text, { now: new Date() });
+
+  const dueAtDate = extracted.dueAt ? new Date(extracted.dueAt) : null;
+  const validDueAt = dueAtDate && !Number.isNaN(dueAtDate.getTime()) ? dueAtDate.toISOString() : null;
+  const priority = VALID_PRIORITIES.includes(extracted.priority) ? extracted.priority : "MEDIUM";
+
+  return {
+    title: (extracted.title || "").trim() || "Untitled follow-up",
+    target: extracted.target || null,
+    notes: extracted.notes || null,
+    dueAt: validDueAt,
+    priority,
+  };
 }
 
 export async function deleteFollowup(userId, id) {

@@ -1,4 +1,22 @@
 import * as followupService from "./followup.service.js";
+import { AiServiceError } from "../../services/ai.service.js";
+
+const AI_ERROR_STATUS = {
+  TIMEOUT: 503,
+  RATE_LIMITED: 429,
+  MISSING_KEY: 500,
+  EMPTY_RESPONSE: 502,
+  UPSTREAM_ERROR: 502,
+};
+
+function handleAiError(res, error, fallbackMessage) {
+  if (error instanceof AiServiceError) {
+    const status = AI_ERROR_STATUS[error.code] || 502;
+    return res.status(status).json({ message: error.message });
+  }
+  console.error(fallbackMessage, error);
+  return res.status(500).json({ message: fallbackMessage });
+}
 
 export const followupController = {
   /**
@@ -155,6 +173,21 @@ export const followupController = {
   },
 
   /**
+   * POST /api/followups/extract
+   */
+  async extract(req, res) {
+    try {
+      const { text } = req.body;
+
+      const extracted = await followupService.extractFollowupFromText(text);
+
+      return res.json({ message: "Extracted", followup: extracted });
+    } catch (error) {
+      return handleAiError(res, error, "Extract followup error:");
+    }
+  },
+
+  /**
    * POST /api/followups/:id/generate-draft
    */
   async generateDraft(req, res) {
@@ -169,8 +202,7 @@ export const followupController = {
 
       return res.json({ message: "Draft generated", followup: result.followup });
     } catch (error) {
-      console.error("Generate draft error:", error);
-      return res.status(500).json({ message: "Failed to generate draft" });
+      return handleAiError(res, error, "Generate draft error:");
     }
   },
 

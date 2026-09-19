@@ -70,6 +70,12 @@ export const refreshTokenSchema = {
 const followupPriority = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
 const reminderPolicy = z.enum(["NORMAL", "PERSISTENT", "AGGRESSIVE"]);
 
+export const extractFollowupSchema = {
+  body: z.object({
+    text: z.string().min(1, "text is required").max(2000),
+  }),
+};
+
 export const createFollowupSchema = {
   body: z.object({
     title: z.string().min(1, "Title is required").max(255),

@@ -51,6 +51,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "TODO_REMINDER",
   "JIRA_TICKET_REMINDER",
   "JIRA_TICKET_ESCALATED",
+  "AI_DIGEST",
 ]);
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
 

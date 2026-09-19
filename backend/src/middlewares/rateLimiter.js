@@ -1,10 +1,10 @@
 import { redisClient } from "../config/redis.js";
 
-export const rateLimit = ({ keyPrefix, limit, windowSec }) => {
+export const rateLimit = ({ keyPrefix, limit, windowSec, keyFn }) => {
   return async (req, res, next) => {
     try {
-      const ip = req.ip || req.connection.remoteAddress || "unknown";
-      const key = `${keyPrefix}:${ip}`;
+      const identifier = keyFn ? keyFn(req) : (req.ip || req.connection.remoteAddress || "unknown");
+      const key = `${keyPrefix}:${identifier}`;
 
       const current = await redisClient.get(key);
 

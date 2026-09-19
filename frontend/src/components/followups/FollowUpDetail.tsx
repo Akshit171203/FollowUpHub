@@ -15,6 +15,7 @@ import {
   generateDraft,
   type FollowUp,
 } from "@/lib/followups";
+import { getSocket } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,6 +100,28 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    const socket = getSocket();
+
+    function onChunk(payload: { followupId: string; chunk: string }) {
+      if (payload.followupId !== id) return;
+      setDraftText((prev) => prev + payload.chunk);
+    }
+
+    function onDone(payload: { followupId: string; draft: string }) {
+      if (payload.followupId !== id) return;
+      setDraftText(payload.draft);
+      setDraftLoading(false);
+    }
+
+    socket.on("ai:draft:chunk", onChunk);
+    socket.on("ai:draft:done", onDone);
+    return () => {
+      socket.off("ai:draft:chunk", onChunk);
+      socket.off("ai:draft:done", onDone);
+    };
+  }, [id]);
+
   function startEditing() {
       if (!item) return;
       setEditForm({
@@ -162,9 +185,10 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
     if (!id) return;
     try {
       setDraftLoading(true);
+      setDraftText(""); // streamed in live via ai:draft:chunk socket events
       const updated = await generateDraft(id);
       setItem(updated);
-      setDraftText(updated.aiDraft || "");
+      setDraftText(updated.aiDraft || ""); // fallback if socket events were missed
     } catch (e: unknown) {
       toast.error((e as Error)?.message ?? "Failed to generate draft");
     } finally {
@@ -295,7 +319,7 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-5">
                 
                 {/* Title & Core Metadata */}
                 <div className="flex flex-col gap-4">
@@ -313,106 +337,114 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
                   </div>
                 </div>
 
-                {/* Target & Notes Box */}
-                <div className="flex flex-col gap-6 p-6 rounded-[20px] bg-gradient-to-b from-zinc-50/80 to-zinc-50/30 border border-zinc-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-                  <div className="flex flex-col gap-2">
-                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                {/* Crisp App-Native Metadata Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-zinc-50/80 border border-zinc-200/80 shadow-sm transition-all hover:bg-zinc-50 hover:border-zinc-300">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                       <Target className="w-3.5 h-3.5" /> Target
                     </span>
-                    <span className="text-[15px] font-medium text-zinc-800 leading-relaxed">
-                      {item.target || <span className="text-zinc-400 italic font-normal">No target specified</span>}
+                    <span className="text-[15px] font-semibold text-zinc-900 mt-0.5 truncate">
+                      {item.target || <span className="text-zinc-400 italic font-medium">None specified</span>}
                     </span>
                   </div>
                   
-                  <div className="h-px bg-zinc-200/50 w-full" />
-                  
-                  <div className="flex flex-col gap-2">
-                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                  <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-zinc-50/80 border border-zinc-200/80 shadow-sm transition-all hover:bg-zinc-50 hover:border-zinc-300">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                       <AlignLeft className="w-3.5 h-3.5" /> Notes
                     </span>
-                    <span className="text-[15px] font-medium text-zinc-800 leading-relaxed whitespace-pre-wrap">
-                      {item.notes || <span className="text-zinc-400 italic font-normal">No additional notes</span>}
+                    <span className="text-[14px] font-medium text-zinc-700 leading-relaxed whitespace-pre-wrap mt-0.5">
+                      {item.notes || <span className="text-zinc-400 italic font-medium">No notes added</span>}
                     </span>
                   </div>
                 </div>
 
-                {/* AI Draft */}
-                <div className="flex flex-col gap-3 p-6 rounded-[20px] bg-gradient-to-b from-violet-50/60 to-violet-50/20 border border-violet-200/60">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-violet-500 uppercase tracking-widest">
-                      <Sparkles className="w-3.5 h-3.5" /> AI Follow-up Draft
-                    </span>
+                {/* Crisp AI Draft Box */}
+                <div className="relative flex flex-col gap-4 p-6 rounded-[20px] bg-violet-50/40 border border-violet-100 shadow-sm mt-4">
+                  <div className="flex items-center justify-between z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100 text-violet-600 border border-violet-200/50 shadow-sm">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-[16px] font-bold text-zinc-900 tracking-tight leading-none">AI Assistant</h3>
+                        <p className="text-[13px] font-medium text-zinc-500 mt-1">Draft a perfect follow-up</p>
+                      </div>
+                    </div>
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={onGenerateDraft}
                       disabled={draftLoading}
-                      className="rounded-lg border-violet-200 bg-white hover:bg-violet-50 text-violet-700 font-bold gap-1.5 text-xs h-8 px-3"
+                      className="h-9 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-semibold text-[13px] shadow-sm transition-all active:scale-95"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {draftLoading ? "Drafting..." : draftText ? "Regenerate" : "Auto-Draft Message"}
+                      <Sparkles className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                      {draftLoading ? "Drafting..." : draftText ? "Regenerate" : "Generate Draft"}
                     </Button>
                   </div>
 
-                  {draftLoading ? (
-                    <div className="space-y-2 py-1 animate-pulse">
-                      <div className="h-3 rounded bg-violet-200/50 w-full" />
-                      <div className="h-3 rounded bg-violet-200/50 w-5/6" />
-                      <div className="h-3 rounded bg-violet-200/50 w-2/3" />
+                  <div className="relative z-10">
+                  {draftLoading && !draftText ? (
+                    <div className="space-y-2.5 py-3">
+                      <div className="h-2.5 rounded-full bg-violet-200/50 w-full animate-pulse" />
+                      <div className="h-2.5 rounded-full bg-violet-200/50 w-5/6 animate-pulse delay-75" />
+                      <div className="h-2.5 rounded-full bg-violet-200/50 w-2/3 animate-pulse delay-150" />
                     </div>
                   ) : draftText ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="relative animate-in fade-in slide-in-from-bottom-2 duration-300 mt-2">
                       <Textarea
                         value={draftText}
                         onChange={(e) => setDraftText(e.target.value)}
                         rows={4}
-                        className="bg-white border-violet-200/80 text-[14px] leading-relaxed"
+                        className="bg-white border-violet-200 focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-[14px] font-medium leading-relaxed resize-none rounded-xl p-4 text-zinc-800 placeholder:text-zinc-400 shadow-sm transition-all min-h-[120px]"
                       />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={onCopyDraft}
-                        className="self-start rounded-lg text-violet-600 hover:bg-violet-100 font-semibold gap-1.5 text-xs h-8 px-2"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        Copy
-                      </Button>
+                      <div className="absolute bottom-3 right-3">
+                        <Button
+                          size="sm"
+                          onClick={onCopyDraft}
+                          className="rounded-lg bg-white hover:bg-zinc-50 text-violet-700 font-semibold gap-1.5 text-xs h-8 px-3 shadow-sm border border-violet-200 transition-all active:scale-95"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          Copy
+                        </Button>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-[13px] text-zinc-400 italic">
-                      Generate a ready-to-send follow-up message based on this item&apos;s details.
-                    </p>
-                  )}
+                  ) : null}
+                  </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 pt-2 w-full">
-                  <Button
-                    onClick={onDone}
-                    disabled={item.status === "DONE" || item.status === "CANCELLED"}
-                    className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-md shadow-zinc-900/10 font-bold px-5 gap-2 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none transition-all"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Mark as Done
-                  </Button>
-                  
-                  {item.status !== "DONE" && item.status !== "CANCELLED" && (
-                      <Button variant="outline" onClick={onSnooze} className="rounded-xl shadow-sm border-zinc-200 hover:bg-zinc-50 font-bold gap-2 px-5 bg-white">
-                        <Clock className="w-4 h-4 text-zinc-500" />
-                        Snooze 10m
-                      </Button>
-                  )}
-                  
-                  <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="rounded-xl text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors p-3 bg-transparent shadow-none ml-auto border-transparent" title="Delete forever">
-                    <Trash2 className="w-[18px] h-[18px]" />
-                  </Button>
-                </div>
+                
               </div>
             )}
           </>
         )}
       </div>
-
+      
+      {/* Sticky Action Footer */}
+      {!loading && item && !isEditing && !showDeleteConfirm && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-zinc-100 flex items-center justify-between shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)] z-20">
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={onDone}
+              disabled={item.status === "DONE" || item.status === "CANCELLED"}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-sm font-bold gap-1.5 disabled:bg-zinc-100 disabled:text-zinc-400 transition-all"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Mark as Done
+            </Button>
+            
+            {item.status !== "DONE" && item.status !== "CANCELLED" && (
+                <Button size="sm" variant="outline" onClick={onSnooze} className="rounded-xl shadow-sm border-zinc-200 hover:bg-zinc-50 font-bold gap-1.5 bg-white">
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                  Snooze 10m
+                </Button>
+            )}
+          </div>
+          
+          <Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="rounded-xl text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors bg-transparent border-transparent" title="Delete forever">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
