@@ -19,10 +19,6 @@ build/
 .vscode/
 .idea/
 
-# ===== Drizzle / DB meta noise =====
-backend/src/db/migrations/meta/_journal.json
-backend/src/db/migrations/meta/*.json
-
 # ===== Optional: local db volumes (if any) =====
 postgres-data/
 redis-data/

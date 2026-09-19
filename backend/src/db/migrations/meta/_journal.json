@@ -1,0 +1,83 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1767903800982,
+      "tag": "0000_cooing_cardiac",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767908418301,
+      "tag": "0001_outstanding_terrax",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768087516828,
+      "tag": "0002_nervous_madrox",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1768168474820,
+      "tag": "0003_robust_sandman",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1768593892489,
+      "tag": "0004_aspiring_maelstrom",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768594046772,
+      "tag": "0005_chilly_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1768601425662,
+      "tag": "0006_clammy_adam_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1768938447190,
+      "tag": "0007_clumsy_justice",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774208214853,
+      "tag": "0008_damp_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789762607439,
+      "tag": "0009_normal_war_machine",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789812923773,
+      "tag": "0010_broken_zarda",
+      "breakpoints": true
+    }
+  ]
+}
