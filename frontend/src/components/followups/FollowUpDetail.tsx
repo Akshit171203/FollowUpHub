@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, Trash2, Sparkles, Copy } from "lucide-react";
+import { Pencil, Calendar, Target, AlignLeft, CheckCircle2, Clock, Trash2, Sparkles, Copy, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -33,20 +33,20 @@ function StatusBadge({ status }: { status: string }) {
   const getStyles = () => {
     switch (status) {
       case "DONE":
-        return "bg-emerald-50 text-emerald-600 border-emerald-200";
+        return "bg-zinc-900 text-white border-zinc-800";
       case "PENDING":
-        return "bg-blue-50 text-blue-600 border-blue-200";
+        return "bg-white text-zinc-900 border-zinc-200/80 shadow-sm";
       case "ESCALATED":
         return "bg-red-50 text-red-600 border-red-200";
       case "CANCELLED":
-        return "bg-zinc-100 text-zinc-500 border-zinc-200";
+        return "bg-white/50 text-zinc-500 border-zinc-200/50";
       default:
-        return "bg-zinc-100 text-zinc-600 border-zinc-200";
+        return "bg-white text-zinc-600 border-zinc-200 shadow-sm";
     }
   };
 
   return (
-    <span className={cn("px-2.5 py-1 rounded-md text-[12px] font-semibold border uppercase tracking-wide", getStyles())}>
+    <span className={cn("px-3 py-1.5 rounded-full text-[11px] font-bold border uppercase tracking-widest flex items-center shrink-0", getStyles())}>
       {status}
     </span>
   );
@@ -220,231 +220,257 @@ export function FollowUpDetail({ id, onClose, onUpdate }: FollowUpDetailProps) {
 
   if (loading) {
       return (
-        <div className="p-12 flex flex-col items-center justify-center gap-4">
-          <div className="w-8 h-8 rounded-full border-2 border-zinc-200 border-t-zinc-900 animate-spin" />
+        <div className="min-h-[500px] flex flex-col items-center justify-center gap-4">
+          <div className="w-8 h-8 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin" />
           <p className="text-sm font-medium text-zinc-500">Loading details...</p>
         </div>
       );
   }
 
   if (!item) {
-      return <div className="p-8 text-center text-sm font-medium text-zinc-500">Follow-up not found</div>;
+      return <div className="min-h-[500px] flex items-center justify-center text-sm font-medium text-zinc-500">Follow-up not found</div>;
   }
 
   return (
-    <div className="w-full flex flex-col font-sans">
-      {/* Header */}
-      {!showDeleteConfirm && (
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-              Follow-up Details
-            </h2>
+    <div className="w-full flex flex-col md:flex-row font-sans min-h-[500px] max-h-[90vh]">
+      
+      {/* LEFT COLUMN: Metadata & Edit */}
+      <div className="w-full md:w-[380px] shrink-0 bg-[#F5F7FA] relative overflow-y-auto overflow-x-hidden flex flex-col border-r border-zinc-100">
+        
+        {/* Ambient Glows */}
+        <div className="absolute -top-32 -left-32 w-80 h-80 bg-blue-200/40 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-32 right-0 w-80 h-80 bg-emerald-200/30 rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col h-full p-8 md:p-10">
+          
+          <div className="flex items-center justify-between mb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-zinc-200/60 text-zinc-600 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+              Detail View
+            </div>
+            {!isEditing && item.status !== "DONE" && item.status !== "CANCELLED" && (
+                <button 
+                  onClick={startEditing} 
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 hover:bg-white border border-zinc-200/60 text-zinc-600 hover:text-zinc-900 transition-all font-semibold text-xs shadow-sm backdrop-blur-sm" 
+                  title="Edit details"
+                >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit
+                </button>
+            )}
           </div>
-          {!isEditing && item.status !== "DONE" && item.status !== "CANCELLED" && (
-              <button onClick={startEditing} className="p-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors group" title="Edit details">
-                  <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              </button>
+
+          {isEditing ? (
+            /* EDIT MODE */
+            <div className="space-y-5 animate-in fade-in slide-in-from-left-2 duration-300 flex-1 flex flex-col">
+                <div className="space-y-1.5">
+                    <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Title</Label>
+                    <Input 
+                        value={editForm.title} 
+                        onChange={e => setEditForm({...editForm, title: e.target.value})}
+                        className="h-11 rounded-[12px] bg-white hover:bg-zinc-50 border border-zinc-200 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-semibold text-zinc-900 px-4 outline-none"
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Target</Label>
+                    <Input 
+                        value={editForm.target} 
+                        onChange={e => setEditForm({...editForm, target: e.target.value})} 
+                        className="h-11 rounded-[12px] bg-white hover:bg-zinc-50 border border-zinc-200 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-semibold text-zinc-900 px-4 outline-none"
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Due At</Label>
+                    <Input 
+                        type="datetime-local"
+                        value={editForm.dueAt} 
+                        onChange={e => setEditForm({...editForm, dueAt: e.target.value})} 
+                        className="h-11 rounded-[12px] bg-white hover:bg-zinc-50 border border-zinc-200 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-semibold text-zinc-900 px-4 outline-none w-full appearance-none"
+                    />
+                </div>
+                <div className="space-y-1.5 flex-1 flex flex-col">
+                    <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Notes</Label>
+                    <Textarea 
+                        value={editForm.notes} 
+                        onChange={e => setEditForm({...editForm, notes: e.target.value})} 
+                        className="flex-1 resize-none min-h-[120px] rounded-[12px] bg-white hover:bg-zinc-50 border border-zinc-200 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium text-zinc-900 p-4 outline-none"
+                    />
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-6 shrink-0 border-t border-zinc-200/50">
+                    <Button variant="ghost" onClick={() => setIsEditing(false)} className="h-11 px-4 rounded-[12px] font-bold text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors bg-white shadow-sm border border-zinc-200/50">
+                      Cancel
+                    </Button>
+                    <Button onClick={saveEdit} className="h-11 px-5 bg-zinc-900 hover:bg-black text-white rounded-[12px] shadow-md font-bold transition-all active:scale-[0.98]">
+                      Save Changes
+                    </Button>
+                </div>
+            </div>
+          ) : (
+            /* VIEW MODE METADATA */
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-2 duration-300">
+              
+              <div className="mb-6">
+                <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight leading-[1.15] mb-4">
+                  {item.title ?? "Untitled Follow-up"}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2.5">
+                   <StatusBadge status={item.status || "PENDING"} />
+                   {item.dueAt && (
+                     <span className="flex items-center gap-2 text-[12px] font-bold text-zinc-600 bg-white shadow-sm px-3.5 py-1.5 rounded-full border border-zinc-200/80">
+                       <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                       {fmt(item.dueAt)}
+                     </span>
+                   )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 flex-1">
+                <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-white/60 border border-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] backdrop-blur-md">
+                  <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <Target className="w-3.5 h-3.5" /> Target Assignee
+                  </span>
+                  <span className="text-[15px] font-bold text-zinc-800 truncate">
+                    {item.target || <span className="text-zinc-400 italic font-medium">Unassigned</span>}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-white/60 border border-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] backdrop-blur-md flex-1">
+                  <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <AlignLeft className="w-3.5 h-3.5" /> Notes & Context
+                  </span>
+                  <span className="text-[14px] font-medium text-zinc-700 leading-relaxed whitespace-pre-wrap mt-1">
+                    {item.notes || <span className="text-zinc-400 italic font-medium">No notes provided for this follow-up.</span>}
+                  </span>
+                </div>
+              </div>
+
+            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Content */}
-      <div className="p-6">
-        {isEditing ? (
-          /* EDIT MODE */
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="space-y-2">
-                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Title</Label>
-                  <Input 
-                      value={editForm.title} 
-                      onChange={e => setEditForm({...editForm, title: e.target.value})}
-                      className="bg-zinc-50 border-zinc-200 focus:bg-white transition-colors"
-                  />
-              </div>
-              <div className="space-y-2">
-                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Target</Label>
-                  <Input 
-                      value={editForm.target} 
-                      onChange={e => setEditForm({...editForm, target: e.target.value})} 
-                      className="bg-zinc-50 border-zinc-200 focus:bg-white transition-colors"
-                  />
-              </div>
-              <div className="space-y-2">
-                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Notes</Label>
-                  <Input 
-                      value={editForm.notes} 
-                      onChange={e => setEditForm({...editForm, notes: e.target.value})} 
-                      className="bg-zinc-50 border-zinc-200 focus:bg-white transition-colors"
-                  />
-              </div>
-              <div className="space-y-2">
-                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Due At</Label>
-                  <Input 
-                      type="datetime-local"
-                      value={editForm.dueAt} 
-                      onChange={e => setEditForm({...editForm, dueAt: e.target.value})} 
-                      className="bg-zinc-50 border-zinc-200 focus:bg-white transition-colors"
-                  />
-              </div>
-              <div className="flex items-center gap-3 pt-4">
-                  <Button onClick={saveEdit} className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-sm px-6 font-semibold">
-                    Save Changes
-                  </Button>
-                  <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-medium text-zinc-500 hover:text-zinc-900">
-                    Cancel
-                  </Button>
-              </div>
-          </div>
-        ) : (
-          /* VIEW MODE */
-          <>
+      {/* RIGHT COLUMN: AI & Actions */}
+      <div className="flex-1 bg-white relative flex flex-col">
+         
+         <div className="flex-1 p-8 md:p-10 overflow-y-auto">
             {showDeleteConfirm ? (
-              <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in zoom-in-95 fade-in duration-200">
-                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-5 ring-8 ring-red-50/50">
-                  <Trash2 className="w-8 h-8 text-red-600" />
+                <div className="flex flex-col items-center justify-center text-center animate-in zoom-in-95 fade-in duration-300 h-full">
+                  <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 ring-[12px] ring-red-50/50 shadow-inner">
+                    <Trash2 className="w-10 h-10 text-red-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-zinc-900 mb-3 tracking-tight">Delete this follow-up?</h2>
+                  <p className="text-[15px] text-zinc-500 max-w-xs mx-auto mb-10 leading-relaxed font-medium">
+                    This action cannot be undone. This will permanently delete the follow-up.
+                  </p>
+                  <div className="flex flex-col gap-3 w-full max-w-[240px] mx-auto">
+                    <Button onClick={onDelete} className="h-11 bg-red-600 hover:bg-red-700 text-white rounded-[12px] shadow-md shadow-red-600/20 font-bold w-full transition-all active:scale-[0.98]">
+                      Delete Forever
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-11 rounded-[12px] font-bold w-full bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 transition-colors shadow-sm">
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-                <h2 className="text-xl font-semibold text-zinc-900 mb-2 tracking-tight">Delete this follow-up?</h2>
-                <p className="text-[15px] text-zinc-500 max-w-sm mb-8 leading-relaxed">
-                  This action cannot be undone. This will permanently delete the follow-up and remove it from our servers.
-                </p>
-                <div className="flex items-center gap-3 w-full justify-center">
-                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-11 rounded-xl font-bold px-8 bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 transition-colors shadow-sm">
-                    Cancel
-                  </Button>
-                  <Button onClick={onDelete} className="h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-md shadow-red-600/20 font-bold px-8 transition-all">
-                    Delete
-                  </Button>
-                </div>
-              </div>
             ) : (
-              <div className="flex flex-col gap-5">
-                
-                {/* Title & Core Metadata */}
-                <div className="flex flex-col gap-4">
-                  <h1 className="text-[26px] font-extrabold text-zinc-900 tracking-tight leading-tight">
-                    {item.title ?? "Untitled Follow-up"}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-3">
-                     <StatusBadge status={item.status || "PENDING"} />
-                     {item.dueAt && (
-                       <span className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-600 bg-white shadow-sm px-3 py-1.5 rounded-full border border-zinc-200/80">
-                         <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                         {fmt(item.dueAt)}
-                       </span>
-                     )}
-                  </div>
-                </div>
-
-                {/* Crisp App-Native Metadata Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-zinc-50/80 border border-zinc-200/80 shadow-sm transition-all hover:bg-zinc-50 hover:border-zinc-300">
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                      <Target className="w-3.5 h-3.5" /> Target
-                    </span>
-                    <span className="text-[15px] font-semibold text-zinc-900 mt-0.5 truncate">
-                      {item.target || <span className="text-zinc-400 italic font-medium">None specified</span>}
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2 p-5 rounded-[20px] bg-zinc-50/80 border border-zinc-200/80 shadow-sm transition-all hover:bg-zinc-50 hover:border-zinc-300">
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                      <AlignLeft className="w-3.5 h-3.5" /> Notes
-                    </span>
-                    <span className="text-[14px] font-medium text-zinc-700 leading-relaxed whitespace-pre-wrap mt-0.5">
-                      {item.notes || <span className="text-zinc-400 italic font-medium">No notes added</span>}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Crisp AI Draft Box */}
-                <div className="relative flex flex-col gap-4 p-6 rounded-[20px] bg-violet-50/40 border border-violet-100 shadow-sm mt-4">
-                  <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100 text-violet-600 border border-violet-200/50 shadow-sm">
+                /* AI DRAFTING ASSISTANT */
+                <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-300">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-[14px] bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-[0_8px_20px_rgba(59,130,246,0.3)]">
                         <Sparkles className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-[16px] font-bold text-zinc-900 tracking-tight leading-none">AI Assistant</h3>
-                        <p className="text-[13px] font-medium text-zinc-500 mt-1">Draft a perfect follow-up</p>
+                        <h3 className="text-[18px] font-extrabold tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
+                          Drafting Assistant
+                        </h3>
+                        <p className="text-[13px] font-medium text-blue-600/70 mt-1">AI-powered smart replies</p>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={onGenerateDraft}
-                      disabled={draftLoading}
-                      className="h-9 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-semibold text-[13px] shadow-sm transition-all active:scale-95"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5 opacity-80" />
-                      {draftLoading ? "Drafting..." : draftText ? "Regenerate" : "Generate Draft"}
-                    </Button>
                   </div>
 
-                  <div className="relative z-10">
-                  {draftLoading && !draftText ? (
-                    <div className="space-y-2.5 py-3">
-                      <div className="h-2.5 rounded-full bg-violet-200/50 w-full animate-pulse" />
-                      <div className="h-2.5 rounded-full bg-violet-200/50 w-5/6 animate-pulse delay-75" />
-                      <div className="h-2.5 rounded-full bg-violet-200/50 w-2/3 animate-pulse delay-150" />
-                    </div>
-                  ) : draftText ? (
-                    <div className="relative animate-in fade-in slide-in-from-bottom-2 duration-300 mt-2">
-                      <Textarea
-                        value={draftText}
-                        onChange={(e) => setDraftText(e.target.value)}
-                        rows={4}
-                        className="bg-white border-violet-200 focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-[14px] font-medium leading-relaxed resize-none rounded-xl p-4 text-zinc-800 placeholder:text-zinc-400 shadow-sm transition-all min-h-[120px]"
-                      />
-                      <div className="absolute bottom-3 right-3">
-                        <Button
-                          size="sm"
-                          onClick={onCopyDraft}
-                          className="rounded-lg bg-white hover:bg-zinc-50 text-violet-700 font-semibold gap-1.5 text-xs h-8 px-3 shadow-sm border border-violet-200 transition-all active:scale-95"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                          Copy
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
+                  <div className="relative flex-1 flex flex-col group min-h-[250px]">
+                      {draftLoading && !draftText ? (
+                        <div className="absolute inset-0 rounded-[20px] border border-blue-100 bg-[#F5F7FA] p-6 space-y-4">
+                          <div className="h-3.5 rounded-full bg-blue-200/50 w-full animate-pulse" />
+                          <div className="h-3.5 rounded-full bg-blue-200/50 w-5/6 animate-pulse delay-75" />
+                          <div className="h-3.5 rounded-full bg-blue-200/50 w-2/3 animate-pulse delay-150" />
+                        </div>
+                      ) : (
+                        <>
+                          <Textarea
+                            value={draftText}
+                            onChange={(e) => setDraftText(e.target.value)}
+                            placeholder="Hit Generate Draft to let AI write a follow-up message based on your notes..."
+                            className="flex-1 w-full bg-[#F9FAFB] hover:bg-[#F5F7FA] border border-zinc-200/80 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 text-[15px] font-medium leading-relaxed resize-none rounded-[20px] p-6 text-zinc-800 placeholder:text-zinc-400 shadow-inner transition-all outline-none"
+                          />
+                          {draftText && (
+                            <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <Button
+                                size="sm"
+                                onClick={onCopyDraft}
+                                className="rounded-[10px] bg-zinc-900 hover:bg-black text-white font-bold gap-2 text-[11px] h-9 px-4 shadow-md transition-all active:scale-95"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                                Copy text
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end">
+                      <Button
+                        onClick={onGenerateDraft}
+                        disabled={draftLoading}
+                        className="h-11 px-6 rounded-[12px] bg-zinc-900 hover:bg-black border border-zinc-800 text-white font-bold text-[13px] shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {draftLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Drafting...
+                          </>
+                        ) : (
+                          <>
+                            {draftText ? "Regenerate Draft" : "Generate AI Draft"}
+                            <ArrowRight className="w-4 h-4 ml-2 opacity-70" />
+                          </>
+                        )}
+                      </Button>
                   </div>
                 </div>
+            )}
+         </div>
 
-                
-              </div>
-            )}
-          </>
-        )}
+         {/* ACTION FOOTER */}
+         {!loading && item && !isEditing && !showDeleteConfirm && (
+           <div className="p-6 bg-white border-t border-zinc-100 flex items-center justify-between shrink-0">
+             <div className="flex items-center gap-3">
+               <Button
+                 onClick={onDone}
+                 disabled={item.status === "DONE" || item.status === "CANCELLED"}
+                 className="h-11 bg-zinc-900 hover:bg-black text-white rounded-[12px] shadow-md font-bold px-6 gap-2 disabled:opacity-30 disabled:bg-zinc-900 transition-all active:scale-[0.98]"
+               >
+                 <CheckCircle2 className="w-4 h-4" />
+                 Mark as Done
+               </Button>
+               
+               {item.status !== "DONE" && item.status !== "CANCELLED" && (
+                   <Button variant="outline" onClick={onSnooze} className="h-11 rounded-[12px] shadow-sm border-zinc-200 hover:bg-zinc-50 font-bold px-5 gap-2 bg-white text-zinc-700 transition-all active:scale-[0.98]">
+                     <Clock className="w-4 h-4 text-zinc-400" />
+                     Snooze 10m
+                   </Button>
+               )}
+             </div>
+             
+             <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="w-11 h-11 rounded-[12px] flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors bg-white border border-zinc-200/50 shadow-sm" title="Delete forever">
+               <Trash2 className="w-4 h-4" />
+             </Button>
+           </div>
+         )}
+
       </div>
-      
-      {/* Sticky Action Footer */}
-      {!loading && item && !isEditing && !showDeleteConfirm && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-zinc-100 flex items-center justify-between shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)] z-20">
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={onDone}
-              disabled={item.status === "DONE" || item.status === "CANCELLED"}
-              className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl shadow-sm font-bold gap-1.5 disabled:bg-zinc-100 disabled:text-zinc-400 transition-all"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Mark as Done
-            </Button>
-            
-            {item.status !== "DONE" && item.status !== "CANCELLED" && (
-                <Button size="sm" variant="outline" onClick={onSnooze} className="rounded-xl shadow-sm border-zinc-200 hover:bg-zinc-50 font-bold gap-1.5 bg-white">
-                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                  Snooze 10m
-                </Button>
-            )}
-          </div>
-          
-          <Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="rounded-xl text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors bg-transparent border-transparent" title="Delete forever">
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -369,9 +369,9 @@ function FollowUpsContent() {
                         </Link>
                         <button
                            onClick={() => setIsQuickCreateOpen(true)}
-                           className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-sm cursor-pointer"
+                           className="flex items-center gap-2 px-6 py-2.5 bg-zinc-900 hover:bg-black text-white rounded-xl text-[14px] font-bold transition-all active:scale-95 shadow-md cursor-pointer border border-zinc-800"
                         >
-                           <Sparkles className="w-[18px] h-[18px]" /> AI Quick Add
+                           <Sparkles className="w-[16px] h-[16px]" /> AI Quick Add
                         </button>
                      </div>
                   </div>
@@ -559,7 +559,7 @@ function FollowUpsContent() {
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-         <DialogContent className="max-w-2xl p-0 overflow-hidden border-zinc-200/80 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[24px] bg-white sm:rounded-[24px]">
+         <DialogContent className="max-w-[950px] sm:max-w-[950px] w-[95vw] p-0 overflow-hidden border border-zinc-200/50 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.15)] rounded-[20px] bg-white sm:rounded-[20px]">
              <DialogTitle className="sr-only">Follow-up Details</DialogTitle>
              {selectedId && (
                  <FollowUpDetail 

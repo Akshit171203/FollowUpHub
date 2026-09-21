@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { Loader2, RefreshCw, Trash2, ExternalLink, Kanban, Search, ArrowRight, ShieldCheck, Mail, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Defines the shape of a Jira Ticket that we sync and display in the UI
 type Ticket = {
   id: string;
   title: string;
@@ -20,28 +21,32 @@ type Ticket = {
 };
 
 export default function JiraPage() {
+  // Global loading states for fetching, syncing, and disconnecting actions
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   
+  // Connection and ticket state populated from our backend API
   const [isConnected, setIsConnected] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  // Form State
+  // Local form state used when the user connects their Jira workspace
   const [jiraEmail, setJiraEmail] = useState("");
   const [jiraDomain, setJiraDomain] = useState("");
   const [jiraApiToken, setJiraApiToken] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [connecting, setConnecting] = useState(false);
   
-  // Search state
+  // Local state for the search bar to filter tickets in the UI
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Fetch initial connection status and tickets on component mount
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Fetches connection status and the list of synced tickets from the backend
   async function fetchData() {
     setLoading(true);
     try {
@@ -56,18 +61,20 @@ export default function JiraPage() {
     }
   }
 
+  // Handles the form submission to securely connect to a new Jira workspace
   async function handleConnect(e: React.FormEvent) {
     e.preventDefault();
     setConnecting(true);
     try {
       await connectJira({
         jiraEmail,
+        // Cleans up the domain if the user pastes a full URL (e.g. https://domain.atlassian.net)
         jiraDomain: jiraDomain.replace(/^https?:\/\//, '').split('/')[0],
         jiraApiToken,
         managerEmail
       });
       toast.success("Jira connected successfully!");
-      await handleSync(); // Initial sync
+      await handleSync(); // Initial sync immediately after connecting
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to connect to Jira");
@@ -76,6 +83,7 @@ export default function JiraPage() {
     }
   }
 
+  // Manually triggers a Jira sync to fetch the latest tickets from Atlassian
   async function handleSync() {
     setSyncing(true);
     try {
@@ -89,6 +97,7 @@ export default function JiraPage() {
     }
   }
 
+  // Disconnects Jira, clearing the settings and API tokens from the backend
   async function handleDisconnect() {
     if (!confirm("Are you sure you want to disconnect Jira? Your synced tickets will stay in FollowUpHub but won't be updated.")) return;
     
@@ -106,6 +115,7 @@ export default function JiraPage() {
     }
   }
 
+  // Client-side filtering of tickets based on the search input
   const filteredTickets = tickets.filter(t => 
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.status.toLowerCase().includes(searchQuery.toLowerCase())
@@ -204,6 +214,11 @@ export default function JiraPage() {
            </div>
         </div>
 
+        {/* 
+          Main Content Area 
+          If not connected, show the connection form. 
+          If connected, show the ticket list and search bar.
+        */}
         {!isConnected ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} className="grid lg:grid-cols-5 gap-10 items-start">
             
@@ -368,9 +383,10 @@ export default function JiraPage() {
               </div>
             </div>
 
-            {/* Tickets Grid */}
+             {/* Tickets Grid */}
             <AnimatePresence mode="wait">
                {tickets.length === 0 ? (
+                 // Empty State: Connected but no assigned tickets found
                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-20 text-center bg-white border border-zinc-200/80 rounded-2xl shadow-sm">
                    <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-5">
                      <Kanban className="w-8 h-8 text-[#0052CC]/60" />
@@ -389,10 +405,12 @@ export default function JiraPage() {
                    </button>
                  </motion.div>
                ) : filteredTickets.length === 0 ? (
+                 // Empty State: Tickets exist, but none match the search query
                  <div className="text-center py-16 text-[15px] font-medium text-zinc-500 bg-white rounded-2xl border border-zinc-200/80 shadow-sm">
                     No tickets match your search.
                  </div>
                ) : (
+                 // Populated Ticket Grid
                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                    {filteredTickets.map((ticket) => (
                      <motion.div key={ticket.id} variants={itemVariants} className="group flex h-full">
