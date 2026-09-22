@@ -20,7 +20,7 @@ export const getSocket = (): Socket => {
     });
 
     socket.on("connect_error", (err) => {
-      console.error("❌ [Socket] Connection Error:", err.message);
+      console.warn("❌ [Socket] Connection Error:", err.message);
     });
     
     socket.on("disconnect", (reason) => {

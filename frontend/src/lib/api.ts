@@ -85,6 +85,9 @@ export async function apiFetch<T>(
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
   }
 
