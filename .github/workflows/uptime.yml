@@ -1,0 +1,32 @@
+name: Uptime check
+
+# A crashed server cannot report that it is dead, so something outside it has to look.
+# Every 5 minutes this calls /health and tells OpsFlow whether the API is up.
+# It does nothing until the three secrets below exist.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      OPSFLOW_URL: ${{ secrets.OPSFLOW_URL }}
+      OPSFLOW_API_KEY: ${{ secrets.OPSFLOW_API_KEY }}
+      FOLLOWUPHUB_URL: ${{ secrets.FOLLOWUPHUB_URL }}
+    steps:
+      - name: Check /health and report to OpsFlow
+        run: |
+          if [ -z "$OPSFLOW_URL" ] || [ -z "$OPSFLOW_API_KEY" ] || [ -z "$FOLLOWUPHUB_URL" ]; then
+            echo "Uptime check not configured; skipping"; exit 0
+          fi
+          # Retries matter: the free Render plan sleeps when idle and can take about a minute to wake up
+          if curl -fsS --retry 3 --retry-delay 20 --max-time 60 "$FOLLOWUPHUB_URL/health" > /dev/null; then
+            STATUS=resolved
+          else
+            STATUS=firing
+          fi
+          curl -fsS --max-time 20 -X POST "$OPSFLOW_URL/api/integrations/alerts" \
+            -H "Authorization: Bearer $OPSFLOW_API_KEY" -H "Content-Type: application/json" \
+            -d "{\"service\":\"followuphub-api\",\"title\":\"FollowUpHub API is not responding\",\"severity\":\"critical\",\"fingerprint\":\"followuphub-down\",\"source\":\"uptime-check\",\"status\":\"$STATUS\"}"

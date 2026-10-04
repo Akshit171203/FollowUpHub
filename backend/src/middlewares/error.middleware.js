@@ -7,6 +7,8 @@
  */
 
 // Custom application error class for throwing structured errors
+import { opsflow, safeMessage } from "../services/opsflow.service.js";
+
 export class AppError extends Error {
   constructor(message, statusCode = 500, details = null) {
     super(message);
@@ -32,6 +34,12 @@ export function errorHandler(err, req, res, _next) {
 
   if (!isProduction) {
     console.error(err.stack);
+  }
+
+  // Server errors are shown in OpsFlow as evidence. Only the route pattern is sent, never the URL
+  // (query strings can hold tokens), and the message is stripped of query parameters and emails.
+  if (statusCode >= 500) {
+    opsflow.log("ERROR", `${req.method} ${req.route?.path ?? "(no route)"} -> ${statusCode}: ${safeMessage(err)}`);
   }
 
   // Build response payload

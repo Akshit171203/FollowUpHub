@@ -8,7 +8,8 @@
     "start": "NODE_ENV=production node src/server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "opsflow:check": "node scripts/opsflow-check.mjs"
   },
   "keywords": [],
   "author": "",

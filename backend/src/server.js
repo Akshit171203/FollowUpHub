@@ -12,6 +12,7 @@ import { startReminderJob } from "./jobs/reminder.job.js";
 import { startJiraSyncJob } from "./jobs/jira-sync.job.js";
 import { startAiDigestJob } from "./jobs/ai-digest.job.js";
 import { initSocket } from "./socket.js";
+import { opsflow } from "./services/opsflow.service.js";
 
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
@@ -102,10 +103,11 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 // Catch uncaught exceptions and unhandled rejections in production
 process.on("uncaughtException", (err) => {
   console.error("[FATAL] Uncaught Exception:", err);
-  gracefulShutdown("uncaughtException");
+  // tell OpsFlow first (at most ~3s), then run the normal graceful shutdown
+  opsflow.reportFatal("uncaughtException", err).finally(() => gracefulShutdown("uncaughtException"));
 });
 
 process.on("unhandledRejection", (reason) => {
   console.error("[FATAL] Unhandled Rejection:", reason);
-  gracefulShutdown("unhandledRejection");
+  opsflow.reportFatal("unhandledRejection", reason).finally(() => gracefulShutdown("unhandledRejection"));
 });

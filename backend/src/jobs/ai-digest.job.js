@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { runAiDigestJob } from "../services/ai-digest.service.js";
+import { opsflow } from "../services/opsflow.service.js";
 
 export function startAiDigestJob() {
   console.log("[Cron] AI Digest Job started (daily at 8am) at", new Date().toISOString());
@@ -8,7 +9,7 @@ export function startAiDigestJob() {
     const now = new Date();
     console.log(`[Cron] [${now.toISOString()}] Running AI digest job...`);
     try {
-      await runAiDigestJob();
+      await opsflow.trackJob({ id: "ai-digest", title: "Daily AI digest is failing", severity: "SEV3" }, runAiDigestJob);
     } catch (err) {
       console.error(`[Cron] [${now.toISOString()}] AI digest job error:`, err);
     }

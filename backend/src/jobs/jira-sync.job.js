@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { syncAllJiraUsers } from "../modules/jira/jira.service.js";
+import { opsflow } from "../services/opsflow.service.js";
 
 export function startJiraSyncJob() {
   console.log("[Cron] Jira Sync Job started (every 5 minutes) at", new Date().toISOString());
@@ -10,7 +11,7 @@ export function startJiraSyncJob() {
     console.log(`[Cron] [${now.toISOString()}] Running Jira Sync Engine...`);
     
     try {
-      await syncAllJiraUsers();
+      await opsflow.trackJob({ id: "jira-sync", title: "Jira sync is failing", severity: "SEV3" }, syncAllJiraUsers);
     } catch (err) {
       console.error(`[Cron] [${now.toISOString()}] Jira Sync Engine error:`, err);
     }

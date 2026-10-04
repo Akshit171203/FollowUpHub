@@ -73,3 +73,15 @@ jobs:
       - name: Trigger Render Deployment
         # You need to set RENDER_DEPLOY_HOOK_URL in GitHub Repository Secrets
         run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      - name: Tell OpsFlow about this deployment
+        # Optional: does nothing unless the OPSFLOW_URL and OPSFLOW_API_KEY secrets exist, and never fails the deploy
+        continue-on-error: true
+        env:
+          OPSFLOW_URL: ${{ secrets.OPSFLOW_URL }}
+          OPSFLOW_API_KEY: ${{ secrets.OPSFLOW_API_KEY }}
+        run: |
+          if [ -z "$OPSFLOW_URL" ] || [ -z "$OPSFLOW_API_KEY" ]; then echo "OpsFlow not configured; skipping"; exit 0; fi
+          curl -fsS --max-time 20 -X POST "$OPSFLOW_URL/api/deployments" \
+            -H "Authorization: Bearer $OPSFLOW_API_KEY" -H "Content-Type: application/json" \
+            -d "{\"service\":\"followuphub-api\",\"version\":\"${GITHUB_SHA::7}\",\"commitSha\":\"$GITHUB_SHA\",\"environment\":\"production\",\"deployedBy\":\"$GITHUB_ACTOR\"}"
